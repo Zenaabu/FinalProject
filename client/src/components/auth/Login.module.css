@@ -112,21 +112,20 @@
   margin-bottom: 36px;
 }
 
-.logoCircle {
-  display: inline-flex;
+.logoWrapper {
+  display: flex;
   align-items: center;
   justify-content: center;
-  width: 80px;
-  height: 80px;
-  background: linear-gradient(
-    135deg,
-    var(--ocean-blue) 0%,
-    var(--seafoam) 100%
-  );
-  border-radius: 50%;
-  margin-bottom: 16px;
-  box-shadow: 0 8px 16px var(--shadow-light);
+  margin-bottom: 4px;
   animation: float 3s ease-in-out infinite;
+}
+
+.logoImage {
+  width: 180px;
+  height: auto;
+  object-fit: contain;
+  mix-blend-mode: multiply;
+  filter: drop-shadow(0 4px 14px rgba(0, 100, 200, 0.25));
 }
 
 @keyframes float {
@@ -137,11 +136,6 @@
   50% {
     transform: translateY(-8px);
   }
-}
-
-.surfIcon {
-  font-size: 40px;
-  display: block;
 }
 
 .title {
@@ -366,13 +360,8 @@
     max-width: 100%;
   }
 
-  .logoCircle {
-    width: 70px;
-    height: 70px;
-  }
-
-  .surfIcon {
-    font-size: 32px;
+  .logoImage {
+    width: 150px;
   }
 
   .title {
@@ -407,14 +396,8 @@
     margin-bottom: 28px;
   }
 
-  .logoCircle {
-    width: 60px;
-    height: 60px;
-    margin-bottom: 12px;
-  }
-
-  .surfIcon {
-    font-size: 28px;
+  .logoImage {
+    width: 130px;
   }
 
   .title {

@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import styles from "./Login.module.css";
+import logo from "../../assets/bluemarsLogo.png";
 
 const Login = () => {
   const [idNumber, setIdNumber] = useState("");
@@ -108,12 +109,11 @@ const Login = () => {
       <div className={styles.oceanWave} />
 
       <div className={styles.loginCard}>
-        {/* Header with logo/icon */}
+        {/* Header with logo */}
         <div className={styles.header}>
-          <div className={styles.logoCircle}>
-            <span className={styles.surfIcon}>🏄</span>
+          <div className={styles.logoWrapper}>
+            <img src={logo} alt="BlueMars" className={styles.logoImage} />
           </div>
-          <h1 className={styles.title}>BlueMars</h1>
         </div>
 
         {/* Error message */}
