@@ -86,12 +86,6 @@ const Login = () => {
     }
   };
 
-  const handleForgotPassword = () => {
-    // Navigate to forgot password page
-    console.log("Redirect to forgot password");
-    // window.location.href = '/forgot-password';
-  };
-
   const formatIdNumber = (value) => {
     // Format ID number as the user types (XXX-XXX-XXX)
     const digits = value.replace(/\D/g, "").slice(0, 9);
@@ -171,17 +165,6 @@ const Login = () => {
             {errors.password && (
               <span className={styles.errorMessage}>{errors.password}</span>
             )}
-          </div>
-
-          {/* Forgot Password Link */}
-          <div className={styles.forgotPasswordContainer}>
-            <button
-              type="button"
-              onClick={handleForgotPassword}
-              className={styles.forgotPasswordLink}
-            >
-              Forgot Password?
-            </button>
           </div>
 
           {/* Login Button */}
