@@ -22,29 +22,14 @@ function validateId(id) {
 // 2. 1 upper letter
 // 3. 1 number
 // 4. one special char (!~@#$%^&*)
+// also the letters in the password is in english only
 // else - it returns false
 function validatePassword(password) {
   if (!password) return false;
 
-  const p = String(password);
-  if (p.length < 8) return false;
+  const regex = /^(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9])[\x20-\x7E]{8,}$/;
 
-  let hasLetter = false;
-  let hasNumber = false;
-
-  for (let i = 0; i < p.length; i++) {
-    const ch = p[i];
-
-    if (ch >= "A" && ch <= "Z") {
-      hasLetter = true;
-    }
-
-    if (ch >= "0" && ch <= "9") {
-      hasNumber = true;
-    }
-
-    //if([^(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$])
-  }
+  return regex.test(String(password));
 
   return hasLetter && hasNumber;
 }
