@@ -1,8 +1,8 @@
 import "./App.css";
-import Login from "./components/auth/Login";
+import Auth from "./components/auth/Auth";
 
 function App() {
-  return <Login />;
+  return <Auth />; 
 }
 
 export default App;
