@@ -368,32 +368,6 @@ export default function SignupForm({ styles }) {
           />
         </AuthField>
 
-        <AuthField
-          styles={styles}
-          icon={LockIcon}
-          error={errors.confirm_password}
-        >
-          <input
-            type="password"
-            id="signup-confirm-password"
-            className={`${styles.input} ${errors.confirm_password ? styles.inputError : ""}`}
-            placeholder="Confirm your password"
-            value={signUpForm.confirm_password}
-            onChange={(event) => {
-              setSignUpForm((currentForm) => ({
-                ...currentForm,
-                confirm_password: event.target.value,
-              }));
-              setErrors((currentErrors) => ({
-                ...currentErrors,
-                confirm_password: "",
-                submit: "",
-              }));
-            }}
-            disabled={isLoading}
-          />
-        </AuthField>
-
         <button
           type="submit"
           className={`${styles.loginButton} ${styles.fullWidthButton}`}
