@@ -4,6 +4,48 @@ import logo from "../../assets/bluemarsLogo.png";
 
 const PASSWORD_REGEX = /^(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
 
+const iconStroke = {
+  fill: "none",
+  stroke: "currentColor",
+  strokeWidth: "1.8",
+  strokeLinecap: "round",
+  strokeLinejoin: "round",
+};
+
+const UserIcon = () => (
+  <svg viewBox="0 0 24 24" aria-hidden="true" {...iconStroke}>
+    <path d="M20 21a8 8 0 0 0-16 0" />
+    <circle cx="12" cy="8" r="4" />
+  </svg>
+);
+
+const MailIcon = () => (
+  <svg viewBox="0 0 24 24" aria-hidden="true" {...iconStroke}>
+    <rect x="3" y="5" width="18" height="14" rx="3" />
+    <path d="m4 7 8 6 8-6" />
+  </svg>
+);
+
+const PhoneIcon = () => (
+  <svg viewBox="0 0 24 24" aria-hidden="true" {...iconStroke}>
+    <path d="M22 16.9v2.5a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.4 19.4 0 0 1-6-6 19.8 19.8 0 0 1-3.1-8.7A2 2 0 0 1 4.1 1h2.5a2 2 0 0 1 2 1.7c.1.8.3 1.5.5 2.2a2 2 0 0 1-.5 2.1L7.5 8.1a16 16 0 0 0 8.4 8.4l1.1-1.1a2 2 0 0 1 2.1-.5c.7.2 1.4.4 2.2.5a2 2 0 0 1 1.7 1.5Z" />
+  </svg>
+);
+
+const LockIcon = () => (
+  <svg viewBox="0 0 24 24" aria-hidden="true" {...iconStroke}>
+    <rect x="4" y="11" width="16" height="10" rx="2" />
+    <path d="M8 11V8a4 4 0 0 1 8 0v3" />
+  </svg>
+);
+
+const CalendarIcon = () => (
+  <svg viewBox="0 0 24 24" aria-hidden="true" {...iconStroke}>
+    <rect x="3" y="5" width="18" height="16" rx="3" />
+    <path d="M8 3v4M16 3v4M3 10h18" />
+  </svg>
+);
+
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [loginForm, setLoginForm] = useState({
@@ -19,6 +61,7 @@ const Auth = () => {
     gender: "",
     birth_date: "",
     password: "",
+    confirm_password: "",
   });
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
@@ -135,6 +178,12 @@ const Auth = () => {
         "Password must be at least 8 characters with uppercase letter, number, and special character";
     }
 
+    if (!signUpForm.confirm_password.trim()) {
+      newErrors.confirm_password = "Please confirm your password";
+    } else if (signUpForm.confirm_password !== signUpForm.password) {
+      newErrors.confirm_password = "Passwords do not match";
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -187,15 +236,17 @@ const Auth = () => {
     setIsLoading(true);
 
     try {
+      const { confirm_password, ...signUpPayload } = signUpForm;
+
       const response = await fetch("/api/auth/signup", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          ...signUpForm,
-          user_id: signUpForm.user_id.replace(/\D/g, ""),
-          phone: signUpForm.phone.replace(/\D/g, ""),
+          ...signUpPayload,
+          user_id: signUpPayload.user_id.replace(/\D/g, ""),
+          phone: signUpPayload.phone.replace(/\D/g, ""),
         }),
       });
 
@@ -217,14 +268,7 @@ const Auth = () => {
   };
 
   const formatIdNumber = (value) => {
-    const digits = value.replace(/\D/g, "").slice(0, 9);
-    if (digits.length <= 3) {
-      return digits;
-    } else if (digits.length <= 6) {
-      return `${digits.slice(0, 3)}-${digits.slice(3)}`;
-    } else {
-      return `${digits.slice(0, 3)}-${digits.slice(3, 6)}-${digits.slice(6)}`;
-    }
+    return value.replace(/\D/g, "").slice(0, 9);
   };
 
   const formatPhoneNumber = (value) => value.replace(/\D/g, "").slice(0, 10);
@@ -237,10 +281,30 @@ const Auth = () => {
   const signUpBirthDateError = getBirthDateError(signUpForm.birth_date);
   const isSignUpDisabled = isLoading || Boolean(signUpBirthDateError);
 
+  const renderInputField = ({
+    icon: Icon,
+    error,
+    fullWidth = false,
+    fieldClassName = "",
+    children,
+  }) => (
+    <div
+      className={`${styles.formGroup} ${fullWidth ? styles.fullWidthField : ""} ${fieldClassName}`}
+    >
+      <div
+        className={`${styles.fieldShell} ${error ? styles.fieldShellError : ""}`}
+      >
+        <span className={styles.inputIcon} aria-hidden="true">
+          <Icon />
+        </span>
+        {children}
+      </div>
+      {error && <span className={styles.errorMessage}>{error}</span>}
+    </div>
+  );
+
   return (
     <div className={styles.loginContainer}>
-      <div className={styles.oceanWave} />
-
       <div
         className={`${styles.loginCard} ${!isLogin ? styles.signUpCard : ""}`}
       >
@@ -262,65 +326,62 @@ const Auth = () => {
 
         {isLogin ? (
           <form onSubmit={handleLoginSubmit} className={styles.form}>
-            <div className={styles.formGroup}>
-              <label htmlFor="idNumber" className={styles.label}>
-                ID Number (ת"ז)
-              </label>
-              <input
-                type="text"
-                id="idNumber"
-                className={`${styles.input} ${errors.idNumber ? styles.inputError : ""}`}
-                placeholder="123-456-789"
-                value={loginForm.idNumber}
-                onChange={(e) => {
-                  const formatted = formatIdNumber(e.target.value);
-                  setLoginForm((currentForm) => ({
-                    ...currentForm,
-                    idNumber: formatted,
-                  }));
-                  if (errors.idNumber) {
-                    setErrors((currentErrors) => ({
-                      ...currentErrors,
-                      idNumber: "",
+            {renderInputField({
+              icon: UserIcon,
+              error: errors.idNumber,
+              children: (
+                <input
+                  type="text"
+                  id="idNumber"
+                  className={`${styles.input} ${errors.idNumber ? styles.inputError : ""}`}
+                  placeholder="123456789"
+                  value={loginForm.idNumber}
+                  onChange={(e) => {
+                    const formatted = formatIdNumber(e.target.value);
+                    setLoginForm((currentForm) => ({
+                      ...currentForm,
+                      idNumber: formatted,
                     }));
-                  }
-                }}
-                disabled={isLoading}
-                maxLength="11"
-              />
-              {errors.idNumber && (
-                <span className={styles.errorMessage}>{errors.idNumber}</span>
-              )}
-            </div>
+                    if (errors.idNumber) {
+                      setErrors((currentErrors) => ({
+                        ...currentErrors,
+                        idNumber: "",
+                      }));
+                    }
+                  }}
+                  disabled={isLoading}
+                  maxLength="9"
+                  inputMode="numeric"
+                />
+              ),
+            })}
 
-            <div className={styles.formGroup}>
-              <label htmlFor="password" className={styles.label}>
-                Password
-              </label>
-              <input
-                type="password"
-                id="password"
-                className={`${styles.input} ${errors.password ? styles.inputError : ""}`}
-                placeholder="Enter your password"
-                value={loginForm.password}
-                onChange={(e) => {
-                  setLoginForm((currentForm) => ({
-                    ...currentForm,
-                    password: e.target.value,
-                  }));
-                  if (errors.password) {
-                    setErrors((currentErrors) => ({
-                      ...currentErrors,
-                      password: "",
+            {renderInputField({
+              icon: LockIcon,
+              error: errors.password,
+              children: (
+                <input
+                  type="password"
+                  id="password"
+                  className={`${styles.input} ${errors.password ? styles.inputError : ""}`}
+                  placeholder="Enter your password"
+                  value={loginForm.password}
+                  onChange={(e) => {
+                    setLoginForm((currentForm) => ({
+                      ...currentForm,
+                      password: e.target.value,
                     }));
-                  }
-                }}
-                disabled={isLoading}
-              />
-              {errors.password && (
-                <span className={styles.errorMessage}>{errors.password}</span>
-              )}
-            </div>
+                    if (errors.password) {
+                      setErrors((currentErrors) => ({
+                        ...currentErrors,
+                        password: "",
+                      }));
+                    }
+                  }}
+                  disabled={isLoading}
+                />
+              ),
+            })}
 
             <div className={styles.forgotPasswordContainer}>
               <button type="button" className={styles.forgotPasswordLink}>
@@ -341,245 +402,286 @@ const Auth = () => {
             onSubmit={handleSignUpSubmit}
             className={`${styles.form} ${styles.signUpForm}`}
           >
-            <div className={`${styles.formGroup} ${styles.fullWidthField}`}>
-              <label htmlFor="signup-user-id" className={styles.label}>
-                ID Number (ת"ז)
-              </label>
-              <input
-                type="text"
-                id="signup-user-id"
-                className={`${styles.input} ${errors.user_id ? styles.inputError : ""}`}
-                placeholder="123-456-789"
-                value={signUpForm.user_id}
-                onChange={(e) => {
-                  const formatted = formatIdNumber(e.target.value);
-                  setSignUpForm((currentForm) => ({
-                    ...currentForm,
-                    user_id: formatted,
-                  }));
-                  if (errors.user_id) {
-                    setErrors((currentErrors) => ({
-                      ...currentErrors,
-                      user_id: "",
+            {renderInputField({
+              icon: UserIcon,
+              error: errors.user_id,
+              children: (
+                <input
+                  type="text"
+                  id="signup-user-id"
+                  className={`${styles.input} ${errors.user_id ? styles.inputError : ""}`}
+                  placeholder="123456789"
+                  value={signUpForm.user_id}
+                  onChange={(e) => {
+                    const formatted = formatIdNumber(e.target.value);
+                    setSignUpForm((currentForm) => ({
+                      ...currentForm,
+                      user_id: formatted,
                     }));
-                  }
-                }}
-                disabled={isLoading}
-                maxLength="11"
-              />
-              {errors.user_id && (
-                <span className={styles.errorMessage}>{errors.user_id}</span>
-              )}
-            </div>
+                    if (errors.user_id) {
+                      setErrors((currentErrors) => ({
+                        ...currentErrors,
+                        user_id: "",
+                      }));
+                    }
+                  }}
+                  disabled={isLoading}
+                  maxLength="9"
+                  inputMode="numeric"
+                />
+              ),
+            })}
+
+            {renderInputField({
+              icon: MailIcon,
+              error: errors.email,
+              children: (
+                <input
+                  type="email"
+                  id="email"
+                  className={`${styles.input} ${errors.email ? styles.inputError : ""}`}
+                  placeholder="Enter your email"
+                  value={signUpForm.email}
+                  onChange={(e) => {
+                    setSignUpForm((currentForm) => ({
+                      ...currentForm,
+                      email: e.target.value,
+                    }));
+                    if (errors.email) {
+                      setErrors((currentErrors) => ({
+                        ...currentErrors,
+                        email: "",
+                      }));
+                    }
+                  }}
+                  disabled={isLoading}
+                />
+              ),
+            })}
+
+            {renderInputField({
+              icon: UserIcon,
+              error: errors.first_name,
+              children: (
+                <input
+                  type="text"
+                  id="first-name"
+                  className={`${styles.input} ${errors.first_name ? styles.inputError : ""}`}
+                  placeholder="Enter your first name"
+                  value={signUpForm.first_name}
+                  onChange={(e) => {
+                    setSignUpForm((currentForm) => ({
+                      ...currentForm,
+                      first_name: e.target.value,
+                    }));
+                    if (errors.first_name) {
+                      setErrors((currentErrors) => ({
+                        ...currentErrors,
+                        first_name: "",
+                      }));
+                    }
+                  }}
+                  disabled={isLoading}
+                />
+              ),
+            })}
+
+            {renderInputField({
+              icon: UserIcon,
+              error: errors.last_name,
+              children: (
+                <input
+                  type="text"
+                  id="last-name"
+                  className={`${styles.input} ${errors.last_name ? styles.inputError : ""}`}
+                  placeholder="Enter your last name"
+                  value={signUpForm.last_name}
+                  onChange={(e) => {
+                    setSignUpForm((currentForm) => ({
+                      ...currentForm,
+                      last_name: e.target.value,
+                    }));
+                    if (errors.last_name) {
+                      setErrors((currentErrors) => ({
+                        ...currentErrors,
+                        last_name: "",
+                      }));
+                    }
+                  }}
+                  disabled={isLoading}
+                />
+              ),
+            })}
+
+            {renderInputField({
+              icon: PhoneIcon,
+              error: errors.phone,
+              children: (
+                <input
+                  type="tel"
+                  id="phone"
+                  className={`${styles.input} ${errors.phone ? styles.inputError : ""}`}
+                  placeholder="Enter your phone number"
+                  value={signUpForm.phone}
+                  onChange={(e) => {
+                    const formattedPhone = formatPhoneNumber(e.target.value);
+                    setSignUpForm((currentForm) => ({
+                      ...currentForm,
+                      phone: formattedPhone,
+                    }));
+                    if (errors.phone) {
+                      setErrors((currentErrors) => ({
+                        ...currentErrors,
+                        phone: "",
+                      }));
+                    }
+                  }}
+                  disabled={isLoading}
+                  maxLength="10"
+                />
+              ),
+            })}
 
             <div className={styles.formGroup}>
-              <label htmlFor="first-name" className={styles.label}>
-                First Name
-              </label>
-              <input
-                type="text"
-                id="first-name"
-                className={`${styles.input} ${errors.first_name ? styles.inputError : ""}`}
-                placeholder="Enter your first name"
-                value={signUpForm.first_name}
-                onChange={(e) => {
-                  setSignUpForm((currentForm) => ({
-                    ...currentForm,
-                    first_name: e.target.value,
-                  }));
-                  if (errors.first_name) {
-                    setErrors((currentErrors) => ({
-                      ...currentErrors,
-                      first_name: "",
-                    }));
-                  }
-                }}
-                disabled={isLoading}
-              />
-              {errors.first_name && (
-                <span className={styles.errorMessage}>{errors.first_name}</span>
-              )}
-            </div>
-
-            <div className={styles.formGroup}>
-              <label htmlFor="last-name" className={styles.label}>
-                Last Name
-              </label>
-              <input
-                type="text"
-                id="last-name"
-                className={`${styles.input} ${errors.last_name ? styles.inputError : ""}`}
-                placeholder="Enter your last name"
-                value={signUpForm.last_name}
-                onChange={(e) => {
-                  setSignUpForm((currentForm) => ({
-                    ...currentForm,
-                    last_name: e.target.value,
-                  }));
-                  if (errors.last_name) {
-                    setErrors((currentErrors) => ({
-                      ...currentErrors,
-                      last_name: "",
-                    }));
-                  }
-                }}
-                disabled={isLoading}
-              />
-              {errors.last_name && (
-                <span className={styles.errorMessage}>{errors.last_name}</span>
-              )}
-            </div>
-
-            <div className={styles.formGroup}>
-              <label htmlFor="email" className={styles.label}>
-                Email
-              </label>
-              <input
-                type="email"
-                id="email"
-                className={`${styles.input} ${errors.email ? styles.inputError : ""}`}
-                placeholder="Enter your email"
-                value={signUpForm.email}
-                onChange={(e) => {
-                  setSignUpForm((currentForm) => ({
-                    ...currentForm,
-                    email: e.target.value,
-                  }));
-                  if (errors.email) {
-                    setErrors((currentErrors) => ({
-                      ...currentErrors,
-                      email: "",
-                    }));
-                  }
-                }}
-                disabled={isLoading}
-              />
-              {errors.email && (
-                <span className={styles.errorMessage}>{errors.email}</span>
-              )}
-            </div>
-
-            <div className={styles.formGroup}>
-              <label htmlFor="phone" className={styles.label}>
-                Phone
-              </label>
-              <input
-                type="tel"
-                id="phone"
-                className={`${styles.input} ${errors.phone ? styles.inputError : ""}`}
-                placeholder="Enter your phone number"
-                value={signUpForm.phone}
-                onChange={(e) => {
-                  const formattedPhone = formatPhoneNumber(e.target.value);
-                  setSignUpForm((currentForm) => ({
-                    ...currentForm,
-                    phone: formattedPhone,
-                  }));
-                  if (errors.phone) {
-                    setErrors((currentErrors) => ({
-                      ...currentErrors,
-                      phone: "",
-                    }));
-                  }
-                }}
-                disabled={isLoading}
-                maxLength="10"
-              />
-              {errors.phone && (
-                <span className={styles.errorMessage}>{errors.phone}</span>
-              )}
-            </div>
-
-            <div className={styles.formGroup}>
-              <label htmlFor="gender" className={styles.label}>
+              <label className={styles.label} htmlFor="gender">
                 Gender
               </label>
-              <select
+              <div
+                className={styles.genderPills}
                 id="gender"
-                className={`${styles.input} ${errors.gender ? styles.inputError : ""}`}
-                value={signUpForm.gender}
-                onChange={(e) => {
-                  setSignUpForm((currentForm) => ({
-                    ...currentForm,
-                    gender: e.target.value,
-                  }));
-                  if (errors.gender) {
-                    setErrors((currentErrors) => ({
-                      ...currentErrors,
-                      gender: "",
-                    }));
-                  }
-                }}
-                disabled={isLoading}
+                role="radiogroup"
+                aria-label="Gender"
               >
-                <option value="">Select gender</option>
-                <option value="Male">Male</option>
-                <option value="Female">Female</option>
-              </select>
+                <button
+                  type="button"
+                  role="radio"
+                  aria-checked={signUpForm.gender === "Male"}
+                  className={`${styles.genderPill} ${signUpForm.gender === "Male" ? styles.genderPillActive : ""}`}
+                  onClick={() => {
+                    setSignUpForm((currentForm) => ({
+                      ...currentForm,
+                      gender: "Male",
+                    }));
+                    if (errors.gender) {
+                      setErrors((currentErrors) => ({
+                        ...currentErrors,
+                        gender: "",
+                      }));
+                    }
+                  }}
+                  disabled={isLoading}
+                >
+                  Male
+                </button>
+                <button
+                  type="button"
+                  role="radio"
+                  aria-checked={signUpForm.gender === "Female"}
+                  className={`${styles.genderPill} ${signUpForm.gender === "Female" ? styles.genderPillActive : ""}`}
+                  onClick={() => {
+                    setSignUpForm((currentForm) => ({
+                      ...currentForm,
+                      gender: "Female",
+                    }));
+                    if (errors.gender) {
+                      setErrors((currentErrors) => ({
+                        ...currentErrors,
+                        gender: "",
+                      }));
+                    }
+                  }}
+                  disabled={isLoading}
+                >
+                  Female
+                </button>
+              </div>
               {errors.gender && (
                 <span className={styles.errorMessage}>{errors.gender}</span>
               )}
             </div>
 
-            <div className={styles.formGroup}>
-              <label htmlFor="birth-date" className={styles.label}>
-                Birth Date
-              </label>
-              <input
-                type="date"
-                id="birth-date"
-                className={`${styles.input} ${errors.birth_date || signUpBirthDateError ? styles.inputError : ""}`}
-                value={signUpForm.birth_date}
-                onChange={(e) => {
-                  setSignUpForm((currentForm) => ({
-                    ...currentForm,
-                    birth_date: e.target.value,
-                  }));
-                  if (errors.birth_date) {
-                    setErrors((currentErrors) => ({
-                      ...currentErrors,
-                      birth_date: "",
+            {renderInputField({
+              icon: CalendarIcon,
+              error: errors.birth_date || signUpBirthDateError,
+              fieldClassName: styles.birthDateField,
+              children: (
+                <input
+                  type="date"
+                  id="birth-date"
+                  className={`${styles.input} ${errors.birth_date || signUpBirthDateError ? styles.inputError : ""}`}
+                  value={signUpForm.birth_date}
+                  onChange={(e) => {
+                    setSignUpForm((currentForm) => ({
+                      ...currentForm,
+                      birth_date: e.target.value,
                     }));
-                  }
-                }}
-                disabled={isLoading}
-                max={new Date().toISOString().split("T")[0]}
-              />
-              {(errors.birth_date || signUpBirthDateError) && (
-                <span className={styles.errorMessage}>
-                  {errors.birth_date || signUpBirthDateError}
-                </span>
-              )}
-            </div>
+                    if (errors.birth_date) {
+                      setErrors((currentErrors) => ({
+                        ...currentErrors,
+                        birth_date: "",
+                      }));
+                    }
+                  }}
+                  disabled={isLoading}
+                  max={new Date().toISOString().split("T")[0]}
+                />
+              ),
+            })}
 
-            <div className={`${styles.formGroup} ${styles.fullWidthField}`}>
-              <label htmlFor="signup-password" className={styles.label}>
-                Password
-              </label>
-              <input
-                type="password"
-                id="signup-password"
-                className={`${styles.input} ${errors.password ? styles.inputError : ""}`}
-                placeholder="Create your password"
-                value={signUpForm.password}
-                onChange={(e) => {
-                  setSignUpForm((currentForm) => ({
-                    ...currentForm,
-                    password: e.target.value,
-                  }));
-                  if (errors.password) {
-                    setErrors((currentErrors) => ({
-                      ...currentErrors,
-                      password: "",
+            {renderInputField({
+              icon: LockIcon,
+              error: errors.password,
+              children: (
+                <input
+                  type="password"
+                  id="signup-password"
+                  className={`${styles.input} ${errors.password ? styles.inputError : ""}`}
+                  placeholder="Create your password"
+                  value={signUpForm.password}
+                  onChange={(e) => {
+                    setSignUpForm((currentForm) => ({
+                      ...currentForm,
+                      password: e.target.value,
                     }));
-                  }
-                }}
-                disabled={isLoading}
-              />
-              {errors.password && (
-                <span className={styles.errorMessage}>{errors.password}</span>
-              )}
-            </div>
+                    if (errors.password || errors.confirm_password) {
+                      setErrors((currentErrors) => ({
+                        ...currentErrors,
+                        password: "",
+                        confirm_password: "",
+                      }));
+                    }
+                  }}
+                  disabled={isLoading}
+                />
+              ),
+            })}
+
+            {renderInputField({
+              icon: LockIcon,
+              error: errors.confirm_password,
+              children: (
+                <input
+                  type="password"
+                  id="signup-confirm-password"
+                  className={`${styles.input} ${errors.confirm_password ? styles.inputError : ""}`}
+                  placeholder="Confirm your password"
+                  value={signUpForm.confirm_password}
+                  onChange={(e) => {
+                    setSignUpForm((currentForm) => ({
+                      ...currentForm,
+                      confirm_password: e.target.value,
+                    }));
+                    if (errors.confirm_password) {
+                      setErrors((currentErrors) => ({
+                        ...currentErrors,
+                        confirm_password: "",
+                      }));
+                    }
+                  }}
+                  disabled={isLoading}
+                />
+              ),
+            })}
 
             <button
               type="submit"
@@ -605,8 +707,6 @@ const Auth = () => {
           </p>
         </div>
       </div>
-
-      <div className={styles.wavesBottom} />
     </div>
   );
 };

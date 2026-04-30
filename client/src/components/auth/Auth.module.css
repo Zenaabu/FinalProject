@@ -1,19 +1,10 @@
-/* Ocean & Surf Theme Color Palette */
 :root {
-  --primary-blue: #0066cc;
-  --ocean-blue: #0088dd;
-  --deep-ocean: #004499;
-  --light-blue: #e6f2ff;
-  --seafoam: #66dddd;
-  --sand: #f5f1e8;
-  --white: #ffffff;
-  --text-dark: #1a1a1a;
-  --text-light: #666666;
-  --error-red: #ee5a52;
-  --success-green: #2ecc71;
-  --border-light: #e0e0e0;
-  --shadow-light: rgba(0, 100, 150, 0.1);
-  --shadow-medium: rgba(0, 100, 150, 0.2);
+  --surf-white: #ffffff;
+  --surf-blue: #0ea5e9;
+  --wave-navy: #0369a1;
+  --mist-blue: #d9eefc;
+  --line-blue: #cfe2f2;
+  --soft-error: #f87171;
 }
 
 * {
@@ -26,149 +17,117 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #e6f2ff 0%, #ffffff 50%, #f0f8ff 100%);
-  font-family:
-    -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu",
-    "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
-  padding: 20px;
   overflow: hidden;
+  padding: 24px;
+  background:
+    radial-gradient(
+      circle at top right,
+      rgba(14, 165, 233, 0.14),
+      transparent 30%
+    ),
+    radial-gradient(
+      circle at bottom left,
+      rgba(14, 165, 233, 0.1),
+      transparent 26%
+    ),
+    #f0f9ff;
+  font-family:
+    Inter,
+    "Segoe UI",
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    sans-serif;
 }
 
-/* Decorative wave background elements */
-.oceanWave {
+.loginContainer::before,
+.loginContainer::after {
+  content: "";
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 120px;
-  background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120"><defs><pattern id="wave" x="0" y="0" width="120" height="120" patternUnits="userSpaceOnUse"><path d="M0,60 Q30,40 60,60 T120,60" fill="none" stroke="%230088dd" stroke-width="2" opacity="0.3"/></pattern></defs><rect width="1200" height="120" fill="url(%23wave)"/></svg>')
-    repeat-x;
-  background-size: 300px 100px;
-  animation: wave 15s linear infinite;
-  z-index: 0;
+  border-radius: 999px;
+  pointer-events: none;
 }
 
-.wavesBottom {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 100px;
-  background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 100"><defs><pattern id="waveBottom" x="0" y="0" width="120" height="100" patternUnits="userSpaceOnUse"><path d="M0,50 Q30,30 60,50 T120,50 L120,100 L0,100 Z" fill="%230088dd" opacity="0.1"/></pattern></defs><rect width="1200" height="100" fill="url(%23waveBottom)"/></svg>')
-    repeat-x;
-  background-size: 300px 100%;
-  animation: waveRise 20s ease-in-out infinite;
-  z-index: 0;
+.loginContainer::before {
+  top: -120px;
+  right: -80px;
+  width: 280px;
+  height: 280px;
+  background: radial-gradient(circle, rgba(14, 165, 233, 0.2), transparent 70%);
 }
 
-@keyframes wave {
-  0% {
-    background-position: 0 0;
-  }
-  100% {
-    background-position: 300px 0;
-  }
+.loginContainer::after {
+  bottom: -100px;
+  left: -120px;
+  width: 320px;
+  height: 320px;
+  background: radial-gradient(
+    circle,
+    rgba(14, 165, 233, 0.12),
+    transparent 72%
+  );
 }
 
-@keyframes waveRise {
-  0%,
-  100% {
-    transform: translateY(0);
-    opacity: 0.1;
-  }
-  50% {
-    transform: translateY(-10px);
-    opacity: 0.15;
-  }
-}
-
-/* Main login card */
 .loginCard {
   position: relative;
-  z-index: 10;
-  background: var(--white);
-  border-radius: 16px;
-  box-shadow: 0 20px 60px var(--shadow-medium);
+  z-index: 1;
   width: 100%;
-  max-width: 420px;
-  padding: 40px 32px;
-  animation: slideUp 0.6s ease-out;
+  max-width: 440px;
+  padding: 28px 28px 24px;
+  border-radius: 28px;
+  background: var(--surf-white);
+  border: 1px solid rgba(14, 165, 233, 0.08);
+  box-shadow: 0 10px 25px rgba(14, 165, 233, 0.1);
 }
 
 .signUpCard {
-  max-width: 760px;
+  max-width: 600px;
 }
 
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* Header section */
 .header {
+  margin-bottom: 18px;
   text-align: center;
-  margin-bottom: 36px;
 }
 
 .logoWrapper {
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 4px;
-  animation: float 3s ease-in-out infinite;
+  margin-bottom: 12px;
 }
 
 .logoImage {
-  width: 180px;
+  width: 148px;
   height: auto;
   object-fit: contain;
-  mix-blend-mode: multiply;
-  filter: drop-shadow(0 4px 14px rgba(0, 100, 200, 0.25));
-}
-
-@keyframes float {
-  0%,
-  100% {
-    transform: translateY(0px);
-  }
-  50% {
-    transform: translateY(-8px);
-  }
+  filter: drop-shadow(0 8px 20px rgba(14, 165, 233, 0.12));
 }
 
 .title {
+  margin: 0 0 4px;
+  color: var(--wave-navy);
   font-size: 28px;
-  font-weight: 700;
-  color: var(--primary-blue);
-  margin: 0 0 8px 0;
-  letter-spacing: -0.5px;
+  font-weight: 800;
+  letter-spacing: -0.04em;
 }
 
 .subtitle {
-  font-size: 14px;
-  color: var(--text-light);
   margin: 0;
+  color: rgba(3, 105, 161, 0.78);
+  font-size: 14px;
   font-weight: 500;
-  letter-spacing: 0.5px;
 }
 
-/* Form styles */
 .form {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 14px;
 }
 
 .signUpForm {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 15px;
+  gap: 12px 14px;
   align-items: start;
 }
 
@@ -176,223 +135,273 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
+  min-width: 0;
 }
 
 .fullWidthField {
-  grid-column: span 2;
+  grid-column: 1 / -1;
+}
+
+.birthDateField {
+  margin-top: -4px;
 }
 
 .label {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--text-dark);
-  transition: color 0.2s ease;
+  color: var(--wave-navy);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.fieldShell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 46px;
+  padding: 0.6rem 1rem;
+  border: 1px solid var(--line-blue);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.98);
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
+}
+
+.fieldShell:hover {
+  border-color: rgba(14, 165, 233, 0.45);
+}
+
+.fieldShell:focus-within {
+  border-color: var(--surf-blue);
+  box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.16);
+  transform: translateY(-1px);
+}
+
+.fieldShellError {
+  border-color: var(--soft-error);
+  box-shadow: 0 0 0 4px rgba(248, 113, 113, 0.12);
+}
+
+.fieldShellError:hover {
+  border-color: var(--soft-error);
+}
+
+.fieldShellError:focus-within {
+  border-color: var(--soft-error);
+  box-shadow: 0 0 0 4px rgba(248, 113, 113, 0.16);
+}
+
+.inputIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 18px;
+  color: var(--surf-blue);
+}
+
+.inputIcon svg {
+  width: 18px;
+  height: 18px;
 }
 
 .input {
-  padding: 12px 16px;
-  font-size: 16px;
-  border: 2px solid var(--border-light);
-  border-radius: 8px;
-  background: var(--white);
-  color: var(--text-dark);
-  transition: all 0.3s ease;
-  font-family: inherit;
+  width: 100%;
+  min-width: 0;
+  flex: 1;
+  border: 0;
   outline: none;
+  background: transparent;
+  color: var(--wave-navy);
+  font-size: 16px;
+  font-weight: 500;
+  font-family: inherit;
   -webkit-appearance: none;
   appearance: none;
 }
 
 .input::placeholder {
-  color: #bbb;
-}
-
-.input:hover:not(:disabled) {
-  border-color: var(--ocean-blue);
-  box-shadow: 0 0 0 3px var(--light-blue);
-}
-
-.input:focus:not(:disabled) {
-  border-color: var(--primary-blue);
-  box-shadow: 0 0 0 3px var(--light-blue);
-  background: #fafbff;
-}
-
-.inputError {
-  border-color: var(--error-red) !important;
+  color: rgba(3, 105, 161, 0.42);
 }
 
 .input:disabled {
-  background: #f5f5f5;
-  color: #999;
   cursor: not-allowed;
+  color: rgba(3, 105, 161, 0.48);
+}
+
+.input:focus {
+  outline: none;
+}
+
+.input[type="date"] {
+  color-scheme: light;
+}
+
+.inputError {
+  color: var(--wave-navy);
 }
 
 .errorMessage {
+  margin-top: -2px;
   font-size: 12px;
-  color: var(--error-red);
-  font-weight: 500;
-  margin-top: 2px;
-  animation: shake 0.3s ease;
-}
-
-@keyframes shake {
-  0%,
-  100% {
-    transform: translateX(0);
-  }
-  25% {
-    transform: translateX(-3px);
-  }
-  75% {
-    transform: translateX(3px);
-  }
+  font-weight: 400;
+  color: var(--soft-error);
 }
 
 .errorAlert {
+  margin-bottom: 14px;
   padding: 12px 16px;
-  background: #ffe6e6;
-  border: 1px solid var(--error-red);
-  border-radius: 8px;
-  color: var(--error-red);
+  border: 1px solid rgba(14, 165, 233, 0.25);
+  border-radius: 16px;
+  background: rgba(14, 165, 233, 0.08);
+  color: var(--wave-navy);
   font-size: 13px;
-  font-weight: 500;
-  margin-bottom: 12px;
-  animation: slideIn 0.3s ease;
+  font-weight: 600;
 }
 
-@keyframes slideIn {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* Forgot Password Link */
 .forgotPasswordContainer {
   display: flex;
   justify-content: flex-end;
-  margin-bottom: 8px;
+  margin-top: -2px;
 }
 
 .forgotPasswordLink {
-  background: none;
-  border: none;
+  border: 0;
   padding: 0;
+  background: none;
+  color: var(--wave-navy);
+  font: inherit;
   font-size: 13px;
-  color: var(--primary-blue);
+  font-weight: 600;
   cursor: pointer;
-  font-weight: 500;
-  transition: all 0.2s ease;
   text-decoration: none;
-  font-family: inherit;
+  transition:
+    color 0.2s ease,
+    opacity 0.2s ease;
 }
 
-.forgotPasswordLink:hover {
-  color: var(--ocean-blue);
-  text-decoration: underline;
+.forgotPasswordLink:hover:not(:disabled) {
+  color: var(--surf-blue);
 }
 
-.forgotPasswordLink:active {
-  opacity: 0.8;
+.forgotPasswordLink:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
 }
 
-/* Login Button */
-.loginButton {
-  padding: 14px 24px;
-  font-size: 15px;
+.genderPills {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.genderPill {
+  min-height: 38px;
+  padding: 0.5rem 0.9rem;
+  border: 1px solid var(--line-blue);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.98);
+  color: var(--wave-navy);
+  font-size: 12px;
   font-weight: 700;
-  color: var(--white);
-  background: linear-gradient(
-    135deg,
-    var(--primary-blue) 0%,
-    var(--ocean-blue) 100%
-  );
-  border: none;
-  border-radius: 8px;
   cursor: pointer;
-  transition: all 0.3s ease;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  box-shadow: 0 4px 15px rgba(0, 100, 200, 0.3);
-  font-family: inherit;
-  margin-top: 12px;
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease,
+    background-color 0.2s ease,
+    color 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
-.fullWidthButton {
-  grid-column: span 2;
+.genderPill:hover:not(:disabled) {
+  transform: translateY(-1px);
+  border-color: rgba(14, 165, 233, 0.6);
+}
+
+.genderPillActive {
+  background: var(--surf-blue);
+  border-color: var(--surf-blue);
+  color: var(--surf-white);
+  box-shadow: 0 10px 18px rgba(14, 165, 233, 0.18);
+}
+
+.genderPill:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.loginButton {
+  margin-top: 2px;
+  padding: 12px 20px;
+  border: 0;
+  border-radius: 18px;
+  background: var(--surf-blue);
+  color: var(--surf-white);
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  box-shadow: 0 10px 20px rgba(14, 165, 233, 0.18);
+  transition:
+    transform 0.2s ease,
+    background-color 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .loginButton:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(0, 100, 200, 0.4);
+  background: var(--wave-navy);
+  transform: translateY(-1px);
+  box-shadow: 0 12px 24px rgba(3, 105, 161, 0.2);
 }
 
 .loginButton:active:not(:disabled) {
   transform: translateY(0);
-  box-shadow: 0 2px 10px rgba(0, 100, 200, 0.3);
 }
 
 .loginButton:disabled {
-  opacity: 0.7;
   cursor: not-allowed;
+  opacity: 0.72;
 }
 
-/* Footer */
+.fullWidthButton {
+  grid-column: 1 / -1;
+}
+
 .footer {
-  margin-top: 32px;
-  padding-top: 24px;
-  border-top: 1px solid var(--border-light);
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(14, 165, 233, 0.12);
   text-align: center;
 }
 
 .footerText {
-  font-size: 13px;
-  color: var(--text-light);
   margin: 0;
+  color: rgba(3, 105, 161, 0.8);
+  font-size: 13px;
 }
 
-.link {
-  color: var(--primary-blue);
-  text-decoration: none;
-  font-weight: 600;
-  transition: color 0.2s ease;
-}
-
-.link:hover {
-  color: var(--ocean-blue);
-  text-decoration: underline;
-}
-
-/* Responsive Design */
 @media (max-width: 768px) {
   .loginContainer {
     padding: 16px;
   }
 
   .loginCard {
-    padding: 40px 24px;
-    max-width: 100%;
-  }
-
-  .logoImage {
-    width: 150px;
-  }
-
-  .title {
-    font-size: 24px;
-  }
-
-  .form {
-    gap: 20px;
+    padding: 24px 20px 20px;
+    border-radius: 24px;
   }
 
   .signUpCard {
     max-width: 100%;
+  }
+
+  .logoImage {
+    width: 136px;
+  }
+
+  .title {
+    font-size: 24px;
   }
 
   .signUpForm {
@@ -401,16 +410,7 @@
 
   .fullWidthField,
   .fullWidthButton {
-    grid-column: span 1;
-  }
-
-  .input {
-    font-size: 16px; /* Prevents zoom on iOS */
-  }
-
-  .loginButton {
-    font-size: 14px;
-    padding: 12px 20px;
+    grid-column: 1 / -1;
   }
 }
 
@@ -420,69 +420,40 @@
   }
 
   .loginCard {
-    padding: 32px 20px;
-    border-radius: 12px;
+    padding: 22px 16px 18px;
+    border-radius: 22px;
   }
 
   .header {
-    margin-bottom: 28px;
+    margin-bottom: 16px;
   }
 
   .logoImage {
-    width: 130px;
+    width: 132px;
   }
 
   .title {
-    font-size: 22px;
-    margin-bottom: 4px;
-  }
-
-  .subtitle {
-    font-size: 12px;
+    font-size: 23px;
   }
 
   .form {
     gap: 16px;
   }
 
-  .signUpForm {
-    grid-template-columns: 1fr;
-  }
-
-  .fullWidthField,
-  .fullWidthButton {
-    grid-column: span 1;
-  }
-
-  .label {
-    font-size: 13px;
+  .fieldShell,
+  .genderPill,
+  .loginButton {
+    min-height: 44px;
   }
 
   .input {
-    padding: 10px 14px;
-    font-size: 16px;
-  }
-
-  .loginButton {
-    font-size: 13px;
-    padding: 11px 18px;
-    margin-top: 8px;
-  }
-
-  .footer {
-    margin-top: 24px;
-    padding-top: 20px;
-  }
-
-  .footerText {
-    font-size: 12px;
+    font-size: 15px;
   }
 }
 
-/* Print styles */
 @media print {
-  .oceanWave,
-  .wavesBottom {
+  .loginContainer::before,
+  .loginContainer::after {
     display: none;
   }
 }
