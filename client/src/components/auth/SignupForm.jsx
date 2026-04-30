@@ -1,12 +1,12 @@
 import { useState } from "react";
 import AuthField from "./AuthField";
 import {
-  CalendarIcon,
-  LockIcon,
-  MailIcon,
-  PhoneIcon,
-  UserIcon,
-} from "./authIcons";
+  Calendar as CalendarIcon,
+  Lock as LockIcon,
+  Mail as MailIcon,
+  Phone as PhoneIcon,
+  User as UserIcon,
+} from "lucide-react";
 import {
   formatIdNumber,
   formatPhoneNumber,

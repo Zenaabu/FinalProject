@@ -14,7 +14,7 @@ export default function AuthField({
         className={`${styles.fieldShell} ${error ? styles.fieldShellError : ""}`}
       >
         <span className={styles.inputIcon} aria-hidden="true">
-          <Icon />
+          <Icon size={18} strokeWidth={1.8} />
         </span>
         {children}
       </div>

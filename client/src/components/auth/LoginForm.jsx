@@ -1,6 +1,6 @@
 import { useState } from "react";
 import AuthField from "./AuthField";
-import { LockIcon, UserIcon } from "./authIcons";
+import { Lock as LockIcon, User as UserIcon } from "lucide-react";
 import { formatIdNumber, PASSWORD_REGEX, validID } from "./authUtils";
 
 const INITIAL_LOGIN_FORM = {
