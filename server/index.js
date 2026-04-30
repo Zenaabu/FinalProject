@@ -25,8 +25,8 @@ app.use(
 );
 
 // all routes
-app.use("/api/users", usersRouter); // user routes
 app.use("/api/auth", authRouter); // auth routes
+app.use("/api/users", usersRouter); // user routes
 
 app.get("/api", (req, res) => {
   res.json({ message: "Hello from server!" });

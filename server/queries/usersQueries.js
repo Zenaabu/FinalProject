@@ -14,6 +14,68 @@ function findUserById(user_id, cb) {
   );
 }
 
+// a function that gets the email and finds the user from users table by the email
+function findUserByEmail(email, cb) {
+  const conn = db.getConnection();
+
+  conn.query(
+    `SELECT user_id, email
+     FROM users
+     WHERE email = ?`,
+    [email],
+    cb,
+  );
+}
+
+// a function that gets user_id, email, code expiresAt and inserts them to password_reset_codes table
+// if their is no data to same user.
+// if their is a data in the table for same user - then it updates it (using upsert)
+function upsertResetCode(user_id, email, hashedCode, expiresAt, cb) {
+  const conn = db.getConnection();
+
+  conn.query(
+    `INSERT INTO password_reset_codes (user_id, email, code, expires_at)
+     VALUES (?, ?, ?, ?)
+     ON DUPLICATE KEY UPDATE
+     code = VALUES(code),
+     expires_at = VALUES(expires_at)`,
+    [user_id, email, hashedCode, expiresAt],
+    cb,
+  );
+}
+
+// a function that gets an email of the user and finds the reset code of the
+// user only if it didn't expire
+function findResetCodeByEmail(email, cb) {
+  const conn = db.getConnection();
+
+  conn.query(
+    `SELECT *
+     FROM password_reset_codes
+     WHERE email = ?
+     AND expires_at > NOW()`,
+    [email],
+    cb,
+  );
+}
+
+// a function that gets the email of the user and delete the code we've send to him
+// to reset the password from table (after using the code)
+function deleteResetCodeByEmail(email, cb) {
+  const conn = db.getConnection();
+
+  conn.query(
+    `DELETE FROM password_reset_codes
+     WHERE email = ?`,
+    [email],
+    cb,
+  );
+}
+
 module.exports = {
   findUserById,
+  findUserByEmail,
+  upsertResetCode,
+  findResetCodeByEmail,
+  deleteResetCodeByEmail,
 };

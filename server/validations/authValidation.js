@@ -1,4 +1,4 @@
-const { validateID, validatePassword } = require("./utils");
+const { validateId, validatePassword, validateEmail } = require("./utils");
 
 // a function that validates the login request body, checking if the user_id and password are present and valid
 function validateLogin(req, res, next) {
@@ -26,6 +26,30 @@ function validateLogin(req, res, next) {
       message: "Password is not valid!",
     });
   }
-
   next();
 }
+
+// a function that validates the email that we got through request body
+function validateEmailFormat(req, res, next) {
+  const { email } = req.body;
+
+  if (!email) {
+    return res.status(400).json({
+      success: false,
+      message: "Email is required",
+    });
+  }
+
+  if (!validateEmail(email)) {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid email format",
+    });
+  }
+  next();
+}
+
+module.exports = {
+  validateLogin,
+  validateEmailFormat,
+};

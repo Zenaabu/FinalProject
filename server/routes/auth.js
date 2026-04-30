@@ -2,8 +2,13 @@
 const express = require("express");
 const router = express.Router();
 const bcrypt = require("bcrypt"); // to hash the passwords
+const usersQ = require("../queries/usersQueries");
 
-const { validateLogin } = require("../validations/authValidation");
+const {
+  validateLogin,
+  validateEmailFormat,
+} = require("../validations/authValidation");
+const { sendResetCode } = require("../utils");
 
 // POST login (id + password)
 // url: /api/auth/login
@@ -67,5 +72,50 @@ router.post("/login", validateLogin, (req, res) => {
         },
       });
     });
+  });
+});
+
+// POST forget-password (email)
+// url: /api/auth/forget-password
+router.post("/forgot-password", validateEmailFormat, (req, res) => {
+  const { email } = req.body;
+
+  usersQ.findUserByEmail(email, async (err, rows) => {
+    if (err) {
+      return res.status(500).json({ success: false, message: err.message });
+    }
+
+    if (!rows || rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Email does not exist",
+      });
+    }
+
+    const user = rows[0];
+
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    const hashedCode = await bcrypt.hash(code, 10);
+
+    const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
+
+    usersQ.upsertResetCode(
+      user.user_id,
+      user.email,
+      hashedCode,
+      expiresAt,
+      async (err) => {
+        if (err) {
+          return res.status(500).json({ success: false, message: err.message });
+        }
+
+        await sendResetCode(user.email, code);
+
+        res.json({
+          success: true,
+          message: "Reset code sent",
+        });
+      },
+    );
   });
 });

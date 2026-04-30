@@ -1,3 +1,5 @@
+const nodemailer = require("nodemailer"); // importing the library that will send a mail to the user
+
 // a function that gets an id
 // it returns true if it's a valid Israeli id and false if not
 function validateId(id) {
@@ -34,7 +36,41 @@ function validatePassword(password) {
   return hasLetter && hasNumber;
 }
 
+// a function that gets an email and return true if it's valid and false if not
+function validateEmail(email) {
+  if (!email) return false;
+
+  const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  return regex.test(String(email));
+}
+
+// create an email sender (transporter) that will help us send emails to the user
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
+});
+
+// a function that gets the email and a code
+// it sends the reset code to the email we've got
+async function sendResetCode(email, code) {
+  // await transporter.sendMail({
+  //   from: process.env.EMAIL_USER,
+  //   to: email,
+  //   subject: "Password Reset Code",
+  //   text: `Your reset code is: ${code}. It is valid for 5 minutes.`,
+  // });
+
+  console.log("#to change: add the email sender here.");
+  console.log("RESET CODE:", code);
+}
+
 module.exports = {
   validateId,
   validatePassword,
+  validateEmail,
+  sendResetCode,
 };
