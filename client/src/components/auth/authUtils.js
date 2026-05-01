@@ -1,3 +1,10 @@
+export const VIEW_STATE = {
+  LOGIN: "LOGIN",
+  ENTER_EMAIL: "ENTER_EMAIL",
+  VERIFY_OTP: "VERIFY_OTP",
+  RESET_PASSWORD: "RESET_PASSWORD",
+};
+
 export const PASSWORD_REGEX = /^(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
 
 export const validID = (id) => {
