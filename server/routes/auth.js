@@ -7,6 +7,7 @@ const usersQ = require("../queries/usersQueries");
 const {
   validateLogin,
   validateEmailFormat,
+  validateSignup,
 } = require("../validations/authValidation");
 const { sendResetCode } = require("../utils");
 
@@ -117,5 +118,71 @@ router.post("/forgot-password", validateEmailFormat, (req, res) => {
         });
       },
     );
+  });
+});
+
+// POST signup
+// url: /api/auth/signup
+router.post("/signup", validateSignup, (req, res) => {
+  const {
+    user_id,
+    first_name,
+    last_name,
+    email,
+    phone,
+    gender,
+    birth_date,
+    password,
+  } = req.body;
+
+  usersQ.findUserById(user_id, (err, rows) => {
+    if (err) {
+      return res.status(500).json({ success: false, message: err.message });
+    }
+
+    // the user already exists
+    if (rows.length > 0) {
+      return res.status(409).json({
+        success: false,
+        message: "User already exists",
+      });
+    }
+
+ try {
+      const saltRounds = 10;
+      const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+      const newUser = {
+        user_id,
+        first_name,
+        last_name,
+        email,
+        phone,
+        gender,
+        birth_date,
+        role: "user", // when signup by default the role is user
+        password: hashedPassword, 
+        is_blocked: 0, // by default the user is not blocked (false=0)
+      };
+
+      usersQ.createUser(newUser, (err2) => {
+        if (err2) {
+          return res.status(500).json({
+            success: false,
+            message: err2.message,
+          });
+        }
+
+        return res.status(201).json({
+          success: true,
+          message: "Signup success",
+        });
+      });
+    } catch (error) {
+      return res.status(500).json({
+        success: false,
+        message: error.message,
+      });
+    }
   });
 });

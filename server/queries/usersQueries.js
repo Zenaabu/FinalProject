@@ -72,10 +72,35 @@ function deleteResetCodeByEmail(email, cb) {
   );
 }
 
+// a function that gets a new user and adds it to the data base in users table
+function createUser(newUser, cb) {
+  const conn = db.getConnection();
+
+  conn.query(
+    `INSERT INTO users
+      (user_id, first_name, last_name, email, phone, gender, birth_date, role , password, is_blocked)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      newUser.user_id,
+      newUser.first_name,
+      newUser.last_name,
+      newUser.email,
+      newUser.phone,
+      newUser.gender,
+      newUser.birth_date,
+      newUser.role,
+      newUser.password,
+      newUser.is_blocked,
+    ],
+    cb,
+  );
+}
+
 module.exports = {
   findUserById,
   findUserByEmail,
   upsertResetCode,
   findResetCodeByEmail,
   deleteResetCodeByEmail,
+  createUser,
 };

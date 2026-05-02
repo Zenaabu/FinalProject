@@ -68,9 +68,70 @@ async function sendResetCode(email, code) {
   console.log("RESET CODE:", code);
 }
 
+// a function that gets a phone number and returns true if it's valid and false if not
+// a valid phone number have 10 digits only, starting with 05
+function validatePhone(phone) {
+  if (!phone) return false;
+
+  const phoneRegex = /^05\d{8}$/;
+
+  return phoneRegex.test(String(phone));
+}
+
+// a function that gets a gender and returns true if it's valid and false if not
+function validateGender(gender) {
+  if (!gender) return false;
+
+  const validGenders = ["male", "female"];
+
+  return validGenders.includes(String(gender).toLowerCase());
+}
+
+// a function that gets a birthdate and returns true if it's valid and false if not
+// the functions calculate the accurate age (not only the year)
+// if the age is below 18 - returns false
+function validateBirthDate(birth_date) {
+  if (!birth_date) return false;
+
+  const birth = new Date(birth_date);
+
+  // invalid date
+  if (isNaN(birth.getTime())) return false;
+
+  const today = new Date();
+
+  let age = today.getFullYear() - birth.getFullYear();
+
+  // check if birthday already happened this year
+  const hasHadBirthday =
+    today.getMonth() > birth.getMonth() ||
+    (today.getMonth() === birth.getMonth() &&
+      today.getDate() >= birth.getDate());
+
+  if (!hasHadBirthday) {
+    age--;
+  }
+
+  return age >= 18;
+}
+
+// a function that gets a name and returns true if it's valid and false if not
+// the name should contain only english letters
+function validateName(name) {
+  if (!name) return false;
+
+  const nameRegex = /^[A-Za-z]+$/;
+
+  return nameRegex.test(String(name));
+}
+
 module.exports = {
   validateId,
   validatePassword,
   validateEmail,
   sendResetCode,
+  validatePhone,
+  validateGender,
+  validateBirthDate,
+  validateName,
 };
