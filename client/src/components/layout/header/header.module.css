@@ -1,0 +1,129 @@
+/* ============================================================
+   header.module.css  –  Blue Mars Navbar
+   Color palette:
+     Crisp White      → #ffffff
+     Vibrant Surf Blue→ #0ea5e9
+     Deep Wave Navy   → #0369a1
+   ============================================================ */
+
+/* ── 1. NAVBAR CONTAINER ─────────────────────────────────────────────────────
+   `display: flex` turns the <nav> into a flex container so its three
+   direct children (brand / links / auth) line up in a single row.
+
+   `justify-content: space-between` distributes the children along the
+   main (horizontal) axis: the first child goes to the far left, the last
+   child goes to the far right, and the middle child sits in between —
+   giving us the classic three-column navbar layout with zero extra markup.
+
+   `align-items: center` aligns every child along the cross (vertical)
+   axis so they all share the same vertical midpoint, keeping the bar tidy
+   regardless of differing heights.
+   ──────────────────────────────────────────────────────────────────────── */
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  background-color: #ffffff;
+  padding: 0 2rem;
+  height: 70px;
+
+  /* Soft shadow gives the bar a 'floating' feel without a hard border */
+  box-shadow: 0 2px 12px rgba(3, 105, 161, 0.1);
+
+  /* Keep the navbar on top of page content when scrolling */
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+/* ── 2. LEFT – BRAND SECTION ─────────────────────────────────────────────────
+   A nested flex row so the logo image and the brand name sit side-by-side
+   and share the same vertical center line.
+   ──────────────────────────────────────────────────────────────────────── */
+.navBrand {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  text-decoration: none;
+}
+
+.logo {
+  height: 44px;
+  width: auto;
+  /* Slightly round the logo container for a polished look */
+  border-radius: 6px;
+}
+
+.brandName {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #0369a1; /* Deep Wave Navy */
+  letter-spacing: 0.5px;
+}
+
+/* ── 3. CENTER – NAVIGATION LINKS ───────────────────────────────────────────
+   `list-style: none` removes the default bullet points.
+   The <ul> is itself a flex container so the <li> items line up in a row
+   with even spacing via `gap`.
+   ──────────────────────────────────────────────────────────────────────── */
+.navLinks {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.navLink {
+  text-decoration: none;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #0369a1; /* Deep Wave Navy — readable on white */
+  transition: color 0.2s ease;
+}
+
+/* Hover: shift to Vibrant Surf Blue for that ocean-wave feel */
+.navLink:hover {
+  color: #0ea5e9;
+}
+
+/* ── 4. RIGHT – AUTH BUTTONS ─────────────────────────────────────────────────
+   Another nested flex row to keep the two auth elements vertically centered
+   and spaced apart from each other.
+   ──────────────────────────────────────────────────────────────────────── */
+.navAuth {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+/* 'Log In' — subtle text link, no background */
+.loginLink {
+  text-decoration: none;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #0369a1; /* Deep Wave Navy */
+  transition: color 0.2s ease;
+}
+
+.loginLink:hover {
+  color: #0ea5e9;
+}
+
+/* 'Sign Up' — prominent filled button */
+.signupButton {
+  text-decoration: none;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #ffffff; /* Crisp White text */
+  background-color: #0ea5e9; /* Vibrant Surf Blue fill */
+  padding: 0.45rem 1.1rem;
+  border-radius: 6px; /* Slightly rounded corners */
+  transition: background-color 0.2s ease;
+}
+
+.signupButton:hover {
+  background-color: #0369a1; /* Darken to Deep Wave Navy on hover */
+}
