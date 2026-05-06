@@ -14,6 +14,7 @@ import {
   PASSWORD_REGEX,
   validID,
 } from "./authUtils";
+import { toast } from "sonner";
 
 const INITIAL_SIGN_UP_FORM = {
   user_id: "",
@@ -97,6 +98,7 @@ export default function SignupForm({ styles }) {
     event.preventDefault();
 
     if (!validateSignUpForm()) {
+      toast.error("Signup error!");
       return;
     }
 
@@ -104,7 +106,11 @@ export default function SignupForm({ styles }) {
 
     try {
       const { confirm_password, ...signUpPayload } = signUpForm;
-
+      console.log({
+        ...signUpPayload,
+        user_id: signUpPayload.user_id.replace(/\D/g, ""),
+        phone: signUpPayload.phone.replace(/\D/g, ""),
+      });
       const response = await fetch("/api/auth/signup", {
         method: "POST",
         headers: {
@@ -121,6 +127,7 @@ export default function SignupForm({ styles }) {
 
       if (response.ok) {
         console.log("Sign up successful:", data);
+        toast.success("Successfull Sign UP");
         setErrors({});
       } else {
         setErrors({
@@ -141,10 +148,7 @@ export default function SignupForm({ styles }) {
         <div className={styles.errorAlert}>{errors.submit}</div>
       )}
 
-      <form
-        onSubmit={handleSignUpSubmit}
-        className={`${styles.form} ${styles.signUpForm}`}
-      >
+      <form className={`${styles.form} ${styles.signUpForm}`}>
         <AuthField styles={styles} icon={UserIcon} error={errors.user_id}>
           <input
             type="text"
@@ -372,6 +376,7 @@ export default function SignupForm({ styles }) {
           type="submit"
           className={`${styles.loginButton} ${styles.fullWidthButton}`}
           disabled={isSignUpDisabled}
+          onClick={handleSignUpSubmit}
         >
           {isLoading ? "Creating account..." : "Sign Up"}
         </button>
