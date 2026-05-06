@@ -1,7 +1,8 @@
 const express = require("express");
+const session = require("express-session");
 
 const authRouter = require("./routes/auth");
-const usersRouter = require("./routes/users");
+//const usersRouter = require("./routes/users");
 
 const PORT = process.env.PORT || 3001;
 
@@ -26,7 +27,7 @@ app.use(
 
 // all routes
 app.use("/api/auth", authRouter); // auth routes
-app.use("/api/users", usersRouter); // user routes
+//app.use("/api/users", usersRouter); // user routes
 
 app.get("/api", (req, res) => {
   res.json({ message: "Hello from server!" });

@@ -54,6 +54,7 @@ const transporter = nodemailer.createTransport({
   },
 });
 
+// TODO: to change: add the email sender here.
 // a function that gets the email and a code
 // it sends the reset code to the email we've got
 async function sendResetCode(email, code) {
@@ -64,7 +65,6 @@ async function sendResetCode(email, code) {
   //   text: `Your reset code is: ${code}. It is valid for 5 minutes.`,
   // });
 
-  console.log("#to change: add the email sender here.");
   console.log("RESET CODE:", code);
 }
 

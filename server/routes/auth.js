@@ -9,7 +9,7 @@ const {
   validateEmailFormat,
   validateSignup,
 } = require("../validations/authValidation");
-const { sendResetCode } = require("../utils");
+const { sendResetCode } = require("../validations/utils");
 
 // POST login (id + password)
 // url: /api/auth/login
@@ -64,6 +64,7 @@ router.post("/login", validateLogin, (req, res) => {
       return res.status(200).json({
         success: true,
         message: "Login success",
+        // TODO: we have to delete this at the end
         user: {
           user_id: user.user_id,
           first_name: user.first_name,
@@ -71,6 +72,7 @@ router.post("/login", validateLogin, (req, res) => {
           email: user.email,
           role: user.role,
         },
+      
       });
     });
   });
@@ -78,7 +80,7 @@ router.post("/login", validateLogin, (req, res) => {
 
 // POST forget-password (email)
 // url: /api/auth/forget-password
-router.post("/forgot-password", validateEmailFormat, (req, res) => {
+router.post("/forget-password", validateEmailFormat, (req, res) => {
   const { email } = req.body;
 
   usersQ.findUserByEmail(email, async (err, rows) => {
@@ -135,7 +137,7 @@ router.post("/signup", validateSignup, (req, res) => {
     password,
   } = req.body;
 
-  usersQ.findUserById(user_id, (err, rows) => {
+  usersQ.findUserById(user_id, async (err, rows) => {
     if (err) {
       return res.status(500).json({ success: false, message: err.message });
     }
@@ -148,7 +150,7 @@ router.post("/signup", validateSignup, (req, res) => {
       });
     }
 
- try {
+    try {
       const saltRounds = 10;
       const hashedPassword = await bcrypt.hash(password, saltRounds);
 
@@ -161,7 +163,7 @@ router.post("/signup", validateSignup, (req, res) => {
         gender,
         birth_date,
         role: "user", // when signup by default the role is user
-        password: hashedPassword, 
+        password: hashedPassword,
         is_blocked: 0, // by default the user is not blocked (false=0)
       };
 
@@ -186,3 +188,5 @@ router.post("/signup", validateSignup, (req, res) => {
     }
   });
 });
+
+module.exports = router;
