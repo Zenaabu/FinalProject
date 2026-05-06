@@ -191,7 +191,7 @@ export default function LoginForm({ styles, viewState, setViewState }) {
               type="text"
               id="idNumber"
               className={`${styles.input} ${errors.idNumber ? styles.inputError : ""}`}
-              placeholder="123456789"
+              placeholder="Enter your ID number"
               value={loginForm.idNumber}
               onChange={(event) => {
                 const formatted = formatIdNumber(event.target.value);

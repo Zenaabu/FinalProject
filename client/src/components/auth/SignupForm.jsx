@@ -123,11 +123,13 @@ export default function SignupForm({ styles }) {
         toast.success("Successfull Sign UP");
         setErrors({});
       } else {
+        toast.error(data.message || "Sign up failed. Please try again.");
         setErrors({
           submit: data.message || "Sign up failed. Please try again.",
         });
       }
     } catch (error) {
+      toast.error("An error occurred. Please try again.");
       setErrors({ submit: "An error occurred. Please try again." });
       console.error("Sign up error:", error);
     } finally {
@@ -147,7 +149,7 @@ export default function SignupForm({ styles }) {
             type="text"
             id="signup-user-id"
             className={`${styles.input} ${errors.user_id ? styles.inputError : ""}`}
-            placeholder="123456789"
+            placeholder="Enter your ID number"
             value={signUpForm.user_id}
             onChange={(event) => {
               const formatted = formatIdNumber(event.target.value);
