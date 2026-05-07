@@ -1,6 +1,8 @@
 import { useState } from "react";
 import AuthField from "./AuthField";
 import {
+  Eye as EyeIcon,
+  EyeOff as EyeOffIcon,
   Key as KeyIcon,
   Lock as LockIcon,
   Mail as MailIcon,
@@ -23,6 +25,10 @@ export default function LoginForm({ styles, viewState, setViewState }) {
   const [loginForm, setLoginForm] = useState(INITIAL_LOGIN_FORM);
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
+
+  const [showPassword, setShowPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmNewPassword, setShowConfirmNewPassword] = useState(false);
 
   const [forgotEmail, setForgotEmail] = useState("");
   const [otpCode, setOtpCode] = useState("");
@@ -236,9 +242,28 @@ export default function LoginForm({ styles, viewState, setViewState }) {
         )}
 
         {viewState === VIEW_STATE.LOGIN && (
-          <AuthField styles={styles} icon={LockIcon} error={errors.password}>
+          <AuthField
+            styles={styles}
+            icon={LockIcon}
+            error={errors.password}
+            endAdornment={
+              <button
+                type="button"
+                className={styles.passwordToggle}
+                onClick={() => setShowPassword((v) => !v)}
+                disabled={isLoading}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? (
+                  <EyeOffIcon size={18} strokeWidth={1.8} />
+                ) : (
+                  <EyeIcon size={18} strokeWidth={1.8} />
+                )}
+              </button>
+            }
+          >
             <input
-              type="password"
+              type={showPassword ? "text" : "password"}
               id="password"
               className={`${styles.input} ${errors.password ? styles.inputError : ""}`}
               placeholder="Enter your password"
@@ -288,9 +313,26 @@ export default function LoginForm({ styles, viewState, setViewState }) {
               styles={styles}
               icon={LockIcon}
               error={errors.newPassword}
+              endAdornment={
+                <button
+                  type="button"
+                  className={styles.passwordToggle}
+                  onClick={() => setShowNewPassword((v) => !v)}
+                  disabled={isLoading}
+                  aria-label={
+                    showNewPassword ? "Hide password" : "Show password"
+                  }
+                >
+                  {showNewPassword ? (
+                    <EyeOffIcon size={18} strokeWidth={1.8} />
+                  ) : (
+                    <EyeIcon size={18} strokeWidth={1.8} />
+                  )}
+                </button>
+              }
             >
               <input
-                type="password"
+                type={showNewPassword ? "text" : "password"}
                 id="newPassword"
                 className={`${styles.input} ${errors.newPassword ? styles.inputError : ""}`}
                 placeholder="New password"
@@ -311,9 +353,26 @@ export default function LoginForm({ styles, viewState, setViewState }) {
               styles={styles}
               icon={LockIcon}
               error={errors.confirmNewPassword}
+              endAdornment={
+                <button
+                  type="button"
+                  className={styles.passwordToggle}
+                  onClick={() => setShowConfirmNewPassword((v) => !v)}
+                  disabled={isLoading}
+                  aria-label={
+                    showConfirmNewPassword ? "Hide password" : "Show password"
+                  }
+                >
+                  {showConfirmNewPassword ? (
+                    <EyeOffIcon size={18} strokeWidth={1.8} />
+                  ) : (
+                    <EyeIcon size={18} strokeWidth={1.8} />
+                  )}
+                </button>
+              }
             >
               <input
-                type="password"
+                type={showConfirmNewPassword ? "text" : "password"}
                 id="confirmNewPassword"
                 className={`${styles.input} ${errors.confirmNewPassword ? styles.inputError : ""}`}
                 placeholder="Confirm new password"

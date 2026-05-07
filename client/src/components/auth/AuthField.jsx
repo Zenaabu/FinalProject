@@ -4,6 +4,7 @@ export default function AuthField({
   error,
   fullWidth = false,
   fieldClassName = "",
+  endAdornment,
   children,
 }) {
   return (
@@ -17,6 +18,7 @@ export default function AuthField({
           <Icon size={18} strokeWidth={1.8} />
         </span>
         {children}
+        {endAdornment}
       </div>
       {error && <span className={styles.errorMessage}>{error}</span>}
     </div>

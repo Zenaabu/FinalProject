@@ -2,6 +2,8 @@ import { useState } from "react";
 import AuthField from "./AuthField";
 import {
   Calendar as CalendarIcon,
+  Eye as EyeIcon,
+  EyeOff as EyeOffIcon,
   Lock as LockIcon,
   Mail as MailIcon,
   Phone as PhoneIcon,
@@ -31,6 +33,7 @@ export default function SignupForm({ styles }) {
   const [signUpForm, setSignUpForm] = useState(INITIAL_SIGN_UP_FORM);
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const signUpBirthDateError = getBirthDateError(signUpForm.birth_date);
   const isSignUpDisabled = isLoading || Boolean(signUpBirthDateError);
@@ -341,9 +344,28 @@ export default function SignupForm({ styles }) {
           />
         </AuthField>
 
-        <AuthField styles={styles} icon={LockIcon} error={errors.password}>
+        <AuthField
+          styles={styles}
+          icon={LockIcon}
+          error={errors.password}
+          endAdornment={
+            <button
+              type="button"
+              className={styles.passwordToggle}
+              onClick={() => setShowPassword((v) => !v)}
+              disabled={isLoading}
+              aria-label={showPassword ? "Hide password" : "Show password"}
+            >
+              {showPassword ? (
+                <EyeOffIcon size={18} strokeWidth={1.8} />
+              ) : (
+                <EyeIcon size={18} strokeWidth={1.8} />
+              )}
+            </button>
+          }
+        >
           <input
-            type="password"
+            type={showPassword ? "text" : "password"}
             id="signup-password"
             className={`${styles.input} ${errors.password ? styles.inputError : ""}`}
             placeholder="Create your password"
