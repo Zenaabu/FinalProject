@@ -41,8 +41,30 @@ function updateUserBlockedStatus(user_id, is_blocked, cb) {
   );
 }
 
+// a function that gets all the instructor constraints with the
+// instructor full name
+function getAllInstructorConstraints(cb) {
+  const conn = db.getConnection();
+
+  conn.query(
+    `SELECT 
+        ic.constraints_id,
+        ic.user_id,
+        u.first_name,
+        u.last_name,
+        ic.start_time,
+        ic.end_time,
+        ic.notes
+     FROM instructor_constraints ic
+     JOIN users u ON ic.user_id = u.user_id
+     ORDER BY ic.start_time`,
+    cb,
+  );
+}
+
 module.exports = {
   getAllUsers,
   updateUserRole,
   updateUserBlockedStatus,
+  getAllInstructorConstraints,
 };

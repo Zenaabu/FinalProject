@@ -84,4 +84,27 @@ router.put(
   },
 );
 
+// GET all instructor constraints
+// url: /api/admin/instructor-constraints
+router.get(
+  "/instructor-constraints",
+  requireLogin,
+  requireAdmin,
+  (req, res) => {
+    adminQ.getAllInstructorConstraints((err, rows) => {
+      if (err) {
+        return res.status(500).json({
+          success: false,
+          message: err.message,
+        });
+      }
+
+      res.json({
+        success: true,
+        constraints: rows,
+      });
+    });
+  },
+);
+
 module.exports = router;
