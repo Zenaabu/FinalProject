@@ -6,8 +6,8 @@ function getAllUsers(cb) {
   const conn = db.getConnection();
 
   conn.query(
-    `SELECT *
-     FROM users,
+    `SELECT user_id, first_name, last_name, email, phone, gender,  DATE_FORMAT(birth_date, '%Y-%m-%d') AS birth_date, role, is_blocked
+     FROM users
     ORDER BY first_name, last_name`,
     cb,
   );
