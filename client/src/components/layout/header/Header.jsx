@@ -14,11 +14,15 @@ function Navbar() {
   function handleCoursesClick(e) {
     e.preventDefault();
     if (location.pathname === "/") {
-      document.getElementById("courses")?.scrollIntoView({ behavior: "smooth" });
+      document
+        .getElementById("courses")
+        ?.scrollIntoView({ behavior: "smooth" });
     } else {
       navigate("/");
       setTimeout(() => {
-        document.getElementById("courses")?.scrollIntoView({ behavior: "smooth" });
+        document
+          .getElementById("courses")
+          ?.scrollIntoView({ behavior: "smooth" });
       }, 100);
     }
   }
@@ -40,7 +44,11 @@ function Navbar() {
           </Link>
         </li>
         <li>
-          <a href="#courses" onClick={handleCoursesClick} className={styles.navLink}>
+          <a
+            href="#courses"
+            onClick={handleCoursesClick}
+            className={styles.navLink}
+          >
             Our Courses
           </a>
         </li>
