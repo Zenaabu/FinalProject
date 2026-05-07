@@ -8,7 +8,7 @@ const {
   validateName,
 } = require("./utils");
 
-// a function that validates the login request body, checking if the user_id and password are present and valid
+// a middleware that validates the login request body, checking if the user_id and password are present and valid
 function validateLogin(req, res, next) {
   const { user_id, password } = req.body;
 
@@ -37,7 +37,7 @@ function validateLogin(req, res, next) {
   next();
 }
 
-// a function that validates the email that we got through request body
+// a middleware that validates the email that we got through request body
 function validateEmailFormat(req, res, next) {
   const { email } = req.body;
 
@@ -57,7 +57,7 @@ function validateEmailFormat(req, res, next) {
   next();
 }
 
-// a function that checks that all signup data are valid
+// a middleware that checks that all signup data are valid
 function validateSignup(req, res, next) {
   const {
     user_id,
@@ -146,8 +146,34 @@ function validateSignup(req, res, next) {
   next();
 }
 
+// a middleware that checks if the user is logged in
+function requireLogin(req, res, next) {
+  if (!req.session.user) {
+    return res.status(401).json({
+      success: false,
+      message: "You must login first!",
+    });
+  }
+
+  next();
+}
+
+// a middleware that checks if the logged in user is an admin
+function requireAdmin(req, res, next) {
+  if (req.session.user.role !== "admin") {
+    return res.status(403).json({
+      success: false,
+      message: "Admin access only!",
+    });
+  }
+
+  next();
+}
+
 module.exports = {
   validateLogin,
   validateEmailFormat,
   validateSignup,
+  requireLogin,
+  requireAdmin,
 };

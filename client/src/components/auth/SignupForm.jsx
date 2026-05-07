@@ -25,7 +25,7 @@ const INITIAL_SIGN_UP_FORM = {
   gender: "",
   birth_date: "",
   password: "",
-  confirm_password: "",
+  // confirm_password: "",
 };
 
 export default function SignupForm({ styles }) {
@@ -84,11 +84,11 @@ export default function SignupForm({ styles }) {
         "Password must be at least 8 characters with uppercase letter, number, and special character";
     }
 
-    if (!signUpForm.confirm_password.trim()) {
-      newErrors.confirm_password = "Please confirm your password";
-    } else if (signUpForm.confirm_password !== signUpForm.password) {
-      newErrors.confirm_password = "Passwords do not match";
-    }
+    // if (!signUpForm.confirm_password.trim()) {
+    //   newErrors.confirm_password = "Please confirm your password";
+    // } else if (signUpForm.confirm_password !== signUpForm.password) {
+    //   newErrors.confirm_password = "Passwords do not match";
+    // }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;

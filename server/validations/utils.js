@@ -125,6 +125,14 @@ function validateName(name) {
   return nameRegex.test(String(name));
 }
 
+// a function that gets a role and returns true if it's valid
+// and false if it's not
+function validateRole(role) {
+  const allowedRoles = ["user", "instructor", "admin"];
+
+  return allowedRoles.includes(role);
+}
+
 module.exports = {
   validateId,
   validatePassword,
@@ -134,4 +142,5 @@ module.exports = {
   validateGender,
   validateBirthDate,
   validateName,
+  validateRole,
 };
