@@ -1,0 +1,13 @@
+/* ============================================================
+   LandingPage.module.css
+   ============================================================ */
+
+.page {
+  min-height: 100vh;
+  font-family:
+    "Segoe UI",
+    system-ui,
+    -apple-system,
+    sans-serif;
+  background: #f0f7ff;
+}
