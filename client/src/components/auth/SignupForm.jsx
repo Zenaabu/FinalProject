@@ -120,17 +120,14 @@ export default function SignupForm({ styles }) {
 
       if (response.ok) {
         console.log("Sign up successful:", data);
-        toast.success("Successfull Sign UP");
-        setErrors({});
+        toast.success(
+          data.message || "Account created successfully! You can now log in.",
+        );
       } else {
         toast.error(data.message || "Sign up failed. Please try again.");
-        setErrors({
-          submit: data.message || "Sign up failed. Please try again.",
-        });
       }
     } catch (error) {
       toast.error("An error occurred. Please try again.");
-      setErrors({ submit: "An error occurred. Please try again." });
       console.error("Sign up error:", error);
     } finally {
       setIsLoading(false);

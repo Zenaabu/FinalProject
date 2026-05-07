@@ -12,6 +12,7 @@ import {
   validID,
   VIEW_STATE,
 } from "./authUtils";
+import { toast } from "sonner";
 
 const INITIAL_LOGIN_FORM = {
   idNumber: "",
@@ -71,17 +72,17 @@ export default function LoginForm({ styles, viewState, setViewState }) {
       });
 
       const data = await response.json();
+      console.log(data);
 
-      if (response.ok) {
-        console.log("Login successful:", data);
-        setErrors({});
+      if (data.success) {
+        toast.success(data.message || "Login successful!");
       } else {
-        setErrors({
-          submit: data.message || "Login failed. Please try again.",
-        });
+        toast.error(
+          data.message || "Login failed. Please check your credentials.",
+        );
       }
     } catch (error) {
-      setErrors({ submit: "An error occurred. Please try again." });
+      toast.error("An error occurred. Please try again.");
       console.error("Login error:", error);
     } finally {
       setIsLoading(false);
@@ -96,7 +97,7 @@ export default function LoginForm({ styles, viewState, setViewState }) {
       setViewState(VIEW_STATE.VERIFY_OTP);
       setErrors({});
     } catch (error) {
-      setErrors({ submit: "Failed to send OTP. Please try again." });
+      toast.error("Failed to send OTP. Please try again.");
       console.error("Send OTP error:", error);
     } finally {
       setIsLoading(false);
@@ -111,7 +112,7 @@ export default function LoginForm({ styles, viewState, setViewState }) {
       setViewState(VIEW_STATE.RESET_PASSWORD);
       setErrors({});
     } catch (error) {
-      setErrors({ submit: "Invalid OTP code. Please try again." });
+      toast.error("Invalid OTP code. Please try again.");
       console.error("Verify OTP error:", error);
     } finally {
       setIsLoading(false);
@@ -126,7 +127,7 @@ export default function LoginForm({ styles, viewState, setViewState }) {
       setViewState(VIEW_STATE.LOGIN);
       setErrors({});
     } catch (error) {
-      setErrors({ submit: "Failed to reset password. Please try again." });
+      toast.error("Failed to reset password. Please try again.");
       console.error("Reset password error:", error);
     } finally {
       setIsLoading(false);
