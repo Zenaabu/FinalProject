@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import styles from "./header.module.css";
 import logo from "../../../assets/bluemarsLogo.png";
 
@@ -8,6 +8,21 @@ import logo from "../../../assets/bluemarsLogo.png";
 // to the far ends and perfectly centers the middle section automatically.
 // ──────────────────────────────────────────────────────────────────────────────
 function Navbar() {
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  function handleCoursesClick(e) {
+    e.preventDefault();
+    if (location.pathname === "/") {
+      document.getElementById("courses")?.scrollIntoView({ behavior: "smooth" });
+    } else {
+      navigate("/");
+      setTimeout(() => {
+        document.getElementById("courses")?.scrollIntoView({ behavior: "smooth" });
+      }, 100);
+    }
+  }
+
   return (
     <nav className={styles.navbar}>
       {/* ── LEFT: Brand ─────────────────────────────────────────────────── */}
@@ -25,13 +40,18 @@ function Navbar() {
           </Link>
         </li>
         <li>
-          <Link to="/courses" className={styles.navLink}>
+          <a href="#courses" onClick={handleCoursesClick} className={styles.navLink}>
             Our Courses
-          </Link>
+          </a>
         </li>
         <li>
           <Link to="/journey" className={styles.navLink}>
             My Surf Journey
+          </Link>
+        </li>
+        <li>
+          <Link to="/about" className={styles.navLink}>
+            About Us
           </Link>
         </li>
       </ul>

@@ -57,7 +57,7 @@ const COURSES = [
 
 function CoursesGrid() {
   return (
-    <section className={styles.section}>
+    <section id="courses" className={styles.section}>
       {/* Section header */}
       <div className={styles.header}>
         <span className={styles.label}>Our Courses</span>
