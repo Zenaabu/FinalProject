@@ -133,6 +133,14 @@ function validateRole(role) {
   return allowedRoles.includes(role);
 }
 
+// a function that gets is_blocked value
+// it returns true if it's valid and false if not
+function validateBlockedStatusValue(is_blocked) {
+  const validValues = [0, 1, true, false];
+
+  return validValues.includes(is_blocked);
+}
+
 module.exports = {
   validateId,
   validatePassword,
@@ -143,4 +151,5 @@ module.exports = {
   validateBirthDate,
   validateName,
   validateRole,
+  validateBlockedStatusValue,
 };

@@ -27,7 +27,22 @@ function updateUserRole(user_id, role, cb) {
   );
 }
 
+// a function that gets user_id and is_blocked
+// it changes the status "is_blocked" in database
+function updateUserBlockedStatus(user_id, is_blocked, cb) {
+  const conn = db.getConnection();
+
+  conn.query(
+    `UPDATE users
+     SET is_blocked = ?
+     WHERE user_id = ?`,
+    [is_blocked, user_id],
+    cb,
+  );
+}
+
 module.exports = {
   getAllUsers,
   updateUserRole,
+  updateUserBlockedStatus,
 };
