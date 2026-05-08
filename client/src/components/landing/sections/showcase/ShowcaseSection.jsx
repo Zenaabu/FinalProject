@@ -1,5 +1,5 @@
 import styles from "./ShowcaseSection.module.css";
-import surfGroup from "../../assets/summervibe-srufing.png";
+import surfGroup from "../../../../assets/summervibe-srufing.png";
 
 function ShowcaseSection() {
   return (

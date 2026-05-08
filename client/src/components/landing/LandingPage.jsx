@@ -1,17 +1,12 @@
-import Navbar from "../layout/header/Header";
-import HeroSection from "./HeroSection";
-import CoursesGrid from "./CoursesGrid";
-import styles from "./LandingPage.module.css";
+import HeroSection from "./sections/hero/HeroSection";
+import CoursesGrid from "./sections/courses/CoursesGrid";
 
 function LandingPage() {
   return (
-    <div className={styles.page}>
-      <Navbar />
-      <main>
-        <HeroSection />
-        <CoursesGrid />
-      </main>
-    </div>
+    <>
+      <HeroSection />
+      <CoursesGrid />
+    </>
   );
 }
 

@@ -1,8 +1,8 @@
 import CourseCard from "./CourseCard";
 import styles from "./CoursesGrid.module.css";
-import beginnerImg from "../../assets/coursesCardsImegs/biggener.png";
-import intermediateImg from "../../assets/coursesCardsImegs/intermidate.png";
-import advancedImg from "../../assets/coursesCardsImegs/advance.png";
+import beginnerImg from "../../../../assets/coursesCardsImegs/biggener.png";
+import intermediateImg from "../../../../assets/coursesCardsImegs/intermidate.png";
+import advancedImg from "../../../../assets/coursesCardsImegs/advance.png";
 
 const COURSES = [
   {

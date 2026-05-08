@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import styles from "./HeroSection.module.css";
-import heroBg from "../../assets/summervibe-srufing.png";
+import heroBg from "../../../../assets/summervibe-srufing.png";
 
 function HeroSection() {
   return (

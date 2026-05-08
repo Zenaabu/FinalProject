@@ -1,0 +1,13 @@
+/* ============================================================
+   main.module.css  –  Site-wide layout shell
+   ============================================================ */
+
+.page {
+  min-height: 100vh;
+  font-family:
+    "Segoe UI",
+    system-ui,
+    -apple-system,
+    sans-serif;
+  background: #f0f7ff;
+}
