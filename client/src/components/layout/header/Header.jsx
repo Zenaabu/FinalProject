@@ -28,6 +28,7 @@ function Navbar() {
   }
 
   return (
+    <header className={styles.header}>
     <nav className={styles.navbar}>
       {/* ── LEFT: Brand ─────────────────────────────────────────────────── */}
       <div className={styles.navBrand}>
@@ -54,7 +55,7 @@ function Navbar() {
         </li>
         <li>
           <Link to="/journey" className={styles.navLink}>
-            My Surf Journey
+            Surf Basics
           </Link>
         </li>
         <li>
@@ -66,14 +67,15 @@ function Navbar() {
 
       {/* ── RIGHT: Auth Buttons ──────────────────────────────────────── */}
       <div className={styles.navAuth}>
-        <Link to="/login" className={styles.loginLink}>
+        <Link to="/login" className={styles.btnOutline}>
           Log In
         </Link>
-        <Link to="/signup" className={styles.signupButton}>
+        <Link to="/signup" className={styles.btnPrimary}>
           Sign Up
         </Link>
       </div>
     </nav>
+    </header>
   );
 }
 

@@ -13,7 +13,7 @@ function HeroSection() {
 
       <div className={styles.content}>
         <h1 className={styles.slogan}>
-          Ride the wave,
+          Ride the wave
           <br />
           <span className={styles.accent}>master the ocean</span>
         </h1>
@@ -24,9 +24,6 @@ function HeroSection() {
         <div className={styles.actions}>
           <Link to="/signup" className={styles.ctaButton}>
             Sign Up Free
-          </Link>
-          <Link to="/courses" className={styles.secondaryButton}>
-            Explore Courses
           </Link>
         </div>
       </div>

@@ -3,10 +3,10 @@
    ============================================================ */
 
 .card {
-  background: #f0f7ff;
+  background: #ffffff;
   border-radius: 20px;
   overflow: hidden;
-  box-shadow: 0 4px 20px rgba(10, 37, 64, 0.08);
+  box-shadow: 0 4px 20px rgba(2, 132, 199, 0.1);
   display: flex;
   flex-direction: column;
   transition:
@@ -14,11 +14,12 @@
     box-shadow 0.3s ease;
   max-width: 380px;
   width: 100%;
+  border: 1px solid rgba(56, 189, 248, 0.2);
 }
 
 .card:hover {
   transform: translateY(-8px);
-  box-shadow: 0 20px 48px rgba(10, 37, 64, 0.15);
+  box-shadow: 0 20px 48px rgba(56, 189, 248, 0.3);
 }
 
 /* ── Photo ── */
@@ -46,13 +47,7 @@
 .imagePlaceholder {
   width: 100%;
   height: 100%;
-  background: linear-gradient(
-    135deg,
-    #040d1c 0%,
-    #0a2540 45%,
-    #0e6ba8 80%,
-    #00bcd4 100%
-  );
+  background: linear-gradient(135deg, #0284c7 0%, #0ea5e9 50%, #38bdf8 100%);
 }
 
 /* ── Body ── */
@@ -94,16 +89,17 @@
 /* ── Title ── */
 .title {
   font-size: 1.3rem;
-  font-weight: 800;
-  color: #0a2540;
+  font-weight: 600;
+  color: #0284c7;
   margin: 0 0 0.4rem;
   line-height: 1.25;
 }
 
 /* ── Description ── */
 .description {
-  font-size: 0.92rem;
-  color: #4a6580;
+  font-size: 1.02rem;
+  font-weight: 500;
+  color: #0ea5e9;
   line-height: 1.6;
   margin: 0 0 1.1rem;
 }
@@ -119,13 +115,13 @@
 .price {
   font-size: 2rem;
   font-weight: 900;
-  color: #0a2540;
+  color: #0284c7;
   line-height: 1;
 }
 
 .priceUnit {
   font-size: 0.88rem;
-  color: #4a6580;
+  color: #0ea5e9;
   font-weight: 500;
 }
 
@@ -144,7 +140,7 @@
   align-items: center;
   gap: 0.6rem;
   font-size: 0.93rem;
-  color: #0e6ba8;
+  color: #0284c7;
   font-weight: 500;
 }
 
@@ -159,9 +155,9 @@
   display: block;
   text-align: center;
   padding: 0.85rem 1.5rem;
-  border: 2px solid #0a2540;
+  border: 2px solid #38bdf8;
   border-radius: 12px;
-  color: #0a2540;
+  color: #0284c7;
   font-size: 0.95rem;
   font-weight: 700;
   text-decoration: none;
@@ -175,7 +171,8 @@
 }
 
 .button:hover {
-  background: #0a2540;
+  background: #38bdf8;
   color: #ffffff;
+  border-color: #38bdf8;
   transform: translateY(-2px);
 }
