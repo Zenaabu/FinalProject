@@ -29,52 +29,52 @@ function Navbar() {
 
   return (
     <header className={styles.header}>
-    <nav className={styles.navbar}>
-      {/* ── LEFT: Brand ─────────────────────────────────────────────────── */}
-      <div className={styles.navBrand}>
-        <img src={logo} alt="Blue Mars logo" className={styles.logo} />
-        <span className={styles.brandName}>Blue Mars</span>
-      </div>
+      <nav className={styles.navbar}>
+        {/* ── LEFT: Brand ─────────────────────────────────────────────────── */}
+        <div className={styles.navBrand}>
+          <img src={logo} alt="Blue Mars logo" className={styles.logo} />
+          <span className={styles.brandName}>Blue Mars</span>
+        </div>
 
-      {/* ── CENTER: Navigation Links ─────────────────────────────────── */}
-      {/* `align-items: center` keeps every link vertically centered       */}
-      <ul className={styles.navLinks}>
-        <li>
-          <Link to="/" className={styles.navLink}>
-            Home
-          </Link>
-        </li>
-        <li>
-          <a
-            href="#courses"
-            onClick={handleCoursesClick}
-            className={styles.navLink}
-          >
-            Our Courses
-          </a>
-        </li>
-        <li>
-          <Link to="/journey" className={styles.navLink}>
-            Surf Basics
-          </Link>
-        </li>
-        <li>
-          <Link to="/about" className={styles.navLink}>
-            About Us
-          </Link>
-        </li>
-      </ul>
+        {/* ── CENTER: Navigation Links ─────────────────────────────────── */}
+        {/* `align-items: center` keeps every link vertically centered       */}
+        <ul className={styles.navLinks}>
+          <li>
+            <Link to="/" className={styles.navLink}>
+              Home
+            </Link>
+          </li>
+          <li>
+            <a
+              href="#courses"
+              onClick={handleCoursesClick}
+              className={styles.navLink}
+            >
+              Our Courses
+            </a>
+          </li>
+          <li>
+            <Link to="/journey" className={styles.navLink}>
+              Surf Basics
+            </Link>
+          </li>
+          <li>
+            <Link to="/about" className={styles.navLink}>
+              About Us
+            </Link>
+          </li>
+        </ul>
 
-      {/* ── RIGHT: Auth Buttons ──────────────────────────────────────── */}
-      <div className={styles.navAuth}>
-        <Link to="/login" className={styles.btnOutline}>
-          Log In
-        </Link>
-        <Link to="/signup" className={styles.btnPrimary}>
-          Sign Up
-        </Link>
-      </div>
-    </nav>
+        {/* ── RIGHT: Auth Buttons ──────────────────────────────────────── */}
+        <div className={styles.navAuth}>
+          <Link to="/login" className={styles.btnOutline}>
+            Log In
+          </Link>
+          <Link to="/signup" className={styles.btnPrimary}>
+            Sign Up
+          </Link>
+        </div>
+      </nav>
     </header>
   );
 }

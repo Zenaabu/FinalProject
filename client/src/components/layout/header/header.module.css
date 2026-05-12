@@ -73,7 +73,7 @@
 
 /* Animated underline on hover */
 .navLink::after {
-  content: '';
+  content: "";
   position: absolute;
   bottom: 0;
   left: 0;
@@ -128,7 +128,9 @@
   background: var(--color-light-accent);
   padding: 0.45rem 1.2rem;
   border-radius: 8px;
-  transition: background 0.2s ease, transform 0.2s ease;
+  transition:
+    background 0.2s ease,
+    transform 0.2s ease;
 }
 
 .btnPrimary:hover {
