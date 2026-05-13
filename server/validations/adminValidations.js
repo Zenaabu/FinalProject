@@ -58,7 +58,39 @@ function validateBlockedStatus(req, res, next) {
   next();
 }
 
+// a middleware that validates the video upload
+function validateVideoUpload(req, res, next) {
+  const { title, description } = req.body;
+
+  // check title
+  if (!title || title.trim() === "") {
+    return res.status(400).json({
+      success: false,
+      message: "Title is required",
+    });
+  }
+
+  // check description
+  if (!description || description.trim() === "") {
+    return res.status(400).json({
+      success: false,
+      message: "Description is required",
+    });
+  }
+
+  // check file
+  if (!req.file) {
+    return res.status(400).json({
+      success: false,
+      message: "Video file is required",
+    });
+  }
+
+  next();
+}
+
 module.exports = {
   validateRoleUpdate,
   validateBlockedStatus,
+  validateVideoUpload,
 };

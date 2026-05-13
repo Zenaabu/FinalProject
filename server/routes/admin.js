@@ -7,8 +7,11 @@ const { requireLogin, requireAdmin } = require("../validations/authValidation");
 const {
   validateRoleUpdate,
   validateBlockedStatus,
+  validateVideoUpload,
 } = require("../validations/adminValidations");
 const { checkUserExists } = require("../validations/userValidations");
+
+const upload = require("../middlewares/uploadVideo");
 
 // GET all users
 // url: /api/admin/users
@@ -107,4 +110,53 @@ router.get(
   },
 );
 
+// POST upload video
+// url: /api/admin/upload-video
+router.post(
+  "/upload-video",
+  requireAdmin,
+  upload.single("video"),
+  validateVideoUpload,
+  (req, res) => {
+    const { title, description } = req.body;
+
+    // path that will be saved in DB
+    const url = `/uploads/videos/${req.file.filename}`;
+
+    adminQ.addVideo(url, title, description, (err, result) => {
+      if (err) {
+        return res.status(500).json({
+          success: false,
+          message: err.message,
+        });
+      }
+
+      res.status(201).json({
+        success: true,
+        message: "Video uploaded successfully",
+        url: url,
+      });
+    });
+  },
+);
+
+// GET all courses
+// url: /api/admin/courses
+router.get("/courses", requireAdmin, (req, res) => {
+  adminQ.getAllCourses((err, rows) => {
+    if (err) {
+      return res.status(500).json({
+        success: false,
+        message: err.message,
+      });
+    }
+
+    res.json({
+      success: true,
+      courses: rows,
+    });
+  });
+});
+
 module.exports = router;
+

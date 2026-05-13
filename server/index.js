@@ -12,6 +12,9 @@ const app = express();
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
+// static files (videos)
+app.use("/uploads", express.static("server/uploads"));
+
 // the session
 app.use(
   session({

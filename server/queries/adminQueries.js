@@ -62,9 +62,36 @@ function getAllInstructorConstraints(cb) {
   );
 }
 
+// a function that adds a video to the database (url, title, description)
+function addVideo(url, title, description, cb) {
+  const conn = db.getConnection();
+
+  conn.query(
+    `INSERT INTO content_videos
+     (url, title, description, is_active)
+     VALUES (?, ?, ?, 1)`,
+    [url, title, description],
+    cb,
+  );
+}
+
+// a function that gets all courses
+function getAllCourses(cb) {
+  const conn = db.getConnection();
+
+  conn.query(
+    `SELECT *
+     FROM courses
+     ORDER BY start_date DESC`,
+    cb,
+  );
+}
+
 module.exports = {
   getAllUsers,
   updateUserRole,
   updateUserBlockedStatus,
   getAllInstructorConstraints,
+  addVideo,
+  getAllCourses,
 };
