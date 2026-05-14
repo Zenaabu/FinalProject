@@ -8,6 +8,10 @@ const {
   validateRoleUpdate,
   validateBlockedStatus,
   validateVideoUpload,
+  validateAddCourse,
+  validateLessonsDetails,
+  validateDuplicateCourse,
+  validateInstructorLessonConflict,
 } = require("../validations/adminValidations");
 const { checkUserExists } = require("../validations/userValidations");
 
@@ -158,5 +162,44 @@ router.get("/courses", requireAdmin, (req, res) => {
   });
 });
 
-module.exports = router;
+// POST add course
+// url: /api/admin/courses
+router.post(
+  "/courses",
+  requireAdmin,
+  validateAddCourse,
+  validateLessonsDetails,
+  validateDuplicateCourse,
+  validateInstructorLessonConflict,
+  (req, res) => {
+    const { course, lessons } = req.body;
 
+    adminQ.addCourse(course, (err, result) => {
+      if (err) {
+        return res.status(500).json({
+          success: false,
+          message: err.message,
+        });
+      }
+
+      const courseId = result.insertId;
+
+      adminQ.addLessonsToCourse(courseId, lessons, (err2) => {
+        if (err2) {
+          return res.status(500).json({
+            success: false,
+            message: err2.message,
+          });
+        }
+
+        res.status(201).json({
+          success: true,
+          message: "Course and lessons added successfully",
+          course_id: courseId,
+        });
+      });
+    });
+  },
+);
+
+module.exports = router;

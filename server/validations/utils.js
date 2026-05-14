@@ -141,6 +141,94 @@ function validateBlockedStatusValue(is_blocked) {
   return validValues.includes(is_blocked);
 }
 
+// a function that gets a start date and end date
+// it returns true if the dates are valid and false if not
+function validateCourseDates(start_date, end_date) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const startDate = new Date(start_date);
+  const endDate = new Date(end_date);
+
+  // invalid dates
+  if (isNaN(startDate) || isNaN(endDate)) return false;
+
+  // start date in the past
+  if (startDate <= today) return false;
+
+  // end date in the past
+  if (endDate <= today) return false;
+
+  // end before start
+  if (endDate <= startDate) return false;
+
+  return true;
+}
+
+// a function that gets the existing max lessons in the current course
+// and an array of the lessons sequence numbers
+// it returns true if the numbers is correct and false if not
+function isValidLessonSequence(existingMaxLesson, lessons) {
+  const lessonNumbers = lessons.map((lesson) => Number(lesson.lesson_number));
+
+  lessonNumbers.sort((a, b) => a - b);
+
+  for (let i = 0; i < lessonNumbers.length; i++) {
+    if (lessonNumbers[i] !== existingMaxLesson + i + 1) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+// a function that gets a lesson date, course start and end date
+// it returns true if the dates are valid and false if not
+function validateLessonDate(lesson_date, course_start_date, course_end_date) {
+  const lessonDate = new Date(lesson_date);
+
+  const startDate = new Date(course_start_date);
+
+  const endDate = new Date(course_end_date);
+
+  // invalid dates
+  if (isNaN(lessonDate) || isNaN(startDate) || isNaN(endDate)) {
+    return false;
+  }
+
+  // lesson must be inside course dates
+  return lessonDate >= startDate && lessonDate <= endDate;
+}
+
+// a function that returns true if lesson start time is before end time
+// and false if not
+function validateLessonTime(start_time, end_time) {
+  if (!start_time || !end_time) {
+    return false;
+  }
+
+  return start_time < end_time;
+}
+
+// a function that gets an array of existing lessons and new lessons of an instructor
+// it return true if at least one lesson from the new lessons exists in the existing
+// ines (has conflict) and false if not
+function hasLessonConflict(existingLessons, newLessons) {
+  for (const existing of existingLessons) {
+    for (const lesson of newLessons) {
+      if (
+        existing.lesson_date === lesson.lesson_date &&
+        existing.start_time < lesson.end_time &&
+        existing.end_time > lesson.start_time
+      ) {
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
+
 module.exports = {
   validateId,
   validatePassword,
@@ -152,4 +240,9 @@ module.exports = {
   validateName,
   validateRole,
   validateBlockedStatusValue,
+  validateCourseDates,
+  isValidLessonSequence,
+  validateLessonDate,
+  validateLessonTime,
+  hasLessonConflict,
 };
