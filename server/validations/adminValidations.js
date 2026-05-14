@@ -8,6 +8,7 @@ const {
   hasLessonConflict,
 } = require("./utils");
 
+const userQ = require("../queries/usersQueries");
 const adminQ = require("../queries/adminQueries");
 
 // a middleware that validates the role (when updating it)
@@ -278,6 +279,38 @@ function validateInstructorLessonConflict(req, res, next) {
   );
 }
 
+// a middleware that checks if the user_id is for an instructor
+function isInstructor(req, res, next) {
+  const { user_id } = req.body;
+
+  userQ.findRole(user_id, (err, rows) => {
+    if (err) {
+      return res.status(500).json({
+        success: false,
+        message: err.message,
+      });
+    }
+
+    // user not found
+    if (!rows || rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    // user is not instructor
+    if (rows[0].role !== "instructor") {
+      return res.status(409).json({
+        success: false,
+        message: "The user is not an instructor!",
+      });
+    }
+
+    next();
+  });
+}
+
 module.exports = {
   validateRoleUpdate,
   validateBlockedStatus,
@@ -286,4 +319,5 @@ module.exports = {
   validateLessonsDetails,
   validateDuplicateCourse,
   validateInstructorLessonConflict,
+  isInstructor,
 };

@@ -12,6 +12,7 @@ const {
   validateLessonsDetails,
   validateDuplicateCourse,
   validateInstructorLessonConflict,
+  isInstructor,
 } = require("../validations/adminValidations");
 const { checkUserExists } = require("../validations/userValidations");
 
@@ -167,12 +168,14 @@ router.get("/courses", requireAdmin, (req, res) => {
 router.post(
   "/courses",
   requireAdmin,
+  isInstructor,
   validateAddCourse,
   validateLessonsDetails,
   validateDuplicateCourse,
   validateInstructorLessonConflict,
   (req, res) => {
-    const { course, lessons } = req.body;
+    const course = req.body;
+    const lessons = req.body.lessons;
 
     adminQ.addCourse(course, (err, result) => {
       if (err) {
