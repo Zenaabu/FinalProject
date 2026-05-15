@@ -1,5 +1,5 @@
 /* ============================================================
-   main.module.css  –  Site-wide layout shell
+   LandingPage.module.css
    ============================================================ */
 
 .page {
@@ -9,5 +9,5 @@
     system-ui,
     -apple-system,
     sans-serif;
-  background: #f0f7ff;
+  background: #ffffff;
 }

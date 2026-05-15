@@ -1,0 +1,139 @@
+/* ============================================================
+   header.module.css  –  Blue Mars Navbar (Premium)
+   Uses global CSS variables from index.css:
+     --color-bg-white      #FFFFFF
+     --color-ocean-text    #0284C7
+     --color-light-accent  #38BDF8
+     --color-button-hover  #0EA5E9
+   ============================================================ */
+
+/* ── 1. STICKY GLASS HEADER ──────────────────────────────────────────────── */
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-bottom: 1px solid rgba(56, 189, 248, 0.15);
+  box-shadow: 0 2px 16px rgba(2, 132, 199, 0.08);
+}
+
+/* ── 2. NAVBAR CONTAINER ─────────────────────────────────────────────────── */
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 2.5rem;
+  height: 70px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* ── 3. LEFT – BRAND ────────────────────────────────────────────────────── */
+.navBrand {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  text-decoration: none;
+}
+
+.logo {
+  height: 44px;
+  width: auto;
+  border-radius: 6px;
+}
+
+.brandName {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--color-ocean-text);
+  letter-spacing: 0.5px;
+}
+
+/* ── 4. CENTER – NAVIGATION LINKS ───────────────────────────────────────── */
+.navLinks {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.navLink {
+  position: relative;
+  text-decoration: none;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--color-ocean-text);
+  padding-bottom: 4px;
+  transition: color 0.2s ease;
+}
+
+/* Animated underline on hover */
+.navLink::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 0%;
+  height: 2px;
+  background: var(--color-light-accent);
+  border-radius: 2px;
+  transition: width 0.25s ease;
+}
+
+.navLink:hover {
+  color: var(--color-light-accent);
+}
+
+.navLink:hover::after {
+  width: 100%;
+}
+
+/* ── 5. RIGHT – AUTH BUTTONS ─────────────────────────────────────────────── */
+.navAuth {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+/* Log In — outline button */
+.btnOutline {
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--color-ocean-text);
+  border: 2px solid var(--color-light-accent);
+  background: transparent;
+  padding: 0.42rem 1.1rem;
+  border-radius: 8px;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease;
+}
+
+.btnOutline:hover {
+  background: rgba(56, 189, 248, 0.1);
+  color: var(--color-ocean-text);
+}
+
+/* Sign Up — primary filled button */
+.btnPrimary {
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #ffffff;
+  background: var(--color-light-accent);
+  padding: 0.45rem 1.2rem;
+  border-radius: 8px;
+  transition:
+    background 0.2s ease,
+    transform 0.2s ease;
+}
+
+.btnPrimary:hover {
+  background: var(--color-button-hover);
+  transform: translateY(-1px);
+}

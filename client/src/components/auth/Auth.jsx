@@ -25,8 +25,8 @@ const VIEW_LABELS = {
   },
 };
 
-const Auth = () => {
-  const [isLogin, setIsLogin] = useState(true);
+const Auth = ({ initialMode = "login" }) => {
+  const [isLogin, setIsLogin] = useState(initialMode === "login");
   const [viewState, setViewState] = useState(VIEW_STATE.LOGIN);
 
   const handleToggleMode = () => {

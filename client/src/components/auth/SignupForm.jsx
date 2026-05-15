@@ -92,6 +92,9 @@ export default function SignupForm({ styles }) {
 
   const handleSignUpSubmit = async (event) => {
     event.preventDefault();
+    9;
+    const result = validateSignUpForm();
+    console.log(result);
 
     if (!validateSignUpForm()) {
       toast.error("Please fix the errors in the form before submitting");

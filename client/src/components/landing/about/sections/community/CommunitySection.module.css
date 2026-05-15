@@ -1,0 +1,102 @@
+/* ── CommunitySection ──────────────────────────────── */
+
+.section {
+  background: #ffffff;
+  padding: 6rem 2rem;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5rem;
+  max-width: 1100px;
+  margin: 0 auto;
+  align-items: center;
+}
+
+/* ── Left: image ── */
+.imageCol {
+  display: flex;
+}
+
+.image {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border-radius: 20px;
+  box-shadow: 0 8px 32px rgba(2, 132, 199, 0.18);
+  display: block;
+}
+
+/* ── Right: text ── */
+.textCol {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+}
+
+.eyebrow {
+  display: inline-block;
+  font-family: "Roboto", sans-serif;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: #38bdf8;
+}
+
+.title {
+  font-size: clamp(1.7rem, 3.5vw, 2.4rem);
+  font-weight: 600;
+  color: #0284c7;
+  margin: 0;
+  line-height: 1.2;
+  letter-spacing: -0.5px;
+}
+
+.body {
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: #0ea5e9;
+  line-height: 1.8;
+  margin: 0;
+}
+
+.button {
+  display: inline-block;
+  align-self: flex-start;
+  margin-top: 0.6rem;
+  padding: 0.8rem 2rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: #ffffff;
+  background: #38bdf8;
+  border-radius: 8px;
+  text-decoration: none;
+  box-shadow: 0 4px 16px rgba(56, 189, 248, 0.3);
+  transition:
+    background 0.2s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+  cursor: pointer;
+}
+
+.button:hover {
+  background: #0ea5e9;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(14, 165, 233, 0.4);
+}
+
+@media (max-width: 768px) {
+  .grid {
+    grid-template-columns: 1fr;
+    gap: 2.5rem;
+  }
+
+  .button {
+    align-self: stretch;
+    text-align: center;
+  }
+}
