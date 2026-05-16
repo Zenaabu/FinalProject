@@ -95,7 +95,6 @@ export default function SignupForm({ styles }) {
 
   const handleSignUpSubmit = async (event) => {
     event.preventDefault();
-9
     const result = validateSignUpForm();
     console.log(result);
 
