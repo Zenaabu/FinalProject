@@ -56,9 +56,7 @@ export default function LoginForm({ styles, viewState, setViewState }) {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleLoginSubmit = async (event) => {
-    event.preventDefault();
-
+  const handleLoginSubmit = async () => {
     if (!validateLoginForm()) {
       return;
     }
@@ -95,13 +93,63 @@ export default function LoginForm({ styles, viewState, setViewState }) {
     }
   };
 
+  const validateForgotEmail = () => {
+    const newErrors = {};
+    if (!forgotEmail.trim()) {
+      newErrors.forgotEmail = "Email is required";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(forgotEmail)) {
+      newErrors.forgotEmail = "Please enter a valid email address";
+    }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const validateOtpCode = () => {
+    const newErrors = {};
+    if (!otpCode.trim()) {
+      newErrors.otpCode = "OTP code is required";
+    } else if (!/^\d{6}$/.test(otpCode)) {
+      newErrors.otpCode = "OTP code must be exactly 6 digits";
+    }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const validateResetPassword = () => {
+    const newErrors = {};
+    if (!newPassword.trim()) {
+      newErrors.newPassword = "New password is required";
+    } else if (!PASSWORD_REGEX.test(newPassword)) {
+      newErrors.newPassword =
+        "Password must be at least 8 characters with uppercase letter, number, and special character";
+    }
+    if (!confirmNewPassword.trim()) {
+      newErrors.confirmNewPassword = "Please confirm your new password";
+    } else if (newPassword !== confirmNewPassword) {
+      newErrors.confirmNewPassword = "Passwords do not match";
+    }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   // Placeholder: check if email exists in the database and send the OTP code
   const handleSendOTP = async (email) => {
+    if (!validateForgotEmail()) return;
     setIsLoading(true);
     try {
-      // TODO: implement API call to verify email and send OTP
-      setViewState(VIEW_STATE.VERIFY_OTP);
-      setErrors({});
+      const response = await fetch("/api/auth/forget-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      const data = await response.json();
+      if (data.success) {
+        setViewState(VIEW_STATE.VERIFY_OTP);
+        setErrors({});
+        toast.success("OTP sent! Check the server console.");
+      } else {
+        toast.error(data.message || "Failed to send OTP. Please try again.");
+      }
     } catch (error) {
       toast.error("Failed to send OTP. Please try again.");
       console.error("Send OTP error:", error);
@@ -112,11 +160,21 @@ export default function LoginForm({ styles, viewState, setViewState }) {
 
   // Placeholder: validate the OTP code
   const handleVerifyOTP = async (code) => {
+    if (!validateOtpCode()) return;
     setIsLoading(true);
     try {
-      // TODO: implement OTP verification API call
-      setViewState(VIEW_STATE.RESET_PASSWORD);
-      setErrors({});
+      const response = await fetch("/api/auth/verify-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: forgotEmail, code }),
+      });
+      const data = await response.json();
+      if (data.success) {
+        setViewState(VIEW_STATE.RESET_PASSWORD);
+        setErrors({});
+      } else {
+        toast.error(data.message || "Invalid OTP code. Please try again.");
+      }
     } catch (error) {
       toast.error("Invalid OTP code. Please try again.");
       console.error("Verify OTP error:", error);
@@ -127,11 +185,24 @@ export default function LoginForm({ styles, viewState, setViewState }) {
 
   // Placeholder: submit the new password update
   const handleResetPassword = async (newPwd) => {
+    if (!validateResetPassword()) return;
     setIsLoading(true);
     try {
-      // TODO: implement password reset API call
-      setViewState(VIEW_STATE.LOGIN);
-      setErrors({});
+      const response = await fetch("/api/auth/reset-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: forgotEmail, newPassword: newPwd }),
+      });
+      const data = await response.json();
+      if (data.success) {
+        toast.success(data.message || "Password updated successfully!");
+        setViewState(VIEW_STATE.LOGIN);
+        setErrors({});
+      } else {
+        toast.error(
+          data.message || "Failed to reset password. Please try again.",
+        );
+      }
     } catch (error) {
       toast.error("Failed to reset password. Please try again.");
       console.error("Reset password error:", error);
@@ -144,7 +215,7 @@ export default function LoginForm({ styles, viewState, setViewState }) {
     event.preventDefault();
     switch (viewState) {
       case VIEW_STATE.LOGIN:
-        handleLoginSubmit(event);
+        handleLoginSubmit();
         break;
       case VIEW_STATE.ENTER_EMAIL:
         handleSendOTP(forgotEmail);

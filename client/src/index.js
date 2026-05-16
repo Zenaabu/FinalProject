@@ -1,5 +1,6 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
+import { BrowserRouter } from "react-router-dom";
 import "./index.css";
 import App from "./App";
 import reportWebVitals from "./reportWebVitals";
@@ -8,8 +9,10 @@ import { Toaster, toast } from "sonner";
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
   <React.StrictMode>
-    <Toaster position="top-center" richColors />
-    <App />
+    <BrowserRouter>
+      <Toaster position="top-center" richColors />
+      <App />
+    </BrowserRouter>
   </React.StrictMode>,
 );
 

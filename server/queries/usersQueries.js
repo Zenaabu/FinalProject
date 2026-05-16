@@ -72,6 +72,19 @@ function deleteResetCodeByEmail(email, cb) {
   );
 }
 
+// a function that updates the password of a user by email
+function updateUserPassword(email, hashedPassword, cb) {
+  const conn = db.getConnection();
+
+  conn.query(
+    `UPDATE users
+     SET password = ?
+     WHERE email = ?`,
+    [hashedPassword, email],
+    cb,
+  );
+}
+
 // a function that gets a new user and adds it to the data base in users table
 function createUser(newUser, cb) {
   const conn = db.getConnection();
@@ -102,5 +115,6 @@ module.exports = {
   upsertResetCode,
   findResetCodeByEmail,
   deleteResetCodeByEmail,
+  updateUserPassword,
   createUser,
 };

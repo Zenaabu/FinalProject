@@ -72,7 +72,6 @@ router.post("/login", validateLogin, (req, res) => {
           email: user.email,
           role: user.role,
         },
-      
       });
     });
   });
@@ -98,6 +97,7 @@ router.post("/forget-password", validateEmailFormat, (req, res) => {
     const user = rows[0];
 
     const code = Math.floor(100000 + Math.random() * 900000).toString();
+    console.log(`[DEV] OTP for ${user.email}: ${code}`);
     const hashedCode = await bcrypt.hash(code, 10);
 
     const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
@@ -120,6 +120,90 @@ router.post("/forget-password", validateEmailFormat, (req, res) => {
         });
       },
     );
+  });
+});
+
+// POST verify-otp (email + OTP code)
+// url: /api/auth/verify-otp
+router.post("/verify-otp", validateEmailFormat, async (req, res) => {
+  const { email, code } = req.body;
+
+  if (!code) {
+    return res
+      .status(400)
+      .json({ success: false, message: "OTP code is required" });
+  }
+
+  usersQ.findResetCodeByEmail(email, async (err, rows) => {
+    if (err) {
+      return res.status(500).json({ success: false, message: err.message });
+    }
+
+    if (!rows || rows.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "OTP code has expired or does not exist",
+      });
+    }
+
+    const isMatch = await bcrypt.compare(code, rows[0].code);
+    if (!isMatch) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid OTP code" });
+    }
+
+    return res.json({ success: true, message: "OTP verified" });
+  });
+});
+
+// POST reset-password (email + new password)
+// url: /api/auth/reset-password
+router.post("/reset-password", validateEmailFormat, async (req, res) => {
+  const { email, newPassword } = req.body;
+
+  if (!newPassword) {
+    return res
+      .status(400)
+      .json({ success: false, message: "New password is required" });
+  }
+
+  usersQ.findResetCodeByEmail(email, async (err, rows) => {
+    if (err) {
+      return res.status(500).json({ success: false, message: err.message });
+    }
+
+    if (!rows || rows.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Session expired. Please start the password reset again.",
+      });
+    }
+
+    try {
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+      usersQ.updateUserPassword(email, hashedPassword, (err2) => {
+        if (err2) {
+          return res
+            .status(500)
+            .json({ success: false, message: err2.message });
+        }
+
+        usersQ.deleteResetCodeByEmail(email, (err3) => {
+          if (err3) {
+            console.error("Failed to delete reset code:", err3.message);
+          }
+        });
+
+        return res.json({
+          success: true,
+          message: "Password updated successfully",
+        });
+      });
+    } catch (error) {
+      return res.status(500).json({ success: false, message: error.message });
+    }
   });
 });
 
