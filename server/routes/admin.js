@@ -13,6 +13,9 @@ const {
   validateDuplicateCourse,
   validateInstructorLessonConflict,
   isInstructor,
+  validateCourseExistsAndCanAddLessons,
+  validateAddLessonsToExistingCourse,
+  validateInstructorLessonConflictForExistingCourse,
 } = require("../validations/adminValidations");
 const { checkUserExists } = require("../validations/userValidations");
 
@@ -148,7 +151,7 @@ router.post(
 // GET all courses
 // url: /api/admin/courses
 router.get("/courses", requireAdmin, (req, res) => {
-  adminQ.getAllCourses((err, rows) => {
+  courseQ.getAllCourses((err, rows) => {
     if (err) {
       return res.status(500).json({
         success: false,
@@ -164,9 +167,9 @@ router.get("/courses", requireAdmin, (req, res) => {
 });
 
 // POST add course
-// url: /api/admin/courses
+// url: /api/admin/add-course
 router.post(
-  "/courses",
+  "/add-course",
   requireAdmin,
   isInstructor,
   validateAddCourse,
@@ -177,7 +180,7 @@ router.post(
     const course = req.body;
     const lessons = req.body.lessons;
 
-    adminQ.addCourse(course, (err, result) => {
+    courseQ.addCourse(course, (err, result) => {
       if (err) {
         return res.status(500).json({
           success: false,
@@ -200,6 +203,34 @@ router.post(
           message: "Course and lessons added successfully",
           course_id: courseId,
         });
+      });
+    });
+  },
+);
+
+// POST add lessons to an existing course
+// url: /api/admin/courses/:course_id/lessons
+router.post(
+  "/courses/:course_id/lessons",
+  requireAdmin,
+  validateCourseExistsAndCanAddLessons,
+  validateAddLessonsToExistingCourse,
+  validateInstructorLessonConflictForExistingCourse,
+  (req, res) => {
+    const courseId = req.params.course_id;
+    const { lessons } = req.body;
+
+    adminQ.addLessonsToCourse(courseId, lessons, (err) => {
+      if (err) {
+        return res.status(500).json({
+          success: false,
+          message: err.message,
+        });
+      }
+
+      res.status(201).json({
+        success: true,
+        message: "Lessons added successfully",
       });
     });
   },

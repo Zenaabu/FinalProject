@@ -10,6 +10,7 @@ const {
 
 const userQ = require("../queries/usersQueries");
 const adminQ = require("../queries/adminQueries");
+const courseQ = require("../queries/courseQueries");
 
 // a middleware that validates the role (when updating it)
 function validateRoleUpdate(req, res, next) {
@@ -231,7 +232,7 @@ function validateLessonsDetails(req, res, next) {
 function validateDuplicateCourse(req, res, next) {
   const course = req.body;
 
-  adminQ.checkDuplicateCourse(course, (err, rows) => {
+  courseQ.checkDuplicateCourse(course, (err, rows) => {
     if (err) {
       return res.status(500).json({
         success: false,
@@ -253,29 +254,15 @@ function validateDuplicateCourse(req, res, next) {
 
 // a middleware that checks if the lessons are valid within the instructor id
 function validateInstructorLessonConflict(req, res, next) {
-  const { user_id, lessons } = req.body;
+  const { user_id, start_date, end_date, lessons } = req.body;
 
-  adminQ.getInstructorLessonsInRange(
+  checkInstructorLessonConflict(
     user_id,
-    req.body.start_date,
-    req.body.end_date,
-    (err, rows) => {
-      if (err) {
-        return res.status(500).json({
-          success: false,
-          message: err.message,
-        });
-      }
-
-      if (hasLessonConflict(rows, lessons)) {
-        return res.status(409).json({
-          success: false,
-          message: "Instructor already has a lesson at this date and time",
-        });
-      }
-
-      next();
-    },
+    start_date,
+    end_date,
+    lessons,
+    res,
+    next,
   );
 }
 
@@ -311,6 +298,172 @@ function isInstructor(req, res, next) {
   });
 }
 
+// a middleware that validates that there is an existing course with the same course_id
+// and the course is not active so we can add lessons
+function validateCourseExistsAndCanAddLessons(req, res, next) {
+  const courseId = req.params.course_id;
+
+  courseQ.findCourseById(courseId, (err, rows) => {
+    if (err) {
+      return res.status(500).json({ success: false, message: err.message });
+    }
+
+    if (!rows || rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Course not found",
+      });
+    }
+
+    const course = rows[0];
+
+    if (course.is_active === 1) {
+      return res.status(409).json({
+        success: false,
+        message: "Cannot add lessons to an active course",
+      });
+    }
+
+    req.course = course;
+    next();
+  });
+}
+
+// a middleware that validates the lessons before adding them to an existing course
+function validateAddLessonsToExistingCourse(req, res, next) {
+  const { lessons } = req.body;
+  const course = req.course;
+
+  if (!lessons || !Array.isArray(lessons) || lessons.length === 0) {
+    return res.status(400).json({
+      success: false,
+      message: "Lessons are required",
+    });
+  }
+
+  for (const lesson of lessons) {
+    if (
+      !lesson.lesson_number ||
+      !lesson.lesson_date ||
+      !lesson.start_time ||
+      !lesson.end_time
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "All lesson fields are required",
+      });
+    }
+
+    if (
+      !validateLessonDate(
+        lesson.lesson_date,
+        course.start_date,
+        course.end_date,
+      )
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Lesson date must be inside course dates",
+      });
+    }
+
+    if (!validateLessonTime(lesson.start_time, lesson.end_time)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid lesson time",
+      });
+    }
+    const lessonNumber = Number(lesson.lesson_number);
+
+    if (!Number.isInteger(lessonNumber) || lessonNumber <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Lesson number must be a positive integer",
+      });
+    }
+
+    if (lessonNumber > Number(course.total_lessons)) {
+      return res.status(400).json({
+        success: false,
+        message: "Lesson number cannot be greater than total lessons",
+      });
+    }
+  }
+
+  adminQ.getMaxLessonNumber(course.course_id, (err, rows) => {
+    if (err) {
+      return res.status(500).json({
+        success: false,
+        message: err.message,
+      });
+    }
+
+    const maxLesson = rows[0].maxLesson || 0;
+
+    if (!isValidLessonSequence(maxLesson, lessons)) {
+      return res.status(400).json({
+        success: false,
+        message: "Lesson numbers must continue the existing sequence",
+      });
+    }
+
+    next();
+  });
+
+  next();
+}
+
+// not for export
+// a middleware that gets the id of the instructor, start and end date of the course,
+// and lessons array. it validates that there is no conflict in instructor lessons
+function checkInstructorLessonConflict(
+  user_id,
+  start_date,
+  end_date,
+  lessons,
+  res,
+  next,
+) {
+  adminQ.getInstructorLessonsInRange(
+    user_id,
+    start_date,
+    end_date,
+    (err, rows) => {
+      if (err) {
+        return res.status(500).json({
+          success: false,
+          message: err.message,
+        });
+      }
+
+      if (hasLessonConflict(rows, lessons)) {
+        return res.status(409).json({
+          success: false,
+          message: "Instructor already has a lesson at this date and time",
+        });
+      }
+
+      next();
+    },
+  );
+}
+
+// a middleware that validates that there is no conflict in the instructor lessons
+// when adding the lessons to an existing course
+function validateInstructorLessonConflictForExistingCourse(req, res, next) {
+  const { lessons } = req.body;
+  const course = req.course;
+
+  checkInstructorLessonConflict(
+    course.user_id,
+    course.start_date,
+    course.end_date,
+    lessons,
+    res,
+    next,
+  );
+}
+
 module.exports = {
   validateRoleUpdate,
   validateBlockedStatus,
@@ -320,4 +473,7 @@ module.exports = {
   validateDuplicateCourse,
   validateInstructorLessonConflict,
   isInstructor,
+  validateCourseExistsAndCanAddLessons,
+  validateAddLessonsToExistingCourse,
+  validateInstructorLessonConflictForExistingCourse,
 };
