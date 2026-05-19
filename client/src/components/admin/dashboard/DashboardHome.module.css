@@ -1,0 +1,30 @@
+/* ============================================================
+   DashboardHome.module.css
+   ============================================================ */
+
+/* ── Page wrapper ────────────────────────────────────────────────────────── */
+.page {
+  padding: 2rem;
+}
+
+/* ── Main two-column layout ──────────────────────────────────────────────── */
+.mainRow {
+  display: grid;
+  grid-template-columns: 1fr 350px;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+/* ── Right column: stacked cards ─────────────────────────────────────────── */
+.rightCol {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* ── Responsive: stack on smaller screens ────────────────────────────────── */
+@media (max-width: 1000px) {
+  .mainRow {
+    grid-template-columns: 1fr;
+  }
+}

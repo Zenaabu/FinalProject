@@ -1,0 +1,48 @@
+/* ============================================================
+   AdminSidebar.module.css
+   Uses global CSS variables from index.css:
+     --color-bg-white      #FFFFFF
+     --color-ocean-text    #0284C7
+     --color-light-accent  #38BDF8
+   ============================================================ */
+
+/* ── Sidebar shell ───────────────────────────────────────────────────────── */
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 240px;
+  height: 100vh;
+  background-color: var(--color-bg-white);
+  border-right: 1px solid rgba(56, 189, 248, 0.2);
+  box-shadow: 2px 0 16px rgba(2, 132, 199, 0.07);
+  display: flex;
+  flex-direction: column;
+  z-index: 900;
+  overflow: hidden;
+}
+
+/* ── Brand / logo area ───────────────────────────────────────────────────── */
+.brand {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 1.5rem 1.25rem 1.25rem;
+  border-bottom: 1px solid rgba(56, 189, 248, 0.15);
+  gap: 0.2rem;
+}
+
+.brandName {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--color-ocean-text);
+  letter-spacing: 0.02em;
+}
+
+.brandSub {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--color-light-accent);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}

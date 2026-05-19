@@ -1,0 +1,146 @@
+/* ============================================================
+   BlockUserModal.module.css
+   ============================================================ */
+
+/* ── Backdrop overlay ────────────────────────────────────────────────────── */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.15s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* ── Modal card ──────────────────────────────────────────────────────────── */
+.modal {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow:
+    0 20px 60px rgba(2, 132, 199, 0.12),
+    0 4px 12px rgba(0, 0, 0, 0.08);
+  width: 100%;
+  max-width: 380px;
+  margin: 1rem;
+  padding: 2rem 1.8rem 1.6rem;
+  text-align: center;
+  animation: slideUp 0.18s ease;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(16px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* ── Icon ────────────────────────────────────────────────────────────────── */
+.iconWrap {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1.1rem;
+}
+
+/* Block = red tint */
+.iconBlock {
+  background: rgba(239, 68, 68, 0.1);
+  color: #dc2626;
+}
+
+/* Unblock = blue/green tint */
+.iconUnblock {
+  background: rgba(56, 189, 248, 0.12);
+  color: var(--color-ocean-text);
+}
+
+/* ── Text ────────────────────────────────────────────────────────────────── */
+.title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 0.55rem;
+}
+
+.message {
+  font-size: 0.88rem;
+  color: #475569;
+  line-height: 1.6;
+  margin: 0 0 0.3rem;
+}
+
+.warning {
+  color: #dc2626;
+}
+
+/* ── Footer buttons ──────────────────────────────────────────────────────── */
+.footer {
+  display: flex;
+  gap: 0.6rem;
+  justify-content: center;
+  margin-top: 1.5rem;
+}
+
+.btnCancel {
+  flex: 1;
+  padding: 0.6rem 1rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #fff;
+  color: #475569;
+  font-size: 0.88rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.btnCancel:hover {
+  background: #f8fafc;
+}
+
+.btnAction {
+  flex: 1;
+  padding: 0.6rem 1rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+/* Block = red */
+.btnActionBlock {
+  background: #ef4444;
+  color: #fff;
+}
+.btnActionBlock:hover {
+  background: #dc2626;
+}
+
+/* Unblock = ocean blue */
+.btnActionUnblock {
+  background: var(--color-light-accent);
+  color: #fff;
+}
+.btnActionUnblock:hover {
+  background: var(--color-button-hover);
+}

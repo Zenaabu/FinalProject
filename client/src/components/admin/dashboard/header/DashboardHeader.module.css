@@ -1,0 +1,64 @@
+/* ============================================================
+   DashboardHeader.module.css
+   ============================================================ */
+
+/* ── Wrapper ─────────────────────────────────────────────────────────────── */
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1.75rem;
+}
+
+/* ── Title ───────────────────────────────────────────────────────────────── */
+.title {
+  font-size: 1.65rem;
+  font-weight: 700;
+  color: var(--color-ocean-text);
+  margin: 0 0 0.3rem;
+}
+
+/* ── Subtitle / date line ────────────────────────────────────────────────── */
+.subtitle {
+  font-size: 0.84rem;
+  color: #64748b;
+  margin: 0;
+}
+
+/* ── "System Online" pill ────────────────────────────────────────────────── */
+.onlineBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  background: #f0fdf4;
+  color: #15803d;
+  font-size: 0.82rem;
+  font-weight: 600;
+  padding: 0.45rem 1rem;
+  border-radius: 999px;
+  border: 1px solid #bbf7d0;
+  white-space: nowrap;
+  margin-top: 0.2rem;
+}
+
+/* ── Animated green dot ──────────────────────────────────────────────────── */
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #22c55e;
+  flex-shrink: 0;
+  animation: pulse 2.2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}

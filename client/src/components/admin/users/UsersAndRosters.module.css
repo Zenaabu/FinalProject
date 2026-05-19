@@ -1,0 +1,55 @@
+/* ============================================================
+   UsersAndRosters.module.css
+   ============================================================ */
+
+/* ── Page wrapper ────────────────────────────────────────────────────────── */
+.page {
+  padding: 2rem;
+}
+
+/* ── Page title ──────────────────────────────────────────────────────────── */
+.title {
+  font-size: 1.65rem;
+  font-weight: 700;
+  color: var(--color-ocean-text);
+  margin: 0 0 1.5rem;
+}
+
+/* ── Tab bar ─────────────────────────────────────────────────────────────── */
+.tabs {
+  display: flex;
+  gap: 0.4rem;
+  margin-bottom: 1.5rem;
+  background: #f0f9ff;
+  padding: 0.35rem;
+  border-radius: 10px;
+  width: fit-content;
+  border: 1px solid rgba(56, 189, 248, 0.15);
+}
+
+/* ── Individual tab button ───────────────────────────────────────────────── */
+.tab {
+  padding: 0.5rem 1.4rem;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--color-ocean-text);
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    background 0.18s ease,
+    color 0.18s ease;
+  white-space: nowrap;
+}
+
+.tab:hover:not(.tabActive) {
+  background: rgba(56, 189, 248, 0.15);
+}
+
+/* ── Active tab ──────────────────────────────────────────────────────────── */
+.tabActive {
+  background: var(--color-light-accent);
+  color: #fff;
+  font-weight: 600;
+}
