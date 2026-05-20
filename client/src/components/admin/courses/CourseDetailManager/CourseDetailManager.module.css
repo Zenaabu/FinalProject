@@ -1,0 +1,57 @@
+/* ============================================================
+   CourseDetailManager.module.css
+   ============================================================ */
+
+/* ── Outer wrapper ───────────────────────────────────────────────────────── */
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+/* ── Back button ─────────────────────────────────────────────────────────── */
+.btnBack {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 1rem;
+  background: transparent;
+  color: var(--color-ocean-text);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  width: fit-content;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.btnBack:hover {
+  background: rgba(56, 189, 248, 0.08);
+  border-color: var(--color-light-accent);
+}
+
+/* ── Course subtitle ─────────────────────────────────────────────────────── */
+.courseTitle {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--color-ocean-text);
+  margin: 0;
+}
+
+/* ── Two-column CSS Grid ─────────────────────────────────────────────────── */
+.detailGrid {
+  display: grid;
+  grid-template-columns: 1fr 1.4fr;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+/* ── Responsive: stack on narrow screens ─────────────────────────────────── */
+@media (max-width: 960px) {
+  .detailGrid {
+    grid-template-columns: 1fr;
+  }
+}

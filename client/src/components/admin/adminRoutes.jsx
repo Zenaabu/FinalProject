@@ -7,14 +7,14 @@ import { Route } from "react-router-dom";
 import AdminLayout from "./AdminLayout";
 import DashboardHome from "./dashboard/DashboardHome";
 import UsersAndRosters from "./users/UsersAndRosters";
+import CoursesMain from "./courses/CoursesMain/CoursesMain";
 
 export const adminRoutes = (
   <Route path="/admin" element={<AdminLayout />}>
     <Route index element={<DashboardHome />} />
+    <Route path="courses" element={<CoursesMain />} />
     <Route path="users" element={<UsersAndRosters />} />
     {/* Future pages — uncomment as you build them:
-    <Route path="courses"    element={<CoursesPage />} />
-    <Route path="users"      element={<UsersPage />} />
     <Route path="staff"      element={<StaffPage />} />
     <Route path="reports"    element={<ReportsPage />} />
     <Route path="financials" element={<FinancialsPage />} />

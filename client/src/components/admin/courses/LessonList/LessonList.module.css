@@ -1,0 +1,312 @@
+/* ============================================================
+   LessonList.module.css
+   ============================================================ */
+
+/* ── Card shell ──────────────────────────────────────────────────────────── */
+.card {
+  background: var(--color-bg-white);
+  border-radius: 14px;
+  box-shadow:
+    0 1px 10px rgba(2, 132, 199, 0.08),
+    0 1px 2px rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(56, 189, 248, 0.12);
+  overflow: hidden;
+}
+
+/* ── Card title ──────────────────────────────────────────────────────────── */
+.cardTitle {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--color-ocean-text);
+  margin: 0;
+  padding: 1.1rem 1.4rem;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+/* ── Table wrapper ───────────────────────────────────────────────────────── */
+.tableWrap {
+  overflow-x: auto;
+}
+
+/* ── Table base ──────────────────────────────────────────────────────────── */
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.86rem;
+}
+
+.table thead tr {
+  border-bottom: 2px solid #f1f5f9;
+}
+
+.table thead th {
+  padding: 0.65rem 1rem;
+  text-align: left;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #94a3b8;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* ── Body rows ───────────────────────────────────────────────────────────── */
+.row {
+  border-bottom: 1px solid #f1f5f9;
+  transition: background 0.15s ease;
+}
+
+.row:last-child {
+  border-bottom: none;
+}
+
+.row:hover {
+  background: #f8fafc;
+}
+
+.row td {
+  padding: 0.75rem 1rem;
+  vertical-align: middle;
+  color: #475569;
+  white-space: nowrap;
+}
+
+.instructorCell {
+  font-weight: 500;
+  color: #0f172a !important;
+}
+
+/* ── Status badges ───────────────────────────────────────────────────────── */
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.2rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.74rem;
+  font-weight: 600;
+}
+
+.statusBadge::before {
+  content: "";
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+}
+
+.statusScheduled {
+  background: rgba(34, 197, 94, 0.1);
+  color: #15803d;
+}
+
+.statusScheduled::before {
+  background: #22c55e;
+}
+
+.statusCancelled {
+  background: rgba(220, 38, 38, 0.08);
+  color: #dc2626;
+}
+
+.statusCancelled::before {
+  background: #dc2626;
+}
+
+/* ── Edit button ─────────────────────────────────────────────────────────── */
+.btnEdit {
+  padding: 0.32rem 0.75rem;
+  background: transparent;
+  color: var(--color-ocean-text);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  border-radius: 6px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease;
+  white-space: nowrap;
+}
+
+.btnEdit:hover {
+  background: var(--color-light-accent);
+  color: #fff;
+  border-color: var(--color-light-accent);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   MODAL STYLES
+══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Backdrop ────────────────────────────────────────────────────────────── */
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+/* ── Modal card ──────────────────────────────────────────────────────────── */
+.modal {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow:
+    0 20px 60px rgba(2, 132, 199, 0.15),
+    0 4px 16px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 460px;
+  overflow: hidden;
+}
+
+/* ── Modal header ────────────────────────────────────────────────────────── */
+.modalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.1rem 1.4rem;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.modalTitle {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--color-ocean-text);
+  margin: 0;
+}
+
+.btnClose {
+  background: none;
+  border: none;
+  font-size: 1rem;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 0.2rem 0.4rem;
+  border-radius: 5px;
+  transition: color 0.15s ease;
+}
+
+.btnClose:hover {
+  color: #475569;
+}
+
+/* ── Modal form ──────────────────────────────────────────────────────────── */
+.modalForm {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1.4rem;
+}
+
+/* ── Two-field row inside modal ──────────────────────────────────────────── */
+.row2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+/* ── Field group ─────────────────────────────────────────────────────────── */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+/* ── Label ───────────────────────────────────────────────────────────────── */
+.label {
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* ── Inputs ──────────────────────────────────────────────────────────────── */
+.input,
+.select {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 0.88rem;
+  color: #0f172a;
+  background: #fff;
+  outline: none;
+  box-sizing: border-box;
+  transition:
+    border-color 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.input:focus,
+.select:focus {
+  border-color: var(--color-light-accent);
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.15);
+}
+
+/* ── Notify participants checkbox ────────────────────────────────────────── */
+.notifyLabel {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  font-size: 0.86rem;
+  font-weight: 500;
+  color: #334155;
+  cursor: pointer;
+  padding: 0.7rem 0.9rem;
+  background: rgba(56, 189, 248, 0.06);
+  border: 1px solid rgba(56, 189, 248, 0.18);
+  border-radius: 8px;
+}
+
+.notifyCheckbox {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--color-light-accent);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+/* ── Modal action buttons ────────────────────────────────────────────────── */
+.modalActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding-top: 0.25rem;
+}
+
+.btnCancel {
+  padding: 0.55rem 1.2rem;
+  background: transparent;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 0.86rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.btnCancel:hover {
+  background: #f1f5f9;
+}
+
+.btnSave {
+  padding: 0.55rem 1.4rem;
+  background: var(--color-light-accent);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.86rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.18s ease;
+}
+
+.btnSave:hover {
+  background: var(--color-button-hover);
+}

@@ -1,0 +1,122 @@
+/* ============================================================
+   CourseEditForm.module.css
+   ============================================================ */
+
+/* ── Card shell ──────────────────────────────────────────────────────────── */
+.card {
+  background: var(--color-bg-white);
+  border-radius: 14px;
+  box-shadow:
+    0 1px 10px rgba(2, 132, 199, 0.08),
+    0 1px 2px rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(56, 189, 248, 0.12);
+  padding: 1.4rem;
+}
+
+/* ── Card title ──────────────────────────────────────────────────────────── */
+.cardTitle {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--color-ocean-text);
+  margin: 0 0 1.25rem;
+}
+
+/* ── Form layout ─────────────────────────────────────────────────────────── */
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* ── Two-field row ───────────────────────────────────────────────────────── */
+.row2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+/* ── Field group ─────────────────────────────────────────────────────────── */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+/* ── Label ───────────────────────────────────────────────────────────────── */
+.label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* ── Input / Textarea / Select base ─────────────────────────────────────── */
+.input,
+.textarea,
+.select {
+  width: 100%;
+  padding: 0.55rem 0.8rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 0.88rem;
+  color: #0f172a;
+  background: #fff;
+  outline: none;
+  transition:
+    border-color 0.18s ease,
+    box-shadow 0.18s ease;
+  box-sizing: border-box;
+}
+
+.input:focus,
+.textarea:focus,
+.select:focus {
+  border-color: var(--color-light-accent);
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.15);
+}
+
+.textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+/* ── Save button ─────────────────────────────────────────────────────────── */
+.btnSave {
+  margin-top: 0.25rem;
+  padding: 0.6rem 1.4rem;
+  background: var(--color-light-accent);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+  align-self: flex-start;
+  transition: background 0.18s ease;
+}
+
+.btnSave:hover {
+  background: var(--color-button-hover);
+}
+
+/* ── Feedback messages ───────────────────────────────────────────────────── */
+.errorMsg {
+  font-size: 0.82rem;
+  color: #dc2626;
+  background: rgba(220, 38, 38, 0.07);
+  border: 1px solid rgba(220, 38, 38, 0.18);
+  border-radius: 7px;
+  padding: 0.5rem 0.8rem;
+  margin: 0;
+}
+
+.successMsg {
+  font-size: 0.82rem;
+  color: #15803d;
+  background: rgba(34, 197, 94, 0.08);
+  border: 1px solid rgba(34, 197, 94, 0.2);
+  border-radius: 7px;
+  padding: 0.5rem 0.8rem;
+  margin: 0;
+}
