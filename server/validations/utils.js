@@ -210,17 +210,41 @@ function validateLessonTime(start_time, end_time) {
   return start_time < end_time;
 }
 
+// a function that gets a date and returns it with format yyyy:mm:dd
+function formatDateOnly(date) {
+  if (date instanceof Date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+
+    return `${year}-${month}-${day}`;
+  }
+
+  return String(date).slice(0, 10);
+}
+
+// a function that gets a time and returns it as a string with only first 5 chars
+// 10:00:00 -> 10:00
+function formatTimeOnly(time) {
+  return String(time).slice(0, 5);
+}
+
 // a function that gets an array of existing lessons and new lessons of an instructor
 // it return true if at least one lesson from the new lessons exists in the existing
 // ines (has conflict) and false if not
 function hasLessonConflict(existingLessons, newLessons) {
   for (const existing of existingLessons) {
     for (const lesson of newLessons) {
-      if (
-        existing.lesson_date === lesson.lesson_date &&
-        existing.start_time < lesson.end_time &&
-        existing.end_time > lesson.start_time
-      ) {
+      const sameDate =
+        formatDateOnly(existing.lesson_date) ===
+        formatDateOnly(lesson.lesson_date);
+
+      const existingStart = formatTimeOnly(existing.start_time);
+      const existingEnd = formatTimeOnly(existing.end_time);
+      const newStart = formatTimeOnly(lesson.start_time);
+      const newEnd = formatTimeOnly(lesson.end_time);
+
+      if (sameDate && existingStart < newEnd && existingEnd > newStart) {
         return true;
       }
     }
@@ -228,7 +252,6 @@ function hasLessonConflict(existingLessons, newLessons) {
 
   return false;
 }
-
 
 module.exports = {
   validateId,

@@ -409,8 +409,6 @@ function validateAddLessonsToExistingCourse(req, res, next) {
 
     next();
   });
-
-  next();
 }
 
 // not for export
@@ -464,6 +462,31 @@ function validateInstructorLessonConflictForExistingCourse(req, res, next) {
   );
 }
 
+// a middleware that checks if there is no lesson in the course
+// with same date and time
+function validateLessonConflictInSameCourse(req, res, next) {
+  const courseId = req.params.course_id;
+  const { lessons } = req.body;
+
+  adminQ.getLessonsByCourseId(courseId, (err, existingLessons) => {
+    if (err) {
+      return res.status(500).json({
+        success: false,
+        message: err.message,
+      });
+    }
+
+    if (hasLessonConflict(existingLessons, lessons)) {
+      return res.status(409).json({
+        success: false,
+        message: "This course already has a lesson at this date and time",
+      });
+    }
+
+    next();
+  });
+}
+
 module.exports = {
   validateRoleUpdate,
   validateBlockedStatus,
@@ -476,4 +499,5 @@ module.exports = {
   validateCourseExistsAndCanAddLessons,
   validateAddLessonsToExistingCourse,
   validateInstructorLessonConflictForExistingCourse,
+  validateLessonConflictInSameCourse,
 };

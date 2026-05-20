@@ -16,6 +16,7 @@ const {
   validateCourseExistsAndCanAddLessons,
   validateAddLessonsToExistingCourse,
   validateInstructorLessonConflictForExistingCourse,
+  validateLessonConflictInSameCourse,
 } = require("../validations/adminValidations");
 const { checkUserExists } = require("../validations/userValidations");
 
@@ -215,6 +216,7 @@ router.post(
   requireAdmin,
   validateCourseExistsAndCanAddLessons,
   validateAddLessonsToExistingCourse,
+  validateLessonConflictInSameCourse,
   validateInstructorLessonConflictForExistingCourse,
   (req, res) => {
     const courseId = req.params.course_id;

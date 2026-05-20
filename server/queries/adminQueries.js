@@ -136,6 +136,19 @@ function getInstructorLessonsInRange(user_id, start_date, end_date, cb) {
   );
 }
 
+// a function that gets the course id and returns the lessons in that course
+function getLessonsByCourseId(courseId, cb) {
+  const conn = db.getConnection();
+
+  conn.query(
+    `SELECT lesson_date, start_time, end_time
+    FROM lessons
+    WHERE course_id = ?`,
+    [courseId],
+    cb,
+  );
+}
+
 module.exports = {
   getAllUsers,
   updateUserRole,
@@ -145,4 +158,5 @@ module.exports = {
   addLessonsToCourse,
   getMaxLessonNumber,
   getInstructorLessonsInRange,
+  getLessonsByCourseId,
 };
