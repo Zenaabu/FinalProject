@@ -125,6 +125,134 @@ function validateName(name) {
   return nameRegex.test(String(name));
 }
 
+// a function that gets a role and returns true if it's valid
+// and false if it's not
+function validateRole(role) {
+  const allowedRoles = ["user", "instructor", "admin"];
+
+  return allowedRoles.includes(role);
+}
+
+// a function that gets is_blocked value
+// it returns true if it's valid and false if not
+function validateBlockedStatusValue(is_blocked) {
+  const validValues = [0, 1, true, false];
+
+  return validValues.includes(is_blocked);
+}
+
+// a function that gets a start date and end date
+// it returns true if the dates are valid and false if not
+function validateCourseDates(start_date, end_date) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const startDate = new Date(start_date);
+  const endDate = new Date(end_date);
+
+  // invalid dates
+  if (isNaN(startDate) || isNaN(endDate)) return false;
+
+  // start date in the past
+  if (startDate <= today) return false;
+
+  // end date in the past
+  if (endDate <= today) return false;
+
+  // end before start
+  if (endDate <= startDate) return false;
+
+  return true;
+}
+
+// a function that gets the existing max lessons in the current course
+// and an array of the lessons sequence numbers
+// it returns true if the numbers is correct and false if not
+function isValidLessonSequence(existingMaxLesson, lessons) {
+  const lessonNumbers = lessons.map((lesson) => Number(lesson.lesson_number));
+
+  lessonNumbers.sort((a, b) => a - b);
+
+  for (let i = 0; i < lessonNumbers.length; i++) {
+    if (lessonNumbers[i] !== existingMaxLesson + i + 1) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+// a function that gets a lesson date, course start and end date
+// it returns true if the dates are valid and false if not
+function validateLessonDate(lesson_date, course_start_date, course_end_date) {
+  const lessonDate = new Date(lesson_date);
+
+  const startDate = new Date(course_start_date);
+
+  const endDate = new Date(course_end_date);
+
+  // invalid dates
+  if (isNaN(lessonDate) || isNaN(startDate) || isNaN(endDate)) {
+    return false;
+  }
+
+  // lesson must be inside course dates
+  return lessonDate >= startDate && lessonDate <= endDate;
+}
+
+// a function that returns true if lesson start time is before end time
+// and false if not
+function validateLessonTime(start_time, end_time) {
+  if (!start_time || !end_time) {
+    return false;
+  }
+
+  return start_time < end_time;
+}
+
+// a function that gets a date and returns it with format yyyy:mm:dd
+function formatDateOnly(date) {
+  if (date instanceof Date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+
+    return `${year}-${month}-${day}`;
+  }
+
+  return String(date).slice(0, 10);
+}
+
+// a function that gets a time and returns it as a string with only first 5 chars
+// 10:00:00 -> 10:00
+function formatTimeOnly(time) {
+  return String(time).slice(0, 5);
+}
+
+// a function that gets an array of existing lessons and new lessons of an instructor
+// it return true if at least one lesson from the new lessons exists in the existing
+// ines (has conflict) and false if not
+function hasLessonConflict(existingLessons, newLessons) {
+  for (const existing of existingLessons) {
+    for (const lesson of newLessons) {
+      const sameDate =
+        formatDateOnly(existing.lesson_date) ===
+        formatDateOnly(lesson.lesson_date);
+
+      const existingStart = formatTimeOnly(existing.start_time);
+      const existingEnd = formatTimeOnly(existing.end_time);
+      const newStart = formatTimeOnly(lesson.start_time);
+      const newEnd = formatTimeOnly(lesson.end_time);
+
+      if (sameDate && existingStart < newEnd && existingEnd > newStart) {
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
+
 module.exports = {
   validateId,
   validatePassword,
@@ -134,4 +262,11 @@ module.exports = {
   validateGender,
   validateBirthDate,
   validateName,
+  validateRole,
+  validateBlockedStatusValue,
+  validateCourseDates,
+  isValidLessonSequence,
+  validateLessonDate,
+  validateLessonTime,
+  hasLessonConflict,
 };

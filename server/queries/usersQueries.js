@@ -109,6 +109,18 @@ function createUser(newUser, cb) {
   );
 }
 
+// a function that gets a user_id and returns it's role
+function findRole(user_id, cb) {
+  const conn = db.getConnection();
+
+  conn.query(
+    `SELECT role FROM users
+     WHERE user_id =?`,
+    [user_id],
+    cb,
+  );
+}
+
 module.exports = {
   findUserById,
   findUserByEmail,
@@ -117,4 +129,5 @@ module.exports = {
   deleteResetCodeByEmail,
   updateUserPassword,
   createUser,
+  findRole,
 };
