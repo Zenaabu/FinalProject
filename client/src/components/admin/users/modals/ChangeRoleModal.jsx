@@ -9,7 +9,7 @@
 import { useState } from "react";
 import styles from "./ChangeRoleModal.module.css";
 
-const ROLES = ["User", "Instructor", "Manager"];
+const ROLES = ["User", "Instructor", "admin"];
 
 function ChangeRoleModal({ user, onConfirm, onClose }) {
   const [selected, setSelected] = useState(user.role);

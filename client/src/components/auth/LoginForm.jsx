@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import AuthField from "./AuthField";
 import {
   Eye as EyeIcon,
@@ -22,6 +23,7 @@ const INITIAL_LOGIN_FORM = {
 };
 
 export default function LoginForm({ styles, viewState, setViewState }) {
+  const navigate = useNavigate();
   const [loginForm, setLoginForm] = useState(INITIAL_LOGIN_FORM);
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
@@ -80,6 +82,11 @@ export default function LoginForm({ styles, viewState, setViewState }) {
 
       if (data.success) {
         toast.success(data.message || "Login successful!");
+        if (data.user?.role === "admin") {
+          navigate("/admin");
+        } else {
+          navigate("/");
+        }
       } else {
         toast.error(
           data.message || "Login failed. Please check your credentials.",
