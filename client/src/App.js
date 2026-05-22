@@ -3,7 +3,7 @@ import "./App.css";
 import { landingRoutes } from "./components/landing/landingRoutes";
 import { authRoutes } from "./components/auth/authRoutes";
 import { aboutRoutes } from "./components/landing/about/aboutRoutes";
-import { journeyRoutes } from "./components/landing/journey/journeyRoutes";
+import { surfBasicsRoutes } from "./components/landing/surfbasics/surfBasicsRoutes";
 
 function App() {
   return (
@@ -11,7 +11,7 @@ function App() {
       {landingRoutes}
       {authRoutes}
       {aboutRoutes}
-      {journeyRoutes}
+      {surfBasicsRoutes}
     </Routes>
   );
 }

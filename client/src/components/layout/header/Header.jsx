@@ -54,7 +54,7 @@ function Navbar() {
             </a>
           </li>
           <li>
-            <Link to="/journey" className={styles.navLink}>
+            <Link to="/surf-basics" className={styles.navLink}>
               Surf Basics
             </Link>
           </li>
