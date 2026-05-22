@@ -17,6 +17,7 @@ const {
   validateAddLessonsToExistingCourse,
   validateInstructorLessonConflictForExistingCourse,
   validateLessonConflictInSameCourse,
+  validateVatUpdate,
 } = require("../validations/adminValidations");
 const { checkUserExists } = require("../validations/userValidations");
 
@@ -237,5 +238,25 @@ router.post(
     });
   },
 );
+
+// PUT update VAT for all courses
+// url: /api/admin/courses/vat
+router.put("/courses/vat", requireAdmin, validateVatUpdate, (req, res) => {
+  const vatPercent = req.vat_percent;
+
+  adminQ.updateCoursesVat(vatPercent, (err, result) => {
+    if (err) {
+      return res.status(500).json({
+        success: false,
+        message: err.message,
+      });
+    }
+
+    res.json({
+      success: true,
+      message: "VAT updated successfully for all courses",
+    });
+  });
+});
 
 module.exports = router;

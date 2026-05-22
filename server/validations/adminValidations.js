@@ -487,6 +487,31 @@ function validateLessonConflictInSameCourse(req, res, next) {
   });
 }
 
+// a middleware that validates the vatPercent
+function validateVatUpdate(req, res, next) {
+  const { vat_percent } = req.body;
+
+  if (vat_percent === undefined || vat_percent === "") {
+    return res.status(400).json({
+      success: false,
+      message: "VAT percent is required",
+    });
+  }
+
+  const vat = Number(vat_percent);
+
+  if (isNaN(vat) || vat < 0 || vat > 100) {
+    return res.status(400).json({
+      success: false,
+      message: "VAT percent must be between 0 and 100",
+    });
+  }
+
+  req.vat_percent = vat;
+
+  next();
+}
+
 module.exports = {
   validateRoleUpdate,
   validateBlockedStatus,
@@ -500,4 +525,5 @@ module.exports = {
   validateAddLessonsToExistingCourse,
   validateInstructorLessonConflictForExistingCourse,
   validateLessonConflictInSameCourse,
+  validateVatUpdate,
 };

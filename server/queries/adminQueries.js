@@ -149,6 +149,18 @@ function getLessonsByCourseId(courseId, cb) {
   );
 }
 
+// a function that gets a vatPercent and updates it for all the courses in the DB
+function updateCoursesVat(vatPercent, cb) {
+  const conn = db.getConnection();
+
+  conn.query(
+    `UPDATE courses
+    SET vat_percent = ?`,
+    [vatPercent],
+    cb,
+  );
+}
+
 module.exports = {
   getAllUsers,
   updateUserRole,
@@ -159,4 +171,5 @@ module.exports = {
   getMaxLessonNumber,
   getInstructorLessonsInRange,
   getLessonsByCourseId,
+  updateCoursesVat,
 };
