@@ -10,25 +10,25 @@ import VideoCard from "./VideoCard";
 const EPISODES = [
   {
     epNumber: 1,
-    title: "Paddling Basics",
+    title: "Lean with BlueMars",
     description:
-      "Master the foundational paddle technique that powers every wave catch. Learn arm positioning, timing, and the body posture that keeps you fast and efficient in the water.",
+      "Whether you’re stepping on a surfboard for the first time or looking to improve your skills, our surf courses are designed for every level — beginner, intermediate, and advanced. Learn proper techniques, ocean safety, and real surfing fundamentals with step-by-step guidance..",
     duration: "4:12",
     videoSrc: "/videos/beginner.mp4",
   },
   {
     epNumber: 2,
-    title: "Standing Up",
+    title: "Surf Safety Essentials",
     description:
-      "The pop-up is the heart of surfing. We break it down into a simple two-step motion you can practise on dry land until it becomes second nature before you ever hit the surf.",
+      "Before chasing waves, every surfer needs to understand safety. In this lesson, we’ll cover the essential rules of the ocean, how to protect yourself and others in the water, and the habits every surfer should know before paddling out.",
     duration: "6:15",
     videoSrc: "/videos/intermediate.mp4",
   },
   {
     epNumber: 3,
-    title: "Ocean Safety",
+    title: "Standing Up",
     description:
-      "Understand rip currents, wave timing, and surf etiquette so your first session is confident, safe, and enjoyable for everyone sharing the lineup.",
+      "The pop-up is the heart of surfing. We break it down into a simple two-step motion you can practise on dry land until it becomes second nature before you ever hit the surf.",
     duration: "5:48",
     videoSrc: "/videos/advance.mp4",
   },
