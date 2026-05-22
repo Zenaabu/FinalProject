@@ -45,7 +45,7 @@
 
 /* ── Subtext ── */
 .subtext {
-  font-size: clamp(0.95rem, 2vw, 1.05rem);
+  font-size: clamp(1.1rem, 2.2vw, 1.25rem);
   color: #64748b;
   line-height: 1.8;
   max-width: 500px;

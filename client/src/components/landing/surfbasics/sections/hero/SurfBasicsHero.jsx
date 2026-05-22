@@ -8,7 +8,7 @@ function SurfBasicsHero() {
       </h1>
 
       <p className={styles.subtext}>
-        Bite-sized beginner lessons taught by Blue Mars instructors — covering
+        Bite sized beginner lessons taught by Blue Mars instructors covering
         everything you need before your first session in the water.
       </p>
     </div>
