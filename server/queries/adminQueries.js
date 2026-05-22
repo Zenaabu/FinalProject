@@ -161,6 +161,27 @@ function updateCoursesVat(vatPercent, cb) {
   );
 }
 
+// a function that gets all registered users in a specific course
+function getCourseRegistrations(courseId, cb) {
+  const conn = db.getConnection();
+  conn.query(
+    ` SELECT 
+      u.user_id,
+      u.first_name,
+      u.last_name,
+      u.email,
+      u.phone,
+      r.payment_date
+    FROM register r
+    JOIN users u
+      ON r.user_id = u.user_id
+    WHERE r.course_id = ?
+    ORDER BY r.payment_date DESC`,
+    [courseId],
+    cb,
+  );
+}
+
 module.exports = {
   getAllUsers,
   updateUserRole,
@@ -172,4 +193,5 @@ module.exports = {
   getInstructorLessonsInRange,
   getLessonsByCourseId,
   updateCoursesVat,
+  getCourseRegistrations,
 };

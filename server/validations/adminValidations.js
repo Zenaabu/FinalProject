@@ -512,6 +512,29 @@ function validateVatUpdate(req, res, next) {
   next();
 }
 
+// a middleware that checks if the course exists
+function validateCourseExists(req, res, next) {
+  const courseId = req.params.course_id;
+
+  courseQ.findCourseById(courseId, (err, rows) => {
+    if (err) {
+      return res.status(500).json({
+        success: false,
+        message: err.message,
+      });
+    }
+
+    if (!rows || rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Course not found",
+      });
+    }
+
+    next();
+  });
+}
+
 module.exports = {
   validateRoleUpdate,
   validateBlockedStatus,
@@ -526,4 +549,5 @@ module.exports = {
   validateInstructorLessonConflictForExistingCourse,
   validateLessonConflictInSameCourse,
   validateVatUpdate,
+  validateCourseExists,
 };

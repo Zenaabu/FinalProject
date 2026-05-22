@@ -18,6 +18,7 @@ const {
   validateInstructorLessonConflictForExistingCourse,
   validateLessonConflictInSameCourse,
   validateVatUpdate,
+  validateCourseExists,
 } = require("../validations/adminValidations");
 const { checkUserExists } = require("../validations/userValidations");
 
@@ -258,5 +259,30 @@ router.put("/courses/vat", requireAdmin, validateVatUpdate, (req, res) => {
     });
   });
 });
+
+// GET course registrations
+// url: /api/admin/courses/:course_id/registrations
+router.get(
+  "/courses/:course_id/registrations",
+  requireAdmin,
+  validateCourseExists,
+  (req, res) => {
+    const courseId = req.params.course_id;
+
+    adminQ.getCourseRegistrations(courseId, (err, rows) => {
+      if (err) {
+        return res.status(500).json({
+          success: false,
+          message: err.message,
+        });
+      }
+
+      res.json({
+        success: true,
+        registrations: rows,
+      });
+    });
+  },
+);
 
 module.exports = router;
