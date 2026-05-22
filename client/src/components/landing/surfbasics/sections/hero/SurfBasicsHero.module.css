@@ -1,0 +1,54 @@
+/* ============================================================
+   SurfBasicsHero.module.css
+   Centered header block – badge, heading, subtitle
+   ============================================================ */
+
+.hero {
+  text-align: center;
+  padding: 5rem 1.5rem 2.5rem;
+  max-width: 680px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+}
+
+/* ── Badge ── */
+.badge {
+  display: inline-block;
+  background: #e0f2fe;
+  color: #0284c7;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 1.8px;
+  text-transform: uppercase;
+  padding: 0.4rem 1.2rem;
+  border-radius: 50px;
+  margin-bottom: 1.6rem;
+  border: 1px solid rgba(14, 165, 233, 0.25);
+}
+
+/* ── Heading ── */
+.heading {
+  font-size: clamp(2.2rem, 5vw, 3.4rem);
+  font-weight: 900;
+  color: #0284c7;
+  line-height: 1.15;
+  margin: 0 0 1.3rem;
+  letter-spacing: -0.5px;
+}
+
+.accent {
+  color: #0ea5e9;
+}
+
+/* ── Subtext ── */
+.subtext {
+  font-size: clamp(1.1rem, 2.2vw, 1.25rem);
+  color: #64748b;
+  line-height: 1.8;
+  max-width: 500px;
+  margin: 0 auto;
+  font-weight: 400;
+}
