@@ -10,7 +10,7 @@ import VideoCard from "./VideoCard";
 const EPISODES = [
   {
     epNumber: 1,
-    title: "Lean with BlueMars",
+    title: "Learn with BlueMars",
     description:
       "Whether you’re stepping on a surfboard for the first time or looking to improve your skills, our surf courses are designed for every level — beginner, intermediate, and advanced. Learn proper techniques, ocean safety, and real surfing fundamentals with step-by-step guidance..",
     duration: "4:12",
