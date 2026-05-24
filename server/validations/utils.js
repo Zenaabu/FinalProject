@@ -253,6 +253,69 @@ function hasLessonConflict(existingLessons, newLessons) {
   return false;
 }
 
+// a function that gets a field of a lesson and returns true if they are
+// allowed fields and false if not
+function areValidLessonUpdateFields(fields) {
+  const allowedFields = ["lesson_date", "start_time", "end_time"];
+
+  return fields.every((field) => allowedFields.includes(field));
+}
+
+// a function that gets the old lesson data and the new lesson data
+// it returns the object of the new updated lesson
+function buildUpdatedLesson(oldLesson, newData) {
+  return {
+    lesson_number: oldLesson.lesson_number,
+    lesson_date: newData.lesson_date ?? oldLesson.lesson_date,
+    start_time: newData.start_time ?? oldLesson.start_time,
+    end_time: newData.end_time ?? oldLesson.end_time,
+  };
+}
+
+// a function that gets the lesson number and total lessons
+// it returns true if the lesson number is valid and false if not
+function validateLessonNumber(lessonNumber, totalLessons) {
+  const num = Number(lessonNumber);
+
+  if (!Number.isInteger(num) || num <= 0) {
+    return false;
+  }
+
+  return num <= Number(totalLessons);
+}
+
+// a function that gets a lessons array and returns true
+// if it's date order is valid and false if not
+function isValidLessonDateOrder(lessons) {
+  const sortedLessons = [...lessons].sort(
+    (a, b) => Number(a.lesson_number) - Number(b.lesson_number),
+  );
+
+  for (let i = 0; i < sortedLessons.length - 1; i++) {
+    const currentDate = new Date(sortedLessons[i].lesson_date);
+    const nextDate = new Date(sortedLessons[i + 1].lesson_date);
+
+    if (currentDate > nextDate) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+// a function that gets a date and returns true if it's a future date
+// and false if not
+function isFutureLessonDate(date) {
+  const lessonDate = new Date(date);
+
+  lessonDate.setHours(0, 0, 0, 0);
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  return lessonDate >= today;
+}
+
 module.exports = {
   validateId,
   validatePassword,
@@ -269,4 +332,9 @@ module.exports = {
   validateLessonDate,
   validateLessonTime,
   hasLessonConflict,
+  areValidLessonUpdateFields,
+  buildUpdatedLesson,
+  validateLessonNumber,
+  isValidLessonDateOrder,
+  isFutureLessonDate,
 };
