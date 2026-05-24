@@ -208,6 +208,20 @@ function findLessonById(lessonId, cb) {
   );
 }
 
+// a function that gets the course id and the details
+// then update course details dynamically
+function updateCourseDetails(courseId, updatedCourse, cb) {
+  const conn = db.getConnection();
+
+  conn.query(
+    `UPDATE courses
+     SET ?
+     WHERE course_id = ?`,
+    [updatedCourse, courseId],
+    cb,
+  );
+}
+
 module.exports = {
   getAllUsers,
   updateUserRole,
@@ -222,4 +236,5 @@ module.exports = {
   getCourseRegistrations,
   updateLesson,
   findLessonById,
+  updateCourseDetails,
 };

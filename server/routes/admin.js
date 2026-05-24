@@ -25,6 +25,9 @@ const {
   validateUpdateLessonDetails,
   validateUpdatedLessonNoConflict,
   validateUpdatedLessonDateOrder,
+  validateCourseCanBeEdited,
+  validateUpdateCourseDetails,
+  validateUpdatedCourseDatesIncludeLessons,
 } = require("../validations/adminValidations");
 const { checkUserExists } = require("../validations/userValidations");
 
@@ -315,6 +318,35 @@ router.patch(
         message: "Lesson updated successfully",
       });
     });
+  },
+);
+
+// PATCH update course details
+// url: /api/admin/courses/:course_id
+router.patch(
+  "/courses/:course_id",
+  requireAdmin,
+  validateCourseCanBeEdited,
+  validateUpdateCourseDetails,
+  validateUpdatedCourseDatesIncludeLessons,
+  (req, res) => {
+    adminQ.updateCourseDetails(
+      req.params.course_id,
+      req.updatedCourse,
+      (err) => {
+        if (err) {
+          return res.status(500).json({
+            success: false,
+            message: err.message,
+          });
+        }
+
+        res.json({
+          success: true,
+          message: "Course details updated successfully",
+        });
+      },
+    );
   },
 );
 

@@ -11,6 +11,8 @@ const {
   validateLessonNumber,
   isValidLessonDateOrder,
   isFutureLessonDate,
+  areValidCourseUpdateFields,
+  buildUpdatedCourse,
 } = require("./utils");
 
 const userQ = require("../queries/usersQueries");
@@ -709,6 +711,149 @@ function validateUpdatedLessonDateOrder(req, res, next) {
   });
 }
 
+// a middleware that checks if the course can be edited
+function validateCourseCanBeEdited(req, res, next) {
+  const courseId = req.params.course_id;
+
+  courseQ.findCourseById(courseId, (err, rows) => {
+    if (err) {
+      return res.status(500).json({ success: false, message: err.message });
+    }
+
+    if (!rows || rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Course not found",
+      });
+    }
+
+    if (rows[0].is_active === 1) {
+      return res.status(409).json({
+        success: false,
+        message: "Cannot edit an active course",
+      });
+    }
+
+    req.course = rows[0];
+    next();
+  });
+}
+
+// a middleware that validates the course details
+function validateUpdateCourseDetails(req, res, next) {
+  const sentFields = Object.keys(req.body);
+
+  if (sentFields.length === 0) {
+    return res.status(400).json({
+      success: false,
+      message: "At least one field is required",
+    });
+  }
+
+  if (!areValidCourseUpdateFields(sentFields)) {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid course fields",
+    });
+  }
+
+  const updatedCourse = buildUpdatedCourse(req.course, req.body);
+
+  if (!["beginner", "intermediate", "advanced"].includes(updatedCourse.level)) {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid course level",
+    });
+  }
+
+  if (
+    Number(updatedCourse.price) <= 0 ||
+    Number(updatedCourse.capacity) <= 0 ||
+    Number(updatedCourse.total_lessons) <= 0
+  ) {
+    return res.status(400).json({
+      success: false,
+      message: "Numbers must be valid",
+    });
+  }
+
+  if (
+    (req.body.start_date !== undefined || req.body.end_date !== undefined) &&
+    !validateCourseDates(updatedCourse.start_date, updatedCourse.end_date)
+  ) {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid course dates",
+    });
+  }
+
+  if (req.body.user_id !== undefined) {
+    userQ.findRole(updatedCourse.user_id, (err, rows) => {
+      if (err) {
+        return res.status(500).json({
+          success: false,
+          message: err.message,
+        });
+      }
+
+      if (!rows || rows.length === 0) {
+        return res.status(404).json({
+          success: false,
+          message: "Instructor not found",
+        });
+      }
+
+      if (rows[0].role !== "instructor") {
+        return res.status(400).json({
+          success: false,
+          message: "User must be an instructor",
+        });
+      }
+
+      req.updatedCourse = updatedCourse;
+      next();
+    });
+
+    return;
+  }
+
+  req.updatedCourse = updatedCourse;
+  next();
+}
+
+// a middleware that validates that the course dates after updating include
+// the lessons that already exist in the course
+function validateUpdatedCourseDatesIncludeLessons(req, res, next) {
+  const courseId = req.params.course_id;
+  const updatedCourse = req.updatedCourse;
+
+  adminQ.getLessonsByCourseId(courseId, (err, lessons) => {
+    if (err) {
+      return res.status(500).json({
+        success: false,
+        message: err.message,
+      });
+    }
+
+    for (const lesson of lessons) {
+      if (
+        !validateLessonDate(
+          lesson.lesson_date,
+          updatedCourse.start_date,
+          updatedCourse.end_date,
+        )
+      ) {
+        return res.status(409).json({
+          success: false,
+          message: "Course dates cannot exclude existing lessons",
+        });
+      }
+    }
+
+    next();
+  });
+}
+
 module.exports = {
   validateRoleUpdate,
   validateBlockedStatus,
@@ -729,4 +874,7 @@ module.exports = {
   validateUpdateLessonDetails,
   validateUpdatedLessonNoConflict,
   validateUpdatedLessonDateOrder,
+  validateCourseCanBeEdited,
+  validateUpdateCourseDetails,
+  validateUpdatedCourseDatesIncludeLessons,
 };
