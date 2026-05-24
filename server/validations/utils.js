@@ -316,6 +316,38 @@ function isFutureLessonDate(date) {
   return lessonDate >= today;
 }
 
+// a function that gets the fields of the course fields and return true
+// if they are valid and false if not
+function areValidCourseUpdateFields(fields) {
+  const allowedFields = [
+    "description",
+    "level",
+    "price",
+    "capacity",
+    "total_lessons",
+    "start_date",
+    "end_date",
+    "user_id",
+  ];
+
+  return fields.every((field) => allowedFields.includes(field));
+}
+
+// a function that gets the old course data and new data
+// it returns an updated course object with the updated details
+function buildUpdatedCourse(oldCourse, newData) {
+  return {
+    description: newData.description ?? oldCourse.description,
+    level: newData.level ?? oldCourse.level,
+    price: newData.price ?? oldCourse.price,
+    capacity: newData.capacity ?? oldCourse.capacity,
+    total_lessons: newData.total_lessons ?? oldCourse.total_lessons,
+    start_date: newData.start_date ?? oldCourse.start_date,
+    end_date: newData.end_date ?? oldCourse.end_date,
+    user_id: newData.user_id ?? oldCourse.user_id,
+  };
+}
+
 module.exports = {
   validateId,
   validatePassword,
@@ -337,4 +369,6 @@ module.exports = {
   validateLessonNumber,
   isValidLessonDateOrder,
   isFutureLessonDate,
+  areValidCourseUpdateFields,
+  buildUpdatedCourse,
 };
