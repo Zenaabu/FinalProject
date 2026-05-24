@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 
 const adminQ = require("../queries/adminQueries");
+const courseQ = require("../queries/courseQueries");
 
 const { requireLogin, requireAdmin } = require("../validations/authValidation");
 const {
@@ -19,6 +20,11 @@ const {
   validateLessonConflictInSameCourse,
   validateVatUpdate,
   validateCourseExists,
+  validateLessonExists,
+  validateLessonCourseExists,
+  validateUpdateLessonDetails,
+  validateUpdatedLessonNoConflict,
+  validateUpdatedLessonDateOrder,
 } = require("../validations/adminValidations");
 const { checkUserExists } = require("../validations/userValidations");
 
@@ -280,6 +286,33 @@ router.get(
       res.json({
         success: true,
         registrations: rows,
+      });
+    });
+  },
+);
+
+// PATCH lesson details (update lesson details - not all fields are required)
+// url: /api/admin/lessons/ :lesson_id
+router.patch(
+  "/lessons/:lesson_id",
+  requireAdmin,
+  validateLessonExists,
+  validateLessonCourseExists,
+  validateUpdateLessonDetails,
+  validateUpdatedLessonNoConflict,
+  validateUpdatedLessonDateOrder,
+  (req, res) => {
+    adminQ.updateLesson(req.params.lesson_id, req.updatedLesson, (err) => {
+      if (err) {
+        return res.status(500).json({
+          success: false,
+          message: err.message,
+        });
+      }
+
+      res.json({
+        success: true,
+        message: "Lesson updated successfully",
       });
     });
   },

@@ -141,7 +141,7 @@ function getLessonsByCourseId(courseId, cb) {
   const conn = db.getConnection();
 
   conn.query(
-    `SELECT lesson_date, start_time, end_time
+    `SELECT *
     FROM lessons
     WHERE course_id = ?`,
     [courseId],
@@ -182,6 +182,32 @@ function getCourseRegistrations(courseId, cb) {
   );
 }
 
+// a function that updates lesson details dynamically
+function updateLesson(lessonId, updatedLesson, cb) {
+  const conn = db.getConnection();
+
+  conn.query(
+    `UPDATE lessons
+    SET ?
+    WHERE lesson_id = ?`,
+    [updatedLesson, lessonId],
+    cb,
+  );
+}
+
+// a function that gets a lessonId and returns the lesson with same id
+function findLessonById(lessonId, cb) {
+  const conn = db.getConnection();
+
+  conn.query(
+    `SELECT *
+     FROM lessons
+     WHERE lesson_id = ?`,
+    [lessonId],
+    cb,
+  );
+}
+
 module.exports = {
   getAllUsers,
   updateUserRole,
@@ -194,4 +220,6 @@ module.exports = {
   getLessonsByCourseId,
   updateCoursesVat,
   getCourseRegistrations,
+  updateLesson,
+  findLessonById,
 };
