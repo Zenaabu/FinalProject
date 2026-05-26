@@ -12,7 +12,7 @@ import styles from "./CourseRosters.module.css";
 const COURSES = [
   {
     id: "course-1",
-    label: "Beginner Surf Basics — June 10",
+    label: "Beginner",
     students: [
       {
         id: 1,
@@ -39,7 +39,7 @@ const COURSES = [
   },
   {
     id: "course-2",
-    label: "Intermediate Carving — June 12",
+    label: "Intermediate",
     students: [
       {
         id: 4,
@@ -59,7 +59,7 @@ const COURSES = [
   },
   {
     id: "course-3",
-    label: "Advanced Pipeline — June 15",
+    label: "Advance",
     students: [
       {
         id: 6,
