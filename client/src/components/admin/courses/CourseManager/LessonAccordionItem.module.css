@@ -1,0 +1,227 @@
+/* ============================================================
+   LessonAccordionItem.module.css
+   ============================================================ */
+
+/* ── Item wrapper ────────────────────────────────────────────────────────── */
+.item {
+  width: 100%;
+  box-sizing: border-box;
+  border-bottom: 1px solid #f1f5f9;
+  transition: background 0.15s ease;
+}
+
+.item:last-child {
+  border-bottom: none;
+}
+
+.itemExpanded > .header {
+  background: #f8fbff;
+}
+
+/* ── Clickable header row ────────────────────────────────────────────────── */
+.header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.15s ease;
+}
+
+.header:hover {
+  background: #f0f9ff;
+}
+
+.header:focus-visible {
+  outline: 2px solid var(--color-light-accent);
+  outline-offset: -2px;
+}
+
+/* ── Chevron ─────────────────────────────────────────────────────────────── */
+.chevron {
+  color: #94a3b8;
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+.chevronOpen {
+  transform: rotate(180deg);
+  color: var(--color-ocean-text);
+}
+
+/* ── Lesson info block ───────────────────────────────────────────────────── */
+.lessonInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.lessonTitleRow {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin-bottom: 0.3rem;
+}
+
+.lessonNumber {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #94a3b8;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.lessonTitle {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.lessonMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  align-items: center;
+  font-size: 0.78rem;
+  color: #64748b;
+}
+
+.dot {
+  color: #cbd5e1;
+}
+
+.attendanceSummary {
+  font-weight: 600;
+  color: var(--color-ocean-text);
+}
+
+/* ── Edit button ─────────────────────────────────────────────────────────── */
+.btnEdit {
+  background: none;
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  border-radius: 7px;
+  padding: 0.35rem;
+  cursor: pointer;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.btnEdit:hover {
+  background: #f0f9ff;
+  color: var(--color-ocean-text);
+  border-color: var(--color-light-accent);
+}
+
+.btnEditActive {
+  background: #e0f2fe;
+  color: var(--color-ocean-text);
+  border-color: var(--color-light-accent);
+}
+
+/* ── Inline edit form panel ──────────────────────────────────────────────── */
+.editPanel {
+  background: #f0f9ff;
+  border-top: 1px solid rgba(56, 189, 248, 0.2);
+  padding: 1rem 1.25rem 1.2rem;
+}
+
+.editTitle {
+  margin: 0 0 0.85rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--color-ocean-text);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.editGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem 1rem;
+  margin-bottom: 1rem;
+}
+
+.editField {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.editLabel {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #475569;
+}
+
+.editInput {
+  width: 100%;
+  padding: 0.5rem 0.7rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  color: #1e293b;
+  background: #ffffff;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.editInput:focus {
+  border-color: var(--color-light-accent);
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.15);
+}
+
+.editInput:hover:not(:focus) {
+  border-color: #cbd5e1;
+}
+
+.editActions {
+  display: flex;
+  gap: 0.6rem;
+}
+
+.btnSave {
+  padding: 0.48rem 1.2rem;
+  background: var(--color-ocean-text);
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.btnSave:hover {
+  background: var(--color-button-hover);
+}
+
+.btnCancel {
+  padding: 0.48rem 1.1rem;
+  background: #ffffff;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.btnCancel:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+/* ── Expanded attendance panel ───────────────────────────────────────────── */
+.panel {
+  background: #f8fbff;
+  border-top: 1px solid rgba(56, 189, 248, 0.15);
+  padding: 1rem 1.25rem 1.25rem;
+}
