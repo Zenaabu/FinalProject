@@ -128,6 +128,8 @@ export default function SignupForm({ styles }) {
         toast.success(
           data.message || "Account created successfully! You can now log in.",
         );
+        setSignUpForm(INITIAL_SIGN_UP_FORM);
+        setErrors({});
       } else {
         toast.error(data.message || "Sign up failed. Please try again.");
       }

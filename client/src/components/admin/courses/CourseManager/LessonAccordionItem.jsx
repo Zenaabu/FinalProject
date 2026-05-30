@@ -7,12 +7,6 @@ import { useState } from "react";
 import AttendanceTable from "./AttendanceTable";
 import styles from "./LessonAccordionItem.module.css";
 
-/* ── Helpers ─────────────────────────────────────────────────────────────── */
-function parseStartTime(timeStr) {
-  // "09:00 (90 min)" → "09:00"
-  return timeStr ? timeStr.split(" ")[0] : "";
-}
-
 /* ── Inline SVG icons ────────────────────────────────────────────────────── */
 function ChevronIcon({ expanded }) {
   return (
@@ -60,9 +54,8 @@ function LessonAccordionItem({ lesson, index }) {
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [form, setForm] = useState({
     date: lesson.date ?? "",
-    startTime: parseStartTime(lesson.time),
-    endTime: "",
-    location: lesson.location ?? "",
+    startTime: lesson.start_time ?? "",
+    endTime: lesson.end_time ?? "",
   });
 
   const toggle = () => setIsExpanded((prev) => !prev);
@@ -91,14 +84,11 @@ function LessonAccordionItem({ lesson, index }) {
         <div className={styles.lessonInfo}>
           <div className={styles.lessonTitleRow}>
             <span className={styles.lessonNumber}>Lesson {index}</span>
-            <span className={styles.lessonTitle}>{lesson.title}</span>
           </div>
           <div className={styles.lessonMeta}>
             <span>{lesson.date}</span>
             <span className={styles.dot}>·</span>
             <span>{lesson.time}</span>
-            <span className={styles.dot}>·</span>
-            <span>{lesson.location}</span>
             <span className={styles.dot}>·</span>
             <span className={styles.attendanceSummary}>
               {attendanceSummary(lesson.students)}
@@ -151,19 +141,13 @@ function LessonAccordionItem({ lesson, index }) {
                 onChange={(e) => handleChange("endTime", e.target.value)}
               />
             </div>
-            <div className={styles.editField}>
-              <label className={styles.editLabel}>Location</label>
-              <input
-                type="text"
-                className={styles.editInput}
-                value={form.location}
-                onChange={(e) => handleChange("location", e.target.value)}
-                placeholder="e.g. South Beach"
-              />
-            </div>
           </div>
           <div className={styles.editActions}>
-            <button className={styles.btnSave} type="button" onClick={handleSave}>
+            <button
+              className={styles.btnSave}
+              type="button"
+              onClick={handleSave}
+            >
               Save
             </button>
             <button

@@ -85,9 +85,113 @@ function getAllCourses(cb) {
   );
 }
 
+// ─── Full course tree: courses → lessons → attendance ──────────────────────
+// Returns an array of course objects, each containing a `lessons` array,
+// each lesson containing a `students` array with attendance status.
+
+function buildCoursesTree(rows) {
+  const courseMap = new Map();
+
+  for (const row of rows) {
+    if (!courseMap.has(row.course_id)) {
+      courseMap.set(row.course_id, {
+        course_id: row.course_id,
+        title: row.description,
+        level: row.level,
+        status: row.is_active ? "Active" : "Inactive",
+        instructor: row.instructor,
+        start_date: row.start_date,
+        end_date: row.end_date,
+        capacity: row.capacity,
+        total_lessons: row.total_lessons,
+        schedule: "", // filled from the first lesson below
+        lessons: new Map(),
+        _studentSet: new Set(),
+      });
+    }
+
+    const course = courseMap.get(row.course_id);
+
+    if (row.lesson_id != null && !course.lessons.has(row.lesson_id)) {
+      course.lessons.set(row.lesson_id, {
+        lesson_id: row.lesson_id,
+        lesson_number: row.lesson_number,
+        date: row.lesson_date,
+        start_time: row.start_time,
+        end_time: row.end_time,
+        time:
+          row.start_time && row.end_time
+            ? `${row.start_time} – ${row.end_time}`
+            : "",
+        students: [],
+      });
+      // Use the first lesson's times as the course-level schedule summary
+      if (!course.schedule && row.start_time) {
+        course.schedule = `${row.start_time} – ${row.end_time}`;
+      }
+    }
+
+    if (row.lesson_id != null && row.student_id != null) {
+      course.lessons.get(row.lesson_id).students.push({
+        user_id: row.student_id,
+        name: row.student_name,
+        email: row.student_email,
+        attendance_status: row.attended === 1 ? "present" : "absent",
+      });
+      course._studentSet.add(row.student_id);
+    }
+  }
+
+  return Array.from(courseMap.values()).map(
+    ({ _studentSet, lessons, ...rest }) => ({
+      ...rest,
+      enrolled: _studentSet.size,
+      lessons: Array.from(lessons.values()),
+    }),
+  );
+}
+
+function getCoursesWithDetails(cb) {
+  const conn = db.getConnection();
+
+  conn.query(
+    `SELECT
+       c.course_id,
+       c.description,
+       c.level,
+       c.is_active,
+       DATE_FORMAT(c.start_date, '%Y-%m-%d') AS start_date,
+       DATE_FORMAT(c.end_date,   '%Y-%m-%d') AS end_date,
+       c.capacity,
+       c.total_lessons,
+       CONCAT(u.first_name, ' ', u.last_name) AS instructor,
+       l.lesson_id,
+       l.lesson_number,
+       DATE_FORMAT(l.lesson_date, '%Y-%m-%d')  AS lesson_date,
+       TIME_FORMAT(l.start_time,  '%H:%i')     AS start_time,
+       TIME_FORMAT(l.end_time,    '%H:%i')     AS end_time,
+       a.user_id                               AS student_id,
+       CONCAT(su.first_name, ' ', su.last_name) AS student_name,
+       su.email                                AS student_email,
+       a.attended
+     FROM   courses c
+     JOIN   users   u  ON c.user_id   = u.user_id
+     LEFT JOIN lessons l  ON l.course_id = c.course_id
+     LEFT JOIN attend  a  ON a.lesson_id = l.lesson_id
+     LEFT JOIN users   su ON su.user_id  = a.user_id
+     WHERE  c.is_active = 1
+     ORDER BY c.course_id, l.lesson_number, su.last_name, su.first_name`,
+    (err, rows) => {
+      if (err) return cb(err);
+      cb(null, buildCoursesTree(rows));
+    },
+  );
+}
+
 module.exports = {
   findCourseById,
   checkDuplicateCourse,
   addCourse,
   getAllCourses,
+  getCoursesWithDetails,
 };

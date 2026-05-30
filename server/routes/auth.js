@@ -273,4 +273,16 @@ router.post("/signup", validateSignup, (req, res) => {
   });
 });
 
+// POST logout
+// url: /api/auth/logout
+router.post("/logout", (req, res) => {
+  req.session.destroy((err) => {
+    if (err) {
+      return res.status(500).json({ success: false, message: "Logout failed" });
+    }
+    res.clearCookie("connect.sid");
+    return res.json({ success: true, message: "Logged out" });
+  });
+});
+
 module.exports = router;

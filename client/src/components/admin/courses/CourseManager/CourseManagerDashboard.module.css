@@ -12,3 +12,17 @@
   margin: 0 auto;
   box-sizing: border-box;
 }
+
+.state {
+  padding: 3rem 1.5rem;
+  text-align: center;
+  color: #64748b;
+  font-size: 0.95rem;
+}
+
+.stateError {
+  padding: 3rem 1.5rem;
+  text-align: center;
+  color: #dc2626;
+  font-size: 0.95rem;
+}

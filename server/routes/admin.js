@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 
 const adminQ = require("../queries/adminQueries");
+const courseQ = require("../queries/courseQueries");
 
 const { requireLogin, requireAdmin } = require("../validations/authValidation");
 const {
@@ -163,6 +164,24 @@ router.get("/courses", requireAdmin, (req, res) => {
     res.json({
       success: true,
       courses: rows,
+    });
+  });
+});
+
+// GET all courses with nested lessons and attendance
+// url: /api/admin/courses/details
+router.get("/courses/details", requireLogin, requireAdmin, (req, res) => {
+  courseQ.getCoursesWithDetails((err, courses) => {
+    if (err) {
+      return res.status(500).json({
+        success: false,
+        message: err.message,
+      });
+    }
+
+    res.json({
+      success: true,
+      courses,
     });
   });
 });

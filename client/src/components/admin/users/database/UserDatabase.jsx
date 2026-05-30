@@ -25,9 +25,9 @@ function toUser(row) {
 
 /* Maps role name → CSS module class for the badge */
 const ROLE_CLASS = {
-  User: "roleUser",
-  Instructor: "roleInstructor",
-  Manager: "roleManager",
+  user: "roleUser",
+  instructor: "roleInstructor",
+  admin: "roleManager",
 };
 
 function UserDatabase() {
@@ -66,24 +66,54 @@ function UserDatabase() {
     setModalType(null);
   }
 
-  /* Apply a role change and close the modal */
+  /* Apply a role change: persist to DB then update local state */
   function handleRoleChange(userId, newRole) {
-    setUsers((prev) =>
-      prev.map((u) => (u.id === userId ? { ...u, role: newRole } : u)),
-    );
-    closeModal();
+    fetch(`/api/admin/users/${userId}/role`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ role: newRole }),
+    })
+      .then((r) => r.json().then((body) => ({ ok: r.ok, body })))
+      .then(({ ok, body }) => {
+        if (!ok) throw new Error(body.message || "Failed to update role");
+        setUsers((prev) =>
+          prev.map((u) => (u.id === userId ? { ...u, role: newRole } : u)),
+        );
+        closeModal();
+      })
+      .catch((e) => {
+        setError(e.message);
+        closeModal();
+      });
   }
 
-  /* Toggle Active ↔ Blocked and close the modal */
+  /* Toggle Active ↔ Blocked: persist to DB then update local state */
   function handleBlockToggle(userId) {
-    setUsers((prev) =>
-      prev.map((u) =>
-        u.id === userId
-          ? { ...u, status: u.status === "Active" ? "Blocked" : "Active" }
-          : u,
-      ),
-    );
-    closeModal();
+    const target = users.find((u) => u.id === userId);
+    const newBlocked = target?.status === "Active" ? 1 : 0;
+
+    fetch(`/api/admin/users/${userId}/block`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ is_blocked: newBlocked }),
+    })
+      .then((r) => r.json().then((body) => ({ ok: r.ok, body })))
+      .then(({ ok, body }) => {
+        if (!ok)
+          throw new Error(body.message || "Failed to update block status");
+        setUsers((prev) =>
+          prev.map((u) =>
+            u.id === userId
+              ? { ...u, status: newBlocked === 1 ? "Blocked" : "Active" }
+              : u,
+          ),
+        );
+        closeModal();
+      })
+      .catch((e) => {
+        setError(e.message);
+        closeModal();
+      });
   }
 
   return (
