@@ -85,9 +85,24 @@ function getAllCourses(cb) {
   );
 }
 
+// get all courses of specific instructor
+function getCoursesByInstructorId(user_id, cb) {
+  const conn = db.getConnection();
+
+  conn.query(
+    `SELECT *
+     FROM courses
+     WHERE user_id = ?
+     ORDER BY start_date DESC`,
+    [user_id],
+    cb,
+  );
+}
+
 module.exports = {
   findCourseById,
   checkDuplicateCourse,
   addCourse,
   getAllCourses,
+  getCoursesByInstructorId,
 };

@@ -4,6 +4,7 @@ const session = require("express-session");
 const authRouter = require("./routes/auth");
 //const usersRouter = require("./routes/users");
 const adminRouter = require("./routes/admin");
+const instructorRouter = require("./routes/instructor");
 
 const PORT = process.env.PORT || 3001;
 
@@ -33,6 +34,7 @@ app.use(
 app.use("/api/auth", authRouter); // auth routes
 //app.use("/api/users", usersRouter); // user routes
 app.use("/api/admin", adminRouter); // admin routes
+app.use("/api/instructor", instructorRouter); // instructor routes
 
 app.get("/api", (req, res) => {
   res.json({ message: "Hello from server!" });
