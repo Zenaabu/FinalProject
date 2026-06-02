@@ -40,7 +40,60 @@ function findInstructorCourse(course_id, instructor_id, cb) {
   );
 }
 
+// a function that gets lesson_id, user_id and attended
+// it saves the attendance in the DB
+// if the user already in the attended table then just update the attendance
+function saveAttendance(lesson_id, user_id, attended, cb) {
+  const conn = db.getConnection();
+
+  conn.query(
+    `INSERT INTO attend (lesson_id, user_id, attended)
+     VALUES (?, ?, ?)
+     ON DUPLICATE KEY UPDATE attended = VALUES(attended)`,
+    [lesson_id, user_id, attended],
+    cb,
+  );
+}
+
+// a function that gets a lesson_id, instructor_id
+// it checks if a lesson belongs to a course of the logged-in instructor
+function findInstructorLesson(lesson_id, instructor_id, cb) {
+  const conn = db.getConnection();
+
+  conn.query(
+    `SELECT
+        l.*,
+        c.course_id,
+        c.end_date
+     FROM lessons l
+     JOIN courses c
+       ON l.course_id = c.course_id
+     WHERE l.lesson_id = ?
+       AND c.user_id = ?`,
+    [lesson_id, instructor_id],
+    cb,
+  );
+}
+
+// a function that gets a user_id and course_id
+// it checks if user is registered to course
+function isUserRegisteredToCourse(user_id, course_id, cb) {
+  const conn = db.getConnection();
+
+  conn.query(
+    `SELECT *
+     FROM register
+     WHERE user_id = ?
+       AND course_id = ?`,
+    [user_id, course_id],
+    cb,
+  );
+}
+
 module.exports = {
   getCourseRegistrationsForInstructor,
   findInstructorCourse,
+  saveAttendance,
+  findInstructorLesson,
+  isUserRegisteredToCourse,
 };

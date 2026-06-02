@@ -11,6 +11,10 @@ const {
 
 const {
   validateInstructorOwnsCourse,
+  validateAttendanceAllowed,
+  validateInstructorOwnsLesson,
+  validateAttendanceBody,
+  validateUserRegisteredToLessonCourse,
 } = require("../validations/instructorValidations");
 
 // GET instructor courses
@@ -61,6 +65,36 @@ router.get(
         });
       },
     );
+  },
+);
+
+// POST save attendance
+// url: /api/instructor/lessons/:lesson_id/attendance
+router.post(
+  "/lessons/:lesson_id/attendance",
+  requireLogin,
+  requireInstructor,
+  validateInstructorOwnsLesson,
+  validateAttendanceBody,
+  validateUserRegisteredToLessonCourse,
+  validateAttendanceAllowed,
+  (req, res) => {
+    const lessonId = req.params.lesson_id;
+    const { user_id, attended } = req.body;
+
+    instructorQ.saveAttendance(lessonId, user_id, attended, (err) => {
+      if (err) {
+        return res.status(500).json({
+          success: false,
+          message: err.message,
+        });
+      }
+
+      res.json({
+        success: true,
+        message: "Attendance saved successfully",
+      });
+    });
   },
 );
 

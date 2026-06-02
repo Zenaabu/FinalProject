@@ -348,6 +348,22 @@ function buildUpdatedCourse(oldCourse, newData) {
   };
 }
 
+// a function that gets lessonDate, startTime and courseEndDate
+// it returns true if the instructor can take attendance and false if not
+// the instructor can take attendance if the lesson already started and
+// the course has not ended yet
+function canTakeAttendance(lessonDate, startTime, courseEndDate) {
+  const now = new Date();
+
+  const lessonStart = new Date(
+    `${formatDateOnly(lessonDate)}T${formatTimeOnly(startTime)}:00`,
+  );
+  const courseEnd = new Date(courseEndDate);
+  courseEnd.setHours(23, 59, 59, 999);
+
+  return now >= lessonStart && now <= courseEnd;
+}
+
 module.exports = {
   validateId,
   validatePassword,
@@ -371,4 +387,5 @@ module.exports = {
   isFutureLessonDate,
   areValidCourseUpdateFields,
   buildUpdatedCourse,
+  canTakeAttendance,
 };
