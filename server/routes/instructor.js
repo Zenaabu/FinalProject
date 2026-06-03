@@ -98,4 +98,30 @@ router.post(
   },
 );
 
+// GET all lessons in a specific course
+// url: /api/instructor/courses/:course_id/lessons
+router.get(
+  "/courses/:course_id/lessons",
+  requireLogin,
+  requireInstructor,
+  validateInstructorOwnsCourse,
+  (req, res) => {
+    const { course_id } = req.params;
+
+    instructorQ.getCourseLessons(course_id, (err, rows) => {
+      if (err) {
+        return res.status(500).json({
+          success: false,
+          message: err.message,
+        });
+      }
+
+      res.json({
+        success: true,
+        lessons: rows,
+      });
+    });
+  },
+);
+
 module.exports = router;

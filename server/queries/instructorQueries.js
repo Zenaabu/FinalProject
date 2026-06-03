@@ -90,10 +90,26 @@ function isUserRegisteredToCourse(user_id, course_id, cb) {
   );
 }
 
+// a function that gets a course_is
+// it returns the list of lessons in this course from DB
+function getCourseLessons(course_id, cb) {
+  const conn = db.getConnection();
+
+  conn.query(
+    `SELECT *
+     FROM lessons
+     WHERE course_id = ?
+     ORDER BY lesson_number`,
+    [course_id],
+    cb,
+  );
+}
+
 module.exports = {
   getCourseRegistrationsForInstructor,
   findInstructorCourse,
   saveAttendance,
   findInstructorLesson,
   isUserRegisteredToCourse,
+  getCourseLessons,
 };
