@@ -1,6 +1,6 @@
 const instructorQ = require("../queries/instructorQueries");
 
-const { canTakeAttendance } = require("./utils");
+const { canTakeAttendance, areValidConstraintFields } = require("./utils");
 
 // a middleware that validates that the current logged instructor
 // owns the course with the id in the params
@@ -127,10 +127,120 @@ function validateUserRegisteredToLessonCourse(req, res, next) {
   });
 }
 
+// a middleware that validates constraint details
+function validateAddConstraint(req, res, next) {
+  const sentFields = Object.keys(req.body);
+
+  if (!areValidConstraintFields(sentFields)) {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid constraint fields",
+    });
+  }
+
+  const { start_time, end_time } = req.body;
+
+  if (!start_time || !end_time) {
+    return res.status(400).json({
+      success: false,
+      message: "Start time and end time are required",
+    });
+  }
+
+  const start = new Date(start_time.replace(" ", "T"));
+  const end = new Date(end_time.replace(" ", "T"));
+
+  if (isNaN(start) || isNaN(end)) {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid date format",
+    });
+  }
+
+  if (end <= start) {
+    return res.status(400).json({
+      success: false,
+      message: "End time must be after start time",
+    });
+  }
+
+  if (start < new Date()) {
+    return res.status(400).json({
+      success: false,
+      message: "Constraint must be in the future",
+    });
+  }
+
+  next();
+}
+
+// a middleware that checks if there is a duplicate constraint of the instructor
+function validateDuplicateConstraint(req, res, next) {
+  const instructorId = req.session.user.user_id;
+  const { start_time, end_time } = req.body;
+
+  instructorQ.findDuplicateConstraint(
+    instructorId,
+    start_time,
+    end_time,
+    (err, rows) => {
+      if (err) {
+        return res.status(500).json({
+          success: false,
+          message: err.message,
+        });
+      }
+
+      if (rows.length > 0) {
+        return res.status(409).json({
+          success: false,
+          message: "This constraint already exists",
+        });
+      }
+
+      next();
+    },
+  );
+}
+
+// a middleware that checks if there is an overlapping constraint in the
+// DB for the same instructor
+function validateOverlappingConstraint(req, res, next) {
+  const instructor_id = req.session.user.user_id;
+
+  const { start_time, end_time } = req.body;
+
+  instructorQ.findOverlappingConstraint(
+    instructor_id,
+    start_time,
+    end_time,
+    (err, rows) => {
+      if (err) {
+        return res.status(500).json({
+          success: false,
+          message: err.message,
+        });
+      }
+
+      if (rows.length > 0) {
+        return res.status(409).json({
+          success: false,
+          message: "This constraint overlaps with an existing constraint",
+        });
+      }
+
+      next();
+    },
+  );
+}
+
 module.exports = {
   validateInstructorOwnsCourse,
   validateAttendanceAllowed,
   validateInstructorOwnsLesson,
   validateAttendanceBody,
   validateUserRegisteredToLessonCourse,
+  validateAddConstraint,
+  validateDuplicateConstraint,
+  validateOverlappingConstraint,
 };

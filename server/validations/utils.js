@@ -364,6 +364,14 @@ function canTakeAttendance(lessonDate, startTime, courseEndDate) {
   return now >= lessonStart && now <= courseEnd;
 }
 
+// a function that gets the fields of the instructor constraint and returns true
+// if they are correct and false if not
+function areValidConstraintFields(fields) {
+  const allowedFields = ["start_time", "end_time", "notes"];
+
+  return fields.every((field) => allowedFields.includes(field));
+}
+
 module.exports = {
   validateId,
   validatePassword,
@@ -388,4 +396,5 @@ module.exports = {
   areValidCourseUpdateFields,
   buildUpdatedCourse,
   canTakeAttendance,
+  areValidConstraintFields,
 };

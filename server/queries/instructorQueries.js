@@ -105,6 +105,62 @@ function getCourseLessons(course_id, cb) {
   );
 }
 
+// a function that gets a constraint and save it at DB
+function addConstraint(constraint, cb) {
+  const conn = db.getConnection();
+
+  conn.query(
+    `INSERT INTO instructor_constraints
+     (
+       user_id,
+       start_time,
+       end_time,
+       notes
+     )
+     VALUES (?, ?, ?, ?)`,
+    [
+      constraint.user_id,
+      constraint.start_time,
+      constraint.end_time,
+      constraint.notes,
+    ],
+    cb,
+  );
+}
+
+// a function that gets user_id, start_time, end_time
+// it checks if there is a duplicate constraints that already have the same data
+// in DB
+function findDuplicateConstraint(user_id, start_time, end_time, cb) {
+  const conn = db.getConnection();
+
+  conn.query(
+    `SELECT *
+     FROM instructor_constraints
+     WHERE user_id = ?
+       AND start_time = ?
+       AND end_time = ?`,
+    [user_id, start_time, end_time],
+    cb,
+  );
+}
+
+// a function that gets user_id, start_time, end_time
+// it checks if instructor already has an overlapping constraint
+function findOverlappingConstraint(user_id, start_time, end_time, cb) {
+  const conn = db.getConnection();
+
+  conn.query(
+    `SELECT *
+     FROM instructor_constraints
+     WHERE user_id = ?
+       AND start_time < ?
+       AND end_time > ?`,
+    [user_id, end_time, start_time],
+    cb,
+  );
+}
+
 module.exports = {
   getCourseRegistrationsForInstructor,
   findInstructorCourse,
@@ -112,4 +168,7 @@ module.exports = {
   findInstructorLesson,
   isUserRegisteredToCourse,
   getCourseLessons,
+  addConstraint,
+  findDuplicateConstraint,
+  findOverlappingConstraint,
 };

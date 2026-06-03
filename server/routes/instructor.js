@@ -15,6 +15,9 @@ const {
   validateInstructorOwnsLesson,
   validateAttendanceBody,
   validateUserRegisteredToLessonCourse,
+  validateAddConstraint,
+  validateDuplicateConstraint,
+  validateOverlappingConstraint,
 } = require("../validations/instructorValidations");
 
 // GET instructor courses
@@ -119,6 +122,36 @@ router.get(
       res.json({
         success: true,
         lessons: rows,
+      });
+    });
+  },
+);
+
+// POST add constraint
+// url: /api/instructor/constraints
+router.post(
+  "/constraints",
+  requireLogin,
+  requireInstructor,
+  validateAddConstraint,
+  validateDuplicateConstraint,
+  validateOverlappingConstraint,
+  (req, res) => {
+    const constraint = req.body;
+
+    constraint.user_id = req.session.user.user_id;
+
+    instructorQ.addConstraint(constraint, (err) => {
+      if (err) {
+        return res.status(500).json({
+          success: false,
+          message: err.message,
+        });
+      }
+
+      res.status(201).json({
+        success: true,
+        message: "Constraint added successfully",
       });
     });
   },
