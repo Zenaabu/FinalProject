@@ -29,7 +29,7 @@ const {
   validateUpdateCourseDetails,
   validateUpdatedCourseDatesIncludeLessons,
 } = require("../validations/adminValidations");
-const { checkUserExists } = require("../validations/userValidations");
+const { checkUserExists } = require("../validations/usersValidations");
 
 const upload = require("../middlewares/uploadVideo");
 

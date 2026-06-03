@@ -372,6 +372,34 @@ function areValidConstraintFields(fields) {
   return fields.every((field) => allowedFields.includes(field));
 }
 
+// a function that gets the fields of the user details
+// it returns true if they are valid and false if not
+function areValidUserUpdateFields(fields) {
+  const allowedFields = [
+    "first_name",
+    "last_name",
+    "email",
+    "phone",
+    "gender",
+    "birth_date",
+  ];
+
+  return fields.every((field) => allowedFields.includes(field));
+}
+
+// a function that gets the old data of the user and the new data
+// it rebuilt the updated user according to the changed data
+function buildUpdatedUser(oldUser, newData) {
+  return {
+    first_name: newData.first_name ?? oldUser.first_name,
+    last_name: newData.last_name ?? oldUser.last_name,
+    email: newData.email ?? oldUser.email,
+    phone: newData.phone ?? oldUser.phone,
+    gender: newData.gender ?? oldUser.gender,
+    birth_date: newData.birth_date ?? oldUser.birth_date,
+  };
+}
+
 module.exports = {
   validateId,
   validatePassword,
@@ -397,4 +425,6 @@ module.exports = {
   buildUpdatedCourse,
   canTakeAttendance,
   areValidConstraintFields,
+  areValidUserUpdateFields,
+  buildUpdatedUser,
 };
