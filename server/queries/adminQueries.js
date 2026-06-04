@@ -1,14 +1,17 @@
 // queries/adminQueries.js
 const db = require("../db/dbSingleton");
 
-// a function that returns all the users from database
-function getAllUsers(cb) {
+// a function that gets a user_id (of the admin)
+// it returns all the users from DB without the user with user_id (without admin)
+function getAllUsers(user_id, cb) {
   const conn = db.getConnection();
 
   conn.query(
     `SELECT user_id, first_name, last_name, email, phone, gender,  DATE_FORMAT(birth_date, '%Y-%m-%d') AS birth_date, role, is_blocked
      FROM users
+     where user_id != ?
     ORDER BY first_name, last_name`,
+    [user_id],
     cb,
   );
 }

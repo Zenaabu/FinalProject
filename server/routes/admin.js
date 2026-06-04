@@ -36,7 +36,7 @@ const upload = require("../middlewares/uploadVideo");
 // GET all users
 // url: /api/admin/users
 router.get("/users", requireLogin, requireAdmin, (req, res) => {
-  adminQ.getAllUsers((err, rows) => {
+  adminQ.getAllUsers(req.session.user.user_id, (err, rows) => {
     if (err) {
       return res.status(500).json({ success: false, message: err.message });
     }
