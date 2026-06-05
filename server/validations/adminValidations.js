@@ -487,6 +487,59 @@ function validateLessonConflictInSameCourse(req, res, next) {
   });
 }
 
+// a middleware that validates the PUT /api/admin/courses/:course_id request body.
+// NOTE: validateCourseDates() is NOT used here because it rejects past dates,
+//       but an already-started course's start_date will naturally be in the past.
+//       We only enforce: both dates are valid, and end_date > start_date.
+function validateUpdateCourse(req, res, next) {
+  const { level, capacity, price, start_date, end_date } = req.body;
+
+  // level must be one of the allowed values if provided
+  if (level && !["beginner", "intermediate", "advanced"].includes(level)) {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid course level",
+    });
+  }
+
+  // numeric fields must be positive if provided
+  if (capacity !== undefined && Number(capacity) <= 0) {
+    return res.status(400).json({
+      success: false,
+      message: "Capacity must be greater than 0",
+    });
+  }
+
+  if (price !== undefined && Number(price) <= 0) {
+    return res.status(400).json({
+      success: false,
+      message: "Price must be greater than 0",
+    });
+  }
+
+  // if both dates are sent, validate their relationship
+  if (start_date && end_date) {
+    const s = new Date(start_date);
+    const e = new Date(end_date);
+
+    if (isNaN(s) || isNaN(e)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid date format",
+      });
+    }
+
+    if (e <= s) {
+      return res.status(400).json({
+        success: false,
+        message: "End date must be after start date",
+      });
+    }
+  }
+
+  next();
+}
+
 module.exports = {
   validateRoleUpdate,
   validateBlockedStatus,
@@ -500,4 +553,5 @@ module.exports = {
   validateAddLessonsToExistingCourse,
   validateInstructorLessonConflictForExistingCourse,
   validateLessonConflictInSameCourse,
+  validateUpdateCourse,
 };
