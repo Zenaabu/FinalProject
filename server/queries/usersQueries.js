@@ -121,6 +121,29 @@ function findRole(user_id, cb) {
   );
 }
 
+// a function that updates profile fields for the logged-in user
+// fields: { first_name, last_name, email, phone, gender, birth_date }
+// password is handled separately
+function updateUserProfile(user_id, fields, cb) {
+  const conn = db.getConnection();
+
+  conn.query(
+    `UPDATE users
+     SET first_name = ?, last_name = ?, email = ?, phone = ?, gender = ?, birth_date = ?
+     WHERE user_id = ?`,
+    [
+      fields.first_name,
+      fields.last_name,
+      fields.email,
+      fields.phone,
+      fields.gender,
+      fields.birth_date,
+      user_id,
+    ],
+    cb,
+  );
+}
+
 module.exports = {
   findUserById,
   findUserByEmail,
@@ -130,4 +153,5 @@ module.exports = {
   updateUserPassword,
   createUser,
   findRole,
+  updateUserProfile,
 };

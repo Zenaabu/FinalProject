@@ -12,6 +12,7 @@ const dbSingleton = {
         user: "root",
         password: "",
         database: "bluemars",
+        dateStrings: true, // return DATE/DATETIME columns as plain strings (avoids timezone shift)
       });
 
       // Connect to the database

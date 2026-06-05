@@ -149,6 +149,19 @@ function getLessonsByCourseId(courseId, cb) {
   );
 }
 
+// a function that returns all users with role = 'instructor'
+function getInstructors(cb) {
+  const conn = db.getConnection();
+
+  conn.query(
+    `SELECT user_id, first_name, last_name
+     FROM users
+     WHERE role = 'instructor' AND is_blocked = 0
+     ORDER BY first_name, last_name`,
+    cb,
+  );
+}
+
 module.exports = {
   getAllUsers,
   updateUserRole,
@@ -159,4 +172,5 @@ module.exports = {
   getMaxLessonNumber,
   getInstructorLessonsInRange,
   getLessonsByCourseId,
+  getInstructors,
 };

@@ -47,10 +47,10 @@ export const NAV_ITEMS = [
     path: "/admin/financials",
   },
   {
-    id: "settings",
-    labelHe: "הגדרות",
-    labelEn: "System Settings",
-    icon: "settings",
-    path: "/admin/settings",
+    id: "profile",
+    labelHe: "פרופיל משתמש",
+    labelEn: "User Profile",
+    icon: "profile",
+    path: "/admin/profile",
   },
 ];

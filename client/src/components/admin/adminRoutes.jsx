@@ -8,17 +8,18 @@ import AdminLayout from "./AdminLayout";
 import DashboardHome from "./dashboard/DashboardHome";
 import UsersAndRosters from "./users/UsersAndRosters";
 import CoursesMain from "./courses/CoursesMain/CoursesMain";
+import UserProfilePage from "./profile/UserProfilePage";
 
 export const adminRoutes = (
   <Route path="/admin" element={<AdminLayout />}>
     <Route index element={<DashboardHome />} />
     <Route path="courses" element={<CoursesMain />} />
     <Route path="users" element={<UsersAndRosters />} />
+    <Route path="profile" element={<UserProfilePage />} />
     {/* Future pages — uncomment as you build them:
     <Route path="staff"      element={<StaffPage />} />
     <Route path="reports"    element={<ReportsPage />} />
     <Route path="financials" element={<FinancialsPage />} />
-    <Route path="settings"   element={<SettingsPage />} />
     */}
   </Route>
 );

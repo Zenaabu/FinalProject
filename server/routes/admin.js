@@ -150,6 +150,17 @@ router.post(
   },
 );
 
+// GET all instructors (users with role = 'instructor')
+// url: /api/admin/instructors
+router.get("/instructors", requireLogin, requireAdmin, (req, res) => {
+  adminQ.getInstructors((err, rows) => {
+    if (err) {
+      return res.status(500).json({ success: false, message: err.message });
+    }
+    res.json({ success: true, instructors: rows });
+  });
+});
+
 // GET all courses
 // url: /api/admin/courses
 router.get("/courses", requireAdmin, (req, res) => {
