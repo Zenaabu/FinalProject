@@ -121,20 +121,6 @@ function findRole(user_id, cb) {
   );
 }
 
-// a function that gets user_id, updatedUser
-// it updates the user details according to what it got
-function updateMyDetails(user_id, updatedUser, cb) {
-  const conn = db.getConnection();
-
-  conn.query(
-    `UPDATE users
-     SET ?
-     WHERE user_id = ?`,
-    [updatedUser, user_id],
-    cb,
-  );
-}
-
 module.exports = {
   findUserById,
   findUserByEmail,
@@ -144,5 +130,4 @@ module.exports = {
   updateUserPassword,
   createUser,
   findRole,
-  updateMyDetails,
 };

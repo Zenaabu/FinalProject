@@ -1,0 +1,39 @@
+/* ============================================================
+   CoursesMain.module.css
+   ============================================================ */
+
+/* ── Page wrapper ────────────────────────────────────────────────────────── */
+.page {
+  padding: 2rem;
+}
+
+/* ── Page header row (title + new-course button) ────────────────────────── */
+.pageHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+}
+
+/* ── Page title ──────────────────────────────────────────────────────────── */
+.title {
+  font-size: 1.65rem;
+  font-weight: 700;
+  color: var(--color-ocean-text);
+  margin: 0;
+}
+
+/* ── "+ New Course" button (extends global btn-primary) ─────────────────── */
+.btnNewCourse {
+  padding: 0.55rem 1.25rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+}
+
+/* ── Form wrapper — adds bottom spacing before the list ─────────────────── */
+.formWrapper {
+  margin-bottom: 2rem;
+}

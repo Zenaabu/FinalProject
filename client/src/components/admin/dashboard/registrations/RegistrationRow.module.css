@@ -1,0 +1,48 @@
+/* ============================================================
+   RegistrationRow.module.css
+   ============================================================ */
+
+/* ── Table row ───────────────────────────────────────────────────────────── */
+.row {
+  border-bottom: 1px solid #f1f5f9;
+  transition: background 0.15s ease;
+}
+
+.row:last-child {
+  border-bottom: none;
+}
+.row:hover {
+  background: #f8fafc;
+}
+
+.row td {
+  padding: 0.85rem 0.75rem;
+  vertical-align: middle;
+}
+
+/* ── Name cell ───────────────────────────────────────────────────────────── */
+.nameCell {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.name {
+  font-weight: 500;
+  color: #0f172a;
+  font-size: 0.9rem;
+}
+
+/* ── Course cell ─────────────────────────────────────────────────────────── */
+.course {
+  color: var(--color-ocean-text);
+  font-size: 0.88rem;
+  font-weight: 500;
+}
+
+/* ── Date cell ───────────────────────────────────────────────────────────── */
+.date {
+  color: #94a3b8;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}

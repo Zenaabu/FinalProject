@@ -1,0 +1,31 @@
+/* ============================================================
+   PaymentBadge.module.css
+   ============================================================ */
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.22rem 0.8rem;
+  border-radius: 999px;
+  font-size: 0.76rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* ── Variants ─────────────────────────────────────────────────────────────── */
+.paid {
+  background: #dcfce7;
+  color: #15803d;
+}
+.pending {
+  background: #fef9c3;
+  color: #a16207;
+}
+.noted {
+  background: #e0f2fe;
+  color: var(--color-ocean-text);
+}
+.default {
+  background: #f1f5f9;
+  color: #475569;
+}

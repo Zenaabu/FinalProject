@@ -1,0 +1,355 @@
+/* ============================================================
+   CourseCreateForm.module.css
+   
+   CSS variables used (defined in src/index.css):
+     --color-bg-white      #ffffff
+     --color-ocean-text    #0284c7
+     --color-light-accent  #38bdf8
+     --color-button-hover  #0ea5e9
+   ============================================================ */
+
+/* ── Card container ──────────────────────────────────────────────────────── */
+.card {
+  background: var(--color-bg-white);
+  border-radius: 18px;
+  box-shadow:
+    0 4px 24px rgba(2, 132, 199, 0.1),
+    0 1px 4px rgba(0, 0, 0, 0.06);
+  border: 1px solid #e0f2fe;
+  max-width: 780px;
+  width: 100%;
+  margin: 0 auto;
+  overflow: hidden;
+}
+
+/* ── Card header ─────────────────────────────────────────────────────────── */
+.cardHeader {
+  padding: 1.6rem 2rem 1.4rem;
+  background: linear-gradient(
+    135deg,
+    var(--color-ocean-text) 0%,
+    var(--color-button-hover) 100%
+  );
+  border-bottom: none;
+}
+
+.cardTitle {
+  margin: 0 0 0.25rem;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #ffffff;
+  /* Override the global h2 color (which is also set to ocean-text) */
+  color: #ffffff !important;
+}
+
+.cardSubtitle {
+  margin: 0;
+  font-size: 0.82rem;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+/* ── Server error banner ─────────────────────────────────────────────────── */
+.errorBanner {
+  margin: 1rem 2rem 0;
+  padding: 0.65rem 1rem;
+  background: #fef2f2;
+  border: 1px solid #fca5a5;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  color: #b91c1c;
+}
+
+/* ── Form wrapper ────────────────────────────────────────────────────────── */
+.form {
+  padding: 1.75rem 2rem 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+}
+
+/* ── 2-column input grid ─────────────────────────────────────────────────── */
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.1rem 1.5rem;
+}
+
+/* Utility: make a field span the full 2-column width */
+.colSpan2 {
+  grid-column: 1 / -1;
+}
+
+/* ── Individual field wrapper ────────────────────────────────────────────── */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+/* ── Labels ──────────────────────────────────────────────────────────────── */
+.label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #475569;
+  letter-spacing: 0.01em;
+}
+
+/* ── Text / number / date inputs ─────────────────────────────────────────── */
+.input {
+  width: 100%;
+  padding: 0.6rem 0.85rem;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  color: #1e293b;
+  background: #fff;
+  transition:
+    border-color 0.18s ease,
+    box-shadow 0.18s ease;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.input:focus {
+  border-color: var(--color-light-accent);
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.18);
+}
+
+/* Error state */
+.inputError {
+  border-color: #f87171;
+}
+
+.inputError:focus {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15);
+}
+
+/* ── Select dropdowns ────────────────────────────────────────────────────── */
+.select {
+  width: 100%;
+  padding: 0.6rem 0.85rem;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  color: #1e293b;
+  background: #fff;
+  cursor: pointer;
+  transition:
+    border-color 0.18s ease,
+    box-shadow 0.18s ease;
+  outline: none;
+  appearance: none;
+  /* Custom chevron icon */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2.5'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  padding-right: 2.2rem;
+  box-sizing: border-box;
+}
+
+.select:focus {
+  border-color: var(--color-light-accent);
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.18);
+}
+
+/* ── Inline field error message ──────────────────────────────────────────── */
+.errorMsg {
+  font-size: 0.73rem;
+  color: #dc2626;
+  margin-top: 0.1rem;
+}
+
+/* ── Action buttons row ──────────────────────────────────────────────────── */
+.actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding-top: 0.25rem;
+  border-top: 1px solid #f1f5f9;
+}
+
+/* Cancel — ghost / outline style */
+.btnCancel {
+  padding: 0.6rem 1.4rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  background: transparent;
+  border: 1.5px solid var(--color-ocean-text);
+  color: var(--color-ocean-text);
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+
+.btnCancel:hover:not(:disabled) {
+  background: #e0f2fe;
+}
+
+.btnCancel:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/*
+ * btnSubmit — pairs with the GLOBAL "btn-primary" class from index.css.
+ * index.css provides:  background-color: var(--color-light-accent); color: #fff;
+ * This class adds shape, sizing, and the disabled state.
+ */
+.btnSubmit {
+  padding: 0.6rem 1.6rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    opacity 0.15s ease;
+}
+
+.btnSubmit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ── Responsive: collapse to 1 column on narrow screens ─────────────────── */
+@media (max-width: 560px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+
+  .colSpan2 {
+    grid-column: 1;
+  }
+
+  .form {
+    padding: 1.25rem 1rem 1.5rem;
+  }
+
+  .cardHeader {
+    padding: 1.2rem 1rem 1rem;
+  }
+}
+
+/* ── Section divider title ───────────────────────────────────────────────── */
+.sectionTitle {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: var(--color-ocean-text);
+  padding-bottom: 0.5rem;
+  border-bottom: 1.5px solid #e0f2fe;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.sectionHint {
+  font-size: 0.68rem;
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+  color: #94a3b8;
+}
+
+/* ── Lessons list ────────────────────────────────────────────────────────── */
+.lessonsList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+/* One lesson row: badge + three fields + remove button */
+.lessonRow {
+  display: grid;
+  /* badge | date | start | end | remove */
+  grid-template-columns: 1.6rem 1fr 1fr 1fr auto;
+  align-items: flex-end;
+  gap: 0.75rem;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 0.7rem 0.9rem;
+}
+
+/* Lesson number badge */
+.lessonBadge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--color-ocean-text);
+  padding-bottom: 0.5rem; /* align with input bottom */
+  white-space: nowrap;
+}
+
+/* Field wrapper inside a lesson row */
+.lessonField {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+/* ── Remove lesson button ─────────────────────────────────────────────────── */
+.btnRemoveLesson {
+  background: transparent;
+  border: 1.5px solid #fca5a5;
+  border-radius: 6px;
+  color: #ef4444;
+  cursor: pointer;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.3rem 0.45rem;
+  line-height: 1;
+  transition:
+    background 0.14s ease,
+    color 0.14s ease;
+  /* align with input bottom */
+  margin-bottom: 0.1rem;
+}
+
+.btnRemoveLesson:hover {
+  background: #fef2f2;
+}
+
+/* ── Add Lesson button ───────────────────────────────────────────────────── */
+.btnAddLesson {
+  align-self: flex-start;
+  background: transparent;
+  border: 1.5px dashed var(--color-light-accent);
+  border-radius: 8px;
+  color: var(--color-ocean-text);
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-weight: 600;
+  padding: 0.45rem 1rem;
+  transition: background 0.15s ease;
+}
+
+.btnAddLesson:hover:not(:disabled) {
+  background: #e0f2fe;
+}
+
+.btnAddLesson:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+@media (max-width: 640px) {
+  .lessonRow {
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto;
+  }
+
+  .lessonBadge {
+    grid-column: 1 / -1;
+    padding-bottom: 0;
+  }
+
+  .btnRemoveLesson {
+    grid-column: 1 / -1;
+    justify-self: start;
+  }
+}

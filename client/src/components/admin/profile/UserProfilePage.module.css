@@ -1,0 +1,409 @@
+/* ─── UserProfilePage.module.css ─────────────────────────────────────────── */
+/* Colours follow the project design system (index.css CSS vars):             */
+/*   --color-bg-white      #ffffff                                            */
+/*   --color-ocean-text    #0284c7                                            */
+/*   --color-light-accent  #38bdf8                                            */
+/*   page bg               #f0f9ff  (same as AdminLayout .content)            */
+/*   dark text             #0f172a                                            */
+/*   muted text            #64748b                                            */
+/* ─────────────────────────────────────────────────────────────────────────── */
+
+/* Page wrapper */
+.page {
+  padding: 2rem 2.5rem;
+  min-height: 100%;
+  background: #f0f9ff;
+}
+
+/* Header */
+.header {
+  margin-bottom: 1.5rem;
+}
+
+.title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--color-ocean-text, #0284c7);
+  margin: 0 0 0.25rem;
+}
+
+.subtitle {
+  font-size: 0.85rem;
+  color: #64748b;
+  margin: 0;
+}
+
+/* Card */
+.card {
+  background: #fff;
+  border-radius: 14px;
+  border: 1px solid rgba(56, 189, 248, 0.18);
+  padding: 2rem;
+  max-width: 860px;
+}
+
+/* Card header row */
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1.75rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid rgba(56, 189, 248, 0.15);
+}
+
+.cardHeaderLeft {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.userName {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--color-ocean-text, #0284c7);
+  margin: 0;
+}
+
+.roleBadge {
+  display: inline-block;
+  background: rgba(56, 189, 248, 0.12);
+  color: var(--color-ocean-text, #0284c7);
+  font-size: 0.72rem;
+  font-weight: 600;
+  border-radius: 999px;
+  padding: 0.2rem 0.65rem;
+  letter-spacing: 0.02em;
+  width: fit-content;
+}
+
+.userIdBadge {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  border-radius: 10px;
+  padding: 0.5rem 0.9rem;
+  gap: 0.15rem;
+}
+
+.userIdLabel {
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: #64748b;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.userIdValue {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--color-ocean-text, #0284c7);
+}
+
+/* Fields grid – 2 columns */
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.85rem;
+}
+
+/* Single field row */
+.field {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  background: #fff;
+  border: 1px solid rgba(56, 189, 248, 0.18);
+  border-radius: 10px;
+  padding: 0.75rem 0.9rem;
+  position: relative;
+  transition: border-color 0.18s;
+  min-height: 64px;
+}
+
+.field:hover {
+  border-color: rgba(56, 189, 248, 0.5);
+}
+
+.field:hover .pencilBtn {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.fieldLocked {
+  background: #f0f9ff;
+}
+
+/* Icon circle */
+.fieldIconCircle {
+  width: 38px;
+  height: 38px;
+  min-width: 38px;
+  border-radius: 50%;
+  background: rgba(56, 189, 248, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-ocean-text, #0284c7);
+}
+
+/* Text content */
+.fieldContent {
+  display: flex;
+  flex-direction: column;
+  gap: 0.18rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.fieldLabel {
+  font-size: 0.67rem;
+  font-weight: 600;
+  color: #64748b;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.lockedBadge {
+  font-size: 0.6rem;
+  font-weight: 600;
+  color: #94a3b8;
+  background: rgba(56, 189, 248, 0.08);
+  border-radius: 4px;
+  padding: 0.05rem 0.3rem;
+  letter-spacing: 0.04em;
+}
+
+.fieldValue {
+  font-size: 0.95rem;
+  color: #0f172a;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.fieldError {
+  font-size: 0.72rem;
+  color: #dc2626;
+  margin-top: 0.1rem;
+}
+
+/* Edit row */
+.editRow {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.editInput {
+  font-size: 0.9rem;
+  padding: 0.3rem 0.55rem;
+  border: 1.5px solid var(--color-light-accent, #38bdf8);
+  border-radius: 6px;
+  outline: none;
+  background: #f0f9ff;
+  color: #0f172a;
+  min-width: 0;
+  flex: 1;
+  max-width: 200px;
+}
+
+.editInput:focus {
+  border-color: var(--color-ocean-text, #0284c7);
+  background: #fff;
+}
+
+.saveBtn {
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 0.28rem 0.65rem;
+  background: var(--color-ocean-text, #0284c7);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+
+.saveBtn:hover:not(:disabled) {
+  background: var(--color-button-hover, #0ea5e9);
+}
+
+.saveBtn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.cancelBtn {
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 0.28rem 0.5rem;
+  background: transparent;
+  color: #64748b;
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  border-radius: 6px;
+  cursor: pointer;
+  transition:
+    color 0.15s,
+    border-color 0.15s;
+}
+
+.cancelBtn:hover {
+  color: #dc2626;
+  border-color: #dc2626;
+}
+
+/* Pencil button */
+.pencilBtn {
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  transform: scale(0.85) translateY(-50%);
+  opacity: 0;
+  background: rgba(56, 189, 248, 0.12);
+  border: none;
+  border-radius: 6px;
+  padding: 0.3rem;
+  cursor: pointer;
+  color: var(--color-ocean-text, #0284c7);
+  transition:
+    opacity 0.18s,
+    transform 0.18s,
+    background 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform-origin: top center;
+}
+
+/* Override stacking of translateY and scale */
+.field:hover .pencilBtn {
+  opacity: 1;
+  transform: translateY(-50%) scale(1);
+}
+
+.pencilBtn:hover {
+  background: rgba(56, 189, 248, 0.25);
+}
+
+/* ── Password field expansion ─────────────────────────────────────────────── */
+
+/* When the password field is in edit mode, span both columns */
+.fieldEditing {
+  grid-column: 1 / -1;
+  align-items: flex-start;
+}
+
+.pwEditBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  width: 100%;
+}
+
+.pwInputRow {
+  display: flex;
+  width: 100%;
+}
+
+.pwInputRow .editInput {
+  max-width: 100%;
+  width: 100%;
+}
+
+/* Red border when input has an error */
+.editInputError {
+  border-color: #d9534f !important;
+  background: #fff5f5 !important;
+}
+
+/* Live requirement list */
+.pwRequirements {
+  list-style: none;
+  margin: 0;
+  padding: 0.5rem 0.6rem;
+  background: #f8f9fa;
+  border: 1px solid #e8f0f8;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.28rem;
+}
+
+.pwRequirements li {
+  font-size: 0.78rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.reqDot {
+  font-size: 0.75rem;
+  font-weight: 700;
+  width: 14px;
+  text-align: center;
+}
+
+.reqOk {
+  color: #228b55;
+}
+
+.reqFail {
+  color: #d9534f;
+}
+
+/* Mismatch error */
+.pwMismatch {
+  font-size: 0.78rem;
+  color: #d9534f;
+  font-weight: 500;
+}
+
+/* Password action buttons row */
+.pwActions {
+  display: flex;
+  gap: 0.4rem;
+  margin-top: 0.15rem;
+}
+
+/* Loading */
+.loadingWrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  color: #7a92a8;
+}
+
+.spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid #c8dff0;
+  border-top-color: #1a6fa8;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Responsive – stack to 1 column on narrow screens */
+@media (max-width: 640px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+
+  .page {
+    padding: 1.25rem 1rem;
+  }
+}

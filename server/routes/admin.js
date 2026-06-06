@@ -18,16 +18,6 @@ const {
   validateAddLessonsToExistingCourse,
   validateInstructorLessonConflictForExistingCourse,
   validateLessonConflictInSameCourse,
-  validateVatUpdate,
-  validateCourseExists,
-  validateLessonExists,
-  validateLessonCourseExists,
-  validateUpdateLessonDetails,
-  validateUpdatedLessonNoConflict,
-  validateUpdatedLessonDateOrder,
-  validateCourseCanBeEdited,
-  validateUpdateCourseDetails,
-  validateUpdatedCourseDatesIncludeLessons,
 } = require("../validations/adminValidations");
 const { checkUserExists } = require("../validations/usersValidations");
 
@@ -160,6 +150,17 @@ router.post(
   },
 );
 
+// GET all instructors (users with role = 'instructor')
+// url: /api/admin/instructors
+router.get("/instructors", requireLogin, requireAdmin, (req, res) => {
+  adminQ.getInstructors((err, rows) => {
+    if (err) {
+      return res.status(500).json({ success: false, message: err.message });
+    }
+    res.json({ success: true, instructors: rows });
+  });
+});
+
 // GET all courses
 // url: /api/admin/courses
 router.get("/courses", requireAdmin, (req, res) => {
@@ -174,6 +175,24 @@ router.get("/courses", requireAdmin, (req, res) => {
     res.json({
       success: true,
       courses: rows,
+    });
+  });
+});
+
+// GET all courses with nested lessons and attendance
+// url: /api/admin/courses/details
+router.get("/courses/details", requireLogin, requireAdmin, (req, res) => {
+  courseQ.getCoursesWithDetails((err, courses) => {
+    if (err) {
+      return res.status(500).json({
+        success: false,
+        message: err.message,
+      });
+    }
+
+    res.json({
+      success: true,
+      courses,
     });
   });
 });
@@ -246,107 +265,6 @@ router.post(
         message: "Lessons added successfully",
       });
     });
-  },
-);
-
-// PUT update VAT for all courses
-// url: /api/admin/courses/vat
-router.put("/courses/vat", requireAdmin, validateVatUpdate, (req, res) => {
-  const vatPercent = req.vat_percent;
-
-  adminQ.updateCoursesVat(vatPercent, (err, result) => {
-    if (err) {
-      return res.status(500).json({
-        success: false,
-        message: err.message,
-      });
-    }
-
-    res.json({
-      success: true,
-      message: "VAT updated successfully for all courses",
-    });
-  });
-});
-
-// GET course registrations
-// url: /api/admin/courses/:course_id/registrations
-router.get(
-  "/courses/:course_id/registrations",
-  requireAdmin,
-  validateCourseExists,
-  (req, res) => {
-    const courseId = req.params.course_id;
-
-    adminQ.getCourseRegistrations(courseId, (err, rows) => {
-      if (err) {
-        return res.status(500).json({
-          success: false,
-          message: err.message,
-        });
-      }
-
-      res.json({
-        success: true,
-        registrations: rows,
-      });
-    });
-  },
-);
-
-// PATCH lesson details (update lesson details - not all fields are required)
-// url: /api/admin/lessons/ :lesson_id
-router.patch(
-  "/lessons/:lesson_id",
-  requireAdmin,
-  validateLessonExists,
-  validateLessonCourseExists,
-  validateUpdateLessonDetails,
-  validateUpdatedLessonNoConflict,
-  validateUpdatedLessonDateOrder,
-  (req, res) => {
-    adminQ.updateLesson(req.params.lesson_id, req.updatedLesson, (err) => {
-      if (err) {
-        return res.status(500).json({
-          success: false,
-          message: err.message,
-        });
-      }
-
-      res.json({
-        success: true,
-        message: "Lesson updated successfully",
-      });
-    });
-  },
-);
-
-// PATCH update course details
-// url: /api/admin/courses/:course_id
-router.patch(
-  "/courses/:course_id",
-  requireAdmin,
-  validateCourseCanBeEdited,
-  validateUpdateCourseDetails,
-  validateUpdatedCourseDatesIncludeLessons,
-  (req, res) => {
-    adminQ.updateCourseDetails(
-      req.params.course_id,
-      req.updatedCourse,
-      (err) => {
-        if (err) {
-          return res.status(500).json({
-            success: false,
-            message: err.message,
-          });
-        }
-
-        res.json({
-          success: true,
-          message: "Course details updated successfully",
-        });
-      },
-    );
   },
 );
 

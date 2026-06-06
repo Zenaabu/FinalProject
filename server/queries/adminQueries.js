@@ -1,5 +1,5 @@
 // queries/adminQueries.js
-const db = require("../db/dbSingleton");
+const db = require("../DB/dbSingleton");
 
 // a function that gets a user_id (of the admin)
 // it returns all the users from DB without the user with user_id (without admin)
@@ -152,79 +152,6 @@ function getLessonsByCourseId(courseId, cb) {
   );
 }
 
-// a function that gets a vatPercent and updates it for all the courses in the DB
-function updateCoursesVat(vatPercent, cb) {
-  const conn = db.getConnection();
-
-  conn.query(
-    `UPDATE courses
-    SET vat_percent = ?`,
-    [vatPercent],
-    cb,
-  );
-}
-
-// a function that gets all registered users in a specific course
-function getCourseRegistrations(courseId, cb) {
-  const conn = db.getConnection();
-  conn.query(
-    ` SELECT 
-      u.user_id,
-      u.first_name,
-      u.last_name,
-      u.email,
-      u.phone,
-      r.payment_date
-    FROM register r
-    JOIN users u
-      ON r.user_id = u.user_id
-    WHERE r.course_id = ?
-    ORDER BY r.payment_date DESC`,
-    [courseId],
-    cb,
-  );
-}
-
-// a function that updates lesson details dynamically
-function updateLesson(lessonId, updatedLesson, cb) {
-  const conn = db.getConnection();
-
-  conn.query(
-    `UPDATE lessons
-    SET ?
-    WHERE lesson_id = ?`,
-    [updatedLesson, lessonId],
-    cb,
-  );
-}
-
-// a function that gets a lessonId and returns the lesson with same id
-function findLessonById(lessonId, cb) {
-  const conn = db.getConnection();
-
-  conn.query(
-    `SELECT *
-     FROM lessons
-     WHERE lesson_id = ?`,
-    [lessonId],
-    cb,
-  );
-}
-
-// a function that gets the course id and the details
-// then update course details dynamically
-function updateCourseDetails(courseId, updatedCourse, cb) {
-  const conn = db.getConnection();
-
-  conn.query(
-    `UPDATE courses
-     SET ?
-     WHERE course_id = ?`,
-    [updatedCourse, courseId],
-    cb,
-  );
-}
-
 module.exports = {
   getAllUsers,
   updateUserRole,
@@ -235,9 +162,4 @@ module.exports = {
   getMaxLessonNumber,
   getInstructorLessonsInRange,
   getLessonsByCourseId,
-  updateCoursesVat,
-  getCourseRegistrations,
-  updateLesson,
-  findLessonById,
-  updateCourseDetails,
 };

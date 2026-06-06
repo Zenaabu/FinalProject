@@ -1,0 +1,40 @@
+/* ============================================================
+   WeeklyAttendance.module.css
+   ============================================================ */
+
+.card {
+  background: #fff;
+  border-radius: 14px;
+  padding: 1.25rem 1.5rem 1rem;
+  box-shadow:
+    0 1px 10px rgba(2, 132, 199, 0.08),
+    0 1px 2px rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(56, 189, 248, 0.12);
+}
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-ocean-text);
+  margin: 0;
+}
+
+.period {
+  font-size: 0.78rem;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.svg {
+  width: 100%;
+  height: auto;
+  display: block;
+  overflow: visible;
+}

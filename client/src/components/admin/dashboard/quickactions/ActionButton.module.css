@@ -1,0 +1,78 @@
+/* ============================================================
+   ActionButton.module.css
+   ============================================================ */
+
+/* ── Base button ─────────────────────────────────────────────────────────── */
+.btn {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.85rem 1.1rem;
+  border: none;
+  border-radius: 11px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-align: left;
+  transition:
+    filter 0.15s ease,
+    transform 0.12s ease;
+}
+
+.btn:hover {
+  filter: brightness(1.07);
+  transform: translateY(-1px);
+}
+.btn:active {
+  transform: translateY(0);
+}
+
+/* ── Icon wrapper ────────────────────────────────────────────────────────── */
+.iconWrap {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  /* background & color are set per-variant below */
+}
+
+/* ── Label ───────────────────────────────────────────────────────────────── */
+.label {
+  flex: 1;
+}
+
+/* ── Colour variants ─────────────────────────────────────────────────────── */
+
+/* primary — light sky-blue button, solid accent icon box */
+.primary {
+  background: rgba(56, 189, 248, 0.13);
+  color: var(--color-ocean-text);
+}
+.primary .iconWrap {
+  background: var(--color-light-accent);
+  color: #fff;
+}
+
+/* dark — soft navy-blue button, ocean icon box */
+.dark {
+  background: rgba(2, 132, 199, 0.1);
+  color: var(--color-ocean-text);
+}
+.dark .iconWrap {
+  background: var(--color-ocean-text);
+  color: #fff;
+}
+
+/* success — soft green button, solid green icon box */
+.success {
+  background: rgba(34, 197, 94, 0.12);
+  color: #15803d;
+}
+.success .iconWrap {
+  background: #22c55e;
+  color: #fff;
+}
