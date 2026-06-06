@@ -1,12 +1,11 @@
-// ─── AttendanceTable.jsx ──────────────────────────────────────────────────────
+﻿// --- AttendanceTable.jsx ---
 // Rendered inside an expanded LessonAccordionItem.
-// Read-only roster — admin can see present / absent status only.
-// ──────────────────────────────────────────────────────────────────────────────
+// Shows every student who has a row in the `attend` table for this lesson.
+// ---
 
 import styles from "./AttendanceTable.module.css";
 
 function StatusBadge({ status }) {
-  // Normalise any legacy "late" value to "absent"
   const display = status === "late" ? "absent" : status;
   return (
     <span className={`${styles.badge} ${styles[`badge_${display}`]}`}>
@@ -16,6 +15,18 @@ function StatusBadge({ status }) {
 }
 
 function AttendanceTable({ students }) {
+  // Guard: undefined / null -> empty array
+  const roster = students ?? [];
+
+  // Empty state: shown when no rows exist in `attend` for this lesson yet
+  if (roster.length === 0) {
+    return (
+      <div className={styles.emptyState}>
+        <p className={styles.emptyTitle}>No attendance records for this lesson yet.</p>
+      </div>
+    );
+  }
+
   return (
     <div className={styles.tableWrap}>
       <table className={styles.table}>
@@ -27,7 +38,7 @@ function AttendanceTable({ students }) {
           </tr>
         </thead>
         <tbody>
-          {students.map((s) => (
+          {roster.map((s) => (
             <tr key={s.user_id} className={styles.row}>
               <td className={styles.nameCell}>{s.name}</td>
               <td className={styles.emailCell}>{s.email}</td>

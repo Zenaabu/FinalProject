@@ -130,7 +130,13 @@ function getCoursesWithDetails(cb) {
 
       const courseIds = courses.map((c) => c.course_id);
 
-      // Step 2: lessons + student attendance for all those courses
+      // Step 2: lessons + student attendance for all those courses.
+      //
+      // IMPORTANT — join order:
+      //   Start from `attend` (the source of truth for attendance records).
+      //   Do NOT go through `register` first: a student may be in `attend`
+      //   without being in `register`, and the old cross-join produced every
+      //   registered student on every lesson regardless of actual attendance.
       conn.query(
         `SELECT
            l.lesson_id,
@@ -139,17 +145,15 @@ function getCoursesWithDetails(cb) {
            DATE_FORMAT(l.lesson_date, '%Y-%m-%d') AS date,
            l.start_time,
            l.end_time,
-           u.user_id,
+           a.user_id,
            CONCAT(u.first_name, ' ', u.last_name) AS name,
            u.email,
            CASE WHEN a.attended = 1 THEN 'present' ELSE 'absent' END AS attendance_status
          FROM lessons l
-         LEFT JOIN register reg ON l.course_id  = reg.course_id
-         LEFT JOIN users    u   ON reg.user_id   = u.user_id
-         LEFT JOIN attend   a   ON a.lesson_id   = l.lesson_id
-                                AND a.user_id    = u.user_id
+         LEFT JOIN attend a ON a.lesson_id = l.lesson_id
+         LEFT JOIN users  u ON u.user_id   = a.user_id
          WHERE l.course_id IN (?)
-         ORDER BY l.course_id, l.lesson_number`,
+         ORDER BY l.course_id, l.lesson_number, u.last_name, u.first_name`,
         [courseIds],
         (err2, rows) => {
           if (err2) return cb(err2);

@@ -164,7 +164,7 @@ function LessonAccordionItem({ lesson, index }) {
       {/* ── Expandable attendance panel ────────────────────────────── */}
       {isExpanded && (
         <div className={styles.panel}>
-          <AttendanceTable students={lesson.students} />
+          <AttendanceTable students={lesson.students ?? []} />
         </div>
       )}
     </div>
