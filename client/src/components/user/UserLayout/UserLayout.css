@@ -1,0 +1,11 @@
+.user-layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: #f4fafd;
+}
+
+.user-layout__content {
+  flex: 1;
+  padding: 32px;
+}

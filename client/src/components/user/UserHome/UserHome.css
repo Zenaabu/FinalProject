@@ -1,0 +1,20 @@
+.user-home {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 32px;
+  text-align: center;
+}
+
+.user-home__title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--color-ocean-text);
+  margin-bottom: 12px;
+}
+
+.user-home__subtitle {
+  font-size: 1.1rem;
+  color: var(--color-light-accent);
+}
