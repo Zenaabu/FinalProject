@@ -82,6 +82,7 @@ export default function LoginForm({ styles, viewState, setViewState }) {
 
       if (data.success) {
         toast.success(data.message || "Login successful!");
+        sessionStorage.setItem("user", JSON.stringify(data.user));
         if (data.user?.role === "admin") {
           navigate("/admin");
         } else if (data.user?.role === "user") {
