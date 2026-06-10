@@ -2,9 +2,10 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  padding: 80px 32px;
+  padding: 48px 32px;
   text-align: center;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .user-home__title {

@@ -1,0 +1,100 @@
+/* ============================================================
+   WeatherWidget.css — Blue Mars User Portal
+   Blue gradient card | Top: recommendation | Bottom: stat row
+   ============================================================ */
+
+.weather-widget {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 90%;
+  max-width: 1000px;
+  border-radius: 16px;
+  overflow: hidden;
+  background: linear-gradient(135deg, #0284c7 0%, #38bdf8 100%);
+  box-shadow: 0 8px 32px rgba(2, 132, 199, 0.25);
+  font-family: "Segoe UI", system-ui, sans-serif;
+  padding: 24px;
+  box-sizing: border-box;
+}
+
+/* ── Top: Recommendation ── */
+.weather-widget__recommendation {
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(6px);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 10px;
+  padding: 16px 20px;
+  text-align: center;
+}
+
+.weather-widget__rec-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0 0 6px 0;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.weather-widget__rec-text {
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.92);
+  line-height: 1.6;
+  margin: 0;
+  font-weight: 500;
+}
+
+/* ── Bottom: Data Row ── */
+.weather-widget__data-row {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  gap: 15px;
+}
+
+.weather-widget__stat-box {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 18px 16px;
+  background: rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 12px;
+  text-align: center;
+  transition: background 0.2s ease;
+}
+
+.weather-widget__stat-box:hover {
+  background: rgba(255, 255, 255, 0.28);
+}
+
+.weather-widget__icon {
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.weather-widget__value {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: #ffffff;
+  line-height: 1;
+}
+
+.weather-widget__label {
+  font-size: 0.78rem;
+  color: rgba(255, 255, 255, 0.8);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* ── Responsive ── */
+@media (max-width: 480px) {
+  .weather-widget__data-row {
+    flex-direction: column;
+  }
+}
