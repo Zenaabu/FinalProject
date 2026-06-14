@@ -85,7 +85,7 @@ function getAllCourses(cb) {
   );
 }
 
-// get all courses of specific instructor
+// a function that get all courses of specific instructor
 function getCoursesByInstructorId(user_id, cb) {
   const conn = db.getConnection();
 
@@ -99,118 +99,16 @@ function getCoursesByInstructorId(user_id, cb) {
   );
 }
 
-// get all courses with nested lessons and per-lesson attendance roster
-function getCoursesWithDetails(cb) {
+// a function that deactivate courses that already ended
+function deactivateExpiredCourses(cb) {
   const conn = db.getConnection();
 
-  // Step 1: all active courses with instructor name + enrollment count
   conn.query(
-    `SELECT
-       c.course_id,
-       c.description                          AS title,
-       c.level,
-       c.capacity,
-       c.total_lessons,
-       c.price,
-       c.vat_percent,
-       c.is_active,
-       DATE_FORMAT(c.start_date, '%Y-%m-%d')  AS start_date,
-       DATE_FORMAT(c.end_date,   '%Y-%m-%d')  AS end_date,
-       CONCAT(u.first_name, ' ', u.last_name) AS instructor,
-       COUNT(r.user_id)                       AS enrolled
-     FROM courses c
-     JOIN  users    u ON c.user_id    = u.user_id
-     LEFT JOIN register r ON c.course_id = r.course_id
-     WHERE c.is_active = 1
-     GROUP BY c.course_id
-     ORDER BY c.start_date DESC`,
-    (err, courses) => {
-      if (err) return cb(err);
-      if (courses.length === 0) return cb(null, []);
-
-      const courseIds = courses.map((c) => c.course_id);
-
-      // Step 2: lessons + student attendance for all those courses.
-      //
-      // IMPORTANT — join order:
-      //   Start from `attend` (the source of truth for attendance records).
-      //   Do NOT go through `register` first: a student may be in `attend`
-      //   without being in `register`, and the old cross-join produced every
-      //   registered student on every lesson regardless of actual attendance.
-      conn.query(
-        `SELECT
-           l.lesson_id,
-           l.course_id,
-           l.lesson_number,
-           DATE_FORMAT(l.lesson_date, '%Y-%m-%d') AS date,
-           l.start_time,
-           l.end_time,
-           a.user_id,
-           CONCAT(u.first_name, ' ', u.last_name) AS name,
-           u.email,
-           CASE WHEN a.attended = 1 THEN 'present' ELSE 'absent' END AS attendance_status
-         FROM lessons l
-         LEFT JOIN attend a ON a.lesson_id = l.lesson_id
-         LEFT JOIN users  u ON u.user_id   = a.user_id
-         WHERE l.course_id IN (?)
-         ORDER BY l.course_id, l.lesson_number, u.last_name, u.first_name`,
-        [courseIds],
-        (err2, rows) => {
-          if (err2) return cb(err2);
-
-          // Build nested structure: course_id → lesson_id → lesson+students
-          const lessonMap = {};
-          for (const row of rows) {
-            if (!lessonMap[row.course_id]) lessonMap[row.course_id] = {};
-
-            if (!lessonMap[row.course_id][row.lesson_id]) {
-              lessonMap[row.course_id][row.lesson_id] = {
-                lesson_id: row.lesson_id,
-                lesson_number: row.lesson_number,
-                date: row.date,
-                start_time: row.start_time,
-                end_time: row.end_time,
-                time: `${row.start_time}–${row.end_time}`,
-                students: [],
-              };
-            }
-
-            // only push if the student row is real (LEFT JOIN can produce nulls)
-            if (row.user_id) {
-              lessonMap[row.course_id][row.lesson_id].students.push({
-                user_id: row.user_id,
-                name: row.name,
-                email: row.email,
-                attendance_status: row.attendance_status,
-              });
-            }
-          }
-
-          const today = new Date().toISOString().split("T")[0];
-
-          const result = courses.map((course) => {
-            const lessons = Object.values(
-              lessonMap[course.course_id] || {},
-            ).sort((a, b) => a.lesson_number - b.lesson_number);
-
-            const schedule =
-              lessons.length > 0
-                ? `${lessons[0].start_time}–${lessons[0].end_time}`
-                : "—";
-
-            const status = !course.is_active
-              ? "inactive"
-              : course.start_date > today
-                ? "upcoming"
-                : "active";
-
-            return { ...course, status, schedule, lessons };
-          });
-
-          cb(null, result);
-        },
-      );
-    },
+    `UPDATE courses
+     SET is_active = 0
+     WHERE end_date < CURDATE()
+       AND is_active = 1`,
+    cb,
   );
 }
 
@@ -220,5 +118,5 @@ module.exports = {
   addCourse,
   getAllCourses,
   getCoursesByInstructorId,
-  getCoursesWithDetails,
+  deactivateExpiredCourses,
 };
