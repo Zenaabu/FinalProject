@@ -163,7 +163,7 @@ router.post(
 // GET all courses
 // url: /api/admin/courses
 router.get("/courses", requireAdmin, (req, res) => {
-  courseQ.getAllCourses((err, rows) => {
+  courseQ.deactivateExpiredCourses((err) => {
     if (err) {
       return res.status(500).json({
         success: false,
@@ -171,9 +171,18 @@ router.get("/courses", requireAdmin, (req, res) => {
       });
     }
 
-    res.json({
-      success: true,
-      courses: rows,
+    courseQ.getAllCourses((err, rows) => {
+      if (err) {
+        return res.status(500).json({
+          success: false,
+          message: err.message,
+        });
+      }
+
+      res.json({
+        success: true,
+        courses: rows,
+      });
     });
   });
 });

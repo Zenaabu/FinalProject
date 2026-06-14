@@ -85,7 +85,7 @@ function getAllCourses(cb) {
   );
 }
 
-// get all courses of specific instructor
+// a function that get all courses of specific instructor
 function getCoursesByInstructorId(user_id, cb) {
   const conn = db.getConnection();
 
@@ -99,10 +99,24 @@ function getCoursesByInstructorId(user_id, cb) {
   );
 }
 
+// a function that deactivate courses that already ended
+function deactivateExpiredCourses(cb) {
+  const conn = db.getConnection();
+
+  conn.query(
+    `UPDATE courses
+     SET is_active = 0
+     WHERE end_date < CURDATE()
+       AND is_active = 1`,
+    cb,
+  );
+}
+
 module.exports = {
   findCourseById,
   checkDuplicateCourse,
   addCourse,
   getAllCourses,
   getCoursesByInstructorId,
+  deactivateExpiredCourses,
 };
