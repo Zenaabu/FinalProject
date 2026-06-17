@@ -2,10 +2,15 @@ const express = require("express");
 const router = express.Router();
 const axios = require("axios");
 
-const { validateUpdateMyDetails } = require("../validations/usersValidations");
+const {
+  validateUpdateMyDetails,
+  validateCanCreatePayPalOrder,
+} = require("../validations/usersValidations");
 const { requireLogin } = require("../validations/authValidation");
 
 const userQ = require("../queries/usersQueries");
+const paypalService = require("../services/paypalService");
+const courseQ = require("../queries/courseQueries");
 
 // PUT user details
 // url: /api/user/me
@@ -95,5 +100,143 @@ router.get("/weather", requireLogin, async (req, res) => {
     });
   }
 });
+
+// POST create PayPal order
+// url: /api/users/courses/:course_id/paypal/create-order
+router.post(
+  "/courses/:course_id/paypal/create-order",
+  requireLogin,
+  validateCanCreatePayPalOrder,
+  async (req, res) => {
+    try {
+      const { course_id } = req.params;
+      const user_id = req.session.user.user_id;
+      const course = req.course;
+      const order = await paypalService.createOrder(course.price, course_id);
+      const approveLink = order.links.find(
+        (link) => link.rel === "approve",
+      )?.href;
+
+      userQ.createCourseReservation(
+        user_id,
+        course_id,
+        order.id,
+        (err, result) => {
+          if (err) {
+            return res.status(500).json({
+              success: false,
+              message: err.message,
+            });
+          }
+
+          res.status(201).json({
+            success: true,
+            order_id: order.id,
+            reservation_id: result.insertId,
+            approve_link: approveLink,
+          });
+        },
+      );
+    } catch (err) {
+      res.status(500).json({
+        success: false,
+        message: err.message,
+      });
+    }
+  },
+);
+
+// POST capture PayPal order
+// url: /api/users/courses/:course_id/paypal/capture-order
+router.post(
+  "/courses/:course_id/paypal/capture-order",
+  requireLogin,
+  async (req, res) => {
+    const { course_id } = req.params;
+    const user_id = req.session.user.user_id;
+    const { order_id } = req.body;
+
+    if (!order_id) {
+      return res.status(400).json({
+        success: false,
+        message: "Order id is required",
+      });
+    }
+
+    userQ.findPendingReservation(
+      order_id,
+      user_id,
+      course_id,
+      async (err, rows) => {
+        if (err) {
+          return res.status(500).json({
+            success: false,
+            message: err.message,
+          });
+        }
+
+        if (!rows || rows.length === 0) {
+          return res.status(404).json({
+            success: false,
+            message: "Pending reservation not found or expired",
+          });
+        }
+
+        const reservation = rows[0];
+
+        try {
+          const capture = await paypalService.captureOrder(order_id);
+
+          if (capture.status !== "COMPLETED") {
+            userQ.failReservation(reservation.reservation_id, () => {});
+
+            return res.status(400).json({
+              success: false,
+              message: "Payment was not completed",
+            });
+          }
+
+          const receipt_number = capture.id;
+
+          userQ.registerUserToCourse(
+            user_id,
+            course_id,
+            receipt_number,
+            (err2) => {
+              if (err2) {
+                return res.status(500).json({
+                  success: false,
+                  message: err2.message,
+                });
+              }
+
+              userQ.approveReservation(reservation.reservation_id, (err3) => {
+                if (err3) {
+                  return res.status(500).json({
+                    success: false,
+                    message: err3.message,
+                  });
+                }
+
+                res.json({
+                  success: true,
+                  message: "Payment completed and user registered successfully",
+                  receipt_number,
+                });
+              });
+            },
+          );
+        } catch (captureErr) {
+          userQ.failReservation(reservation.reservation_id, () => {});
+
+          res.status(500).json({
+            success: false,
+            message: captureErr.message,
+          });
+        }
+      },
+    );
+  },
+);
 
 module.exports = router;
