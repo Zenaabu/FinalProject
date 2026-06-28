@@ -112,6 +112,19 @@ function deactivateExpiredCourses(cb) {
   );
 }
 
+// a function that change the status of old reservations to expired
+function expireOldReservations(cb) {
+  const conn = db.getConnection();
+
+  conn.query(
+    `UPDATE course_reservations
+     SET status = 'expired'
+     WHERE status = 'pending'
+       AND expires_at <= NOW()`,
+    cb,
+  );
+}
+
 module.exports = {
   findCourseById,
   checkDuplicateCourse,
@@ -119,4 +132,5 @@ module.exports = {
   getAllCourses,
   getCoursesByInstructorId,
   deactivateExpiredCourses,
+  expireOldReservations,
 };

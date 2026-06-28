@@ -198,34 +198,68 @@ router.post(
 
           const receipt_number = capture.id;
 
-          userQ.registerUserToCourse(
-            user_id,
-            course_id,
-            receipt_number,
-            (err2) => {
-              if (err2) {
+          userQ.isUserRegistered(user_id, course_id, (checkErr, regRows) => {
+            if (checkErr) {
+              return res.status(500).json({
+                success: false,
+                message: checkErr.message,
+              });
+            }
+
+            if (regRows.length > 0) {
+              userQ.failReservation(reservation.reservation_id, () => {});
+
+              return res.status(409).json({
+                success: false,
+                message: "You are already registered to this course",
+              });
+            }
+
+            userQ.getCourseTakenPlaces(course_id, (placeErr, placeRows) => {
+              if (placeErr) {
                 return res.status(500).json({
                   success: false,
-                  message: err2.message,
+                  message: placeErr.message,
                 });
               }
 
-              userQ.approveReservation(reservation.reservation_id, (err3) => {
-                if (err3) {
-                  return res.status(500).json({
-                    success: false,
-                    message: err3.message,
-                  });
-                }
+              const places = placeRows[0];
 
-                res.json({
-                  success: true,
-                  message: "Payment completed and user registered successfully",
-                  receipt_number,
+              const taken =
+                Number(places.registered_count) + Number(places.pending_count);
+
+              if (taken > Number(places.capacity)) {
+                userQ.failReservation(reservation.reservation_id, () => {});
+
+                return res.status(409).json({
+                  success: false,
+                  message: "Course is full",
                 });
-              });
-            },
-          );
+              }
+
+              userQ.completeCourseRegistration(
+                user_id,
+                course_id,
+                reservation.reservation_id,
+                receipt_number,
+                (err2) => {
+                  if (err2) {
+                    return res.status(500).json({
+                      success: false,
+                      message: err2.message,
+                    });
+                  }
+
+                  res.json({
+                    success: true,
+                    message:
+                      "Payment completed and user registered successfully",
+                    receipt_number,
+                  });
+                },
+              );
+            });
+          });
         } catch (captureErr) {
           userQ.failReservation(reservation.reservation_id, () => {});
 
