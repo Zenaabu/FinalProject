@@ -248,19 +248,54 @@ function failReservation(reservation_id, cb) {
   );
 }
 
-// a function that gets user_id, course_id, receipt_number
-// it registers a user to a course
-function registerUserToCourse(user_id, course_id, receipt_number, cb) {
+// a function that registers user to course and approves reservation
+// both actions happen together using transaction
+function completeCourseRegistration(
+  user_id,
+  course_id,
+  reservation_id,
+  receipt_number,
+  cb,
+) {
   const conn = db.getConnection();
 
-  conn.query(
-    `INSERT INTO register
-     (user_id, course_id, payment_date, receipt_number)
-     VALUES (?, ?, NOW(), ?)`,
-    [user_id, course_id, receipt_number],
-    cb,
-  );
+  conn.beginTransaction((err) => {
+    if (err) return cb(err);
+
+    conn.query(
+      `INSERT INTO register
+       (user_id, course_id, payment_date, receipt_number)
+       VALUES (?, ?, NOW(), ?)`,
+      [user_id, course_id, receipt_number],
+      (err1) => {
+        if (err1) {
+          return conn.rollback(() => cb(err1));
+        }
+
+        conn.query(
+          `UPDATE course_reservations
+           SET status = 'approved'
+           WHERE reservation_id = ?`,
+          [reservation_id],
+          (err2) => {
+            if (err2) {
+              return conn.rollback(() => cb(err2));
+            }
+
+            conn.commit((err3) => {
+              if (err3) {
+                return conn.rollback(() => cb(err3));
+              }
+
+              cb(null);
+            });
+          },
+        );
+      },
+    );
+  });
 }
+
 module.exports = {
   findUserById,
   findUserByEmail,
@@ -278,5 +313,5 @@ module.exports = {
   findPendingReservation,
   approveReservation,
   failReservation,
-  registerUserToCourse,
+  completeCourseRegistration,
 };
