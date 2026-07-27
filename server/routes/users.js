@@ -1,276 +1,193 @@
 const express = require("express");
 const router = express.Router();
-const axios = require("axios");
+const bcrypt = require("bcrypt");
 
+const { checkUserExists } = require("../validations/usersValidations");
 const {
-  validateUpdateMyDetails,
-  validateCanCreatePayPalOrder,
-} = require("../validations/usersValidations");
-const { requireLogin } = require("../validations/authValidation");
+  requireLogin,
+  validateSignup,
+} = require("../validations/authValidation");
 
 const userQ = require("../queries/usersQueries");
-const paypalService = require("../services/paypalService");
-const courseQ = require("../queries/courseQueries");
 
-// PUT user details
-// url: /api/user/me
-router.put("/me", requireLogin, validateUpdateMyDetails, (req, res) => {
-  const user_id = req.session.user.user_id;
+// ensure the logged-in user can only access their own data
+function requireSelf(req, res, next) {
+  if (req.params.user_id !== req.session.user.user_id) {
+    return res.status(403).json({ success: false, message: "Forbidden" });
+  }
+  next();
+}
 
-  userQ.updateMyDetails(user_id, req.updatedUser, (err) => {
+// POST signup
+// url: /api/users/signup
+router.post("/signup", validateSignup, (req, res) => {
+  const {
+    user_id,
+    first_name,
+    last_name,
+    email,
+    phone,
+    gender,
+    birth_date,
+    password,
+  } = req.body;
+
+  userQ.findUserById(user_id, async (err, rows) => {
     if (err) {
-      return res.status(500).json({
+      return res.status(500).json({ success: false, message: err.message });
+    }
+
+    // the user already exists
+    if (rows.length > 0) {
+      return res.status(409).json({
         success: false,
-        message: err.message,
+        message: "User already exists",
       });
     }
 
-    res.json({
-      success: true,
-      message: "Profile updated successfully",
-    });
+    try {
+      const saltRounds = 10;
+      const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+      const newUser = {
+        user_id,
+        first_name,
+        last_name,
+        email,
+        phone,
+        gender,
+        birth_date,
+        role: "user", // when signup by default the role is user
+        password: hashedPassword,
+        is_blocked: 0, // by default the user is not blocked (false=0)
+      };
+
+      userQ.createUser(newUser, (err2) => {
+        if (err2) {
+          return res.status(500).json({
+            success: false,
+            message: err2.message,
+          });
+        }
+
+        return res.status(201).json({
+          success: true,
+          message: "Signup success",
+        });
+      });
+    } catch (error) {
+      return res.status(500).json({
+        success: false,
+        message: error.message,
+      });
+    }
   });
 });
 
-// GET weather + sea details
-// url: /api/user/weather
-router.get("/weather", requireLogin, async (req, res) => {
-  try {
-    const latitude = 32.794;
-    const longitude = 34.9896;
+// GET user by ID
+// url: /api/users/:user_id
+router.get(
+  "/:user_id",
+  requireLogin,
+  requireSelf,
+  checkUserExists,
+  (req, res) => {
+    const { user_id } = req.params;
 
-    const weatherUrl =
-      `https://api.open-meteo.com/v1/forecast` +
-      `?latitude=${latitude}&longitude=${longitude}` +
-      `&current=temperature_2m,rain,wind_speed_10m` +
-      `&timezone=auto`;
-
-    const marineUrl =
-      `https://marine-api.open-meteo.com/v1/marine` +
-      `?latitude=${latitude}&longitude=${longitude}` +
-      `&hourly=wave_height` +
-      `&forecast_days=1` +
-      `&timezone=auto`;
-
-    console.log("Weather URL:", weatherUrl);
-    console.log("Marine URL:", marineUrl);
-
-    const weatherRes = await axios.get(weatherUrl);
-    const weatherData = weatherRes.data;
-
-    let waveHeight = null;
-
-    try {
-      const marineRes = await axios.get(marineUrl);
-      const marineData = marineRes.data;
-
-      if (
-        marineData.hourly &&
-        marineData.hourly.wave_height &&
-        marineData.hourly.wave_height.length > 0
-      ) {
-        waveHeight = marineData.hourly.wave_height[0];
+    userQ.findUserById(user_id, (err, rows) => {
+      if (err) {
+        return res.status(500).json({ success: false, message: err.message });
       }
-    } catch (marineErr) {
-      console.log("Marine API failed:");
-      console.log(marineErr.config?.url);
-      console.log(marineErr.message);
-      console.log(marineErr.response?.data);
+
+      const { password: _pw, ...safeUser } = rows[0];
+      return res.json({ success: true, user: safeUser });
+    });
+  },
+);
+
+// PUT user by ID
+// url: /api/users/:user_id
+router.put("/:user_id", requireLogin, requireSelf, async (req, res) => {
+  const { user_id } = req.params;
+  const { first_name, last_name, email, phone, gender, birth_date, password } =
+    req.body;
+
+  // If email is changing, enforce uniqueness
+  if (email && email !== req.session.user.email) {
+    const emailCheck = await new Promise((resolve) => {
+      userQ.findUserByEmail(email, (err, rows) => {
+        if (err) return resolve({ err });
+        resolve({ rows });
+      });
+    });
+
+    if (emailCheck.err) {
+      return res
+        .status(500)
+        .json({ success: false, message: emailCheck.err.message });
     }
 
-    res.json({
-      success: true,
-      weather: {
-        temperature: weatherData.current.temperature_2m,
-        isRaining: weatherData.current.rain > 0,
-        rainAmount: weatherData.current.rain,
-        windSpeed: weatherData.current.wind_speed_10m,
-        waveHeight: waveHeight,
-      },
-    });
-  } catch (err) {
-    console.log("Weather API failed:");
-    console.log(err.config?.url);
-    console.log(err.message);
-    console.log(err.response?.data);
-
-    res.status(500).json({
-      success: false,
-      message: "Failed to get weather data",
-    });
+    if (emailCheck.rows && emailCheck.rows.length > 0) {
+      return res
+        .status(409)
+        .json({ success: false, message: "Email is already in use" });
+    }
   }
-});
 
-// POST create PayPal order
-// url: /api/users/courses/:course_id/paypal/create-order
-router.post(
-  "/courses/:course_id/paypal/create-order",
-  requireLogin,
-  validateCanCreatePayPalOrder,
-  async (req, res) => {
+  // Fetch current values so we can keep unchanged fields
+  const currentResult = await new Promise((resolve) => {
+    userQ.findUserById(user_id, (err, rows) => {
+      if (err) return resolve({ err });
+      resolve({ rows });
+    });
+  });
+
+  if (currentResult.err) {
+    return res
+      .status(500)
+      .json({ success: false, message: currentResult.err.message });
+  }
+
+  if (!currentResult.rows || currentResult.rows.length === 0) {
+    return res.status(404).json({ success: false, message: "User not found" });
+  }
+
+  const current = currentResult.rows[0];
+
+  const fields = {
+    first_name: first_name ?? current.first_name,
+    last_name: last_name ?? current.last_name,
+    email: email ?? current.email,
+    phone: phone ?? current.phone,
+    gender: gender ?? current.gender,
+    birth_date: birth_date ?? current.birth_date,
+  };
+
+  // Handle password change separately
+  if (password) {
     try {
-      const { course_id } = req.params;
-      const user_id = req.session.user.user_id;
-      const course = req.course;
-      const order = await paypalService.createOrder(course.price, course_id);
-      const approveLink = order.links.find(
-        (link) => link.rel === "approve",
-      )?.href;
-
-      userQ.createCourseReservation(
-        user_id,
-        course_id,
-        order.id,
-        (err, result) => {
-          if (err) {
-            return res.status(500).json({
-              success: false,
-              message: err.message,
-            });
-          }
-
-          res.status(201).json({
-            success: true,
-            order_id: order.id,
-            reservation_id: result.insertId,
-            approve_link: approveLink,
-          });
-        },
-      );
+      const hashed = await bcrypt.hash(password, 10);
+      await new Promise((resolve, reject) => {
+        userQ.updateUserPassword(fields.email, hashed, (err) => {
+          if (err) return reject(err);
+          resolve();
+        });
+      });
     } catch (err) {
-      res.status(500).json({
-        success: false,
-        message: err.message,
-      });
+      return res.status(500).json({ success: false, message: err.message });
     }
-  },
-);
+  }
 
-// POST capture PayPal order
-// url: /api/users/courses/:course_id/paypal/capture-order
-router.post(
-  "/courses/:course_id/paypal/capture-order",
-  requireLogin,
-  async (req, res) => {
-    const { course_id } = req.params;
-    const user_id = req.session.user.user_id;
-    const { order_id } = req.body;
-
-    if (!order_id) {
-      return res.status(400).json({
-        success: false,
-        message: "Order id is required",
-      });
+  userQ.updateMyDetails(user_id, fields, (err) => {
+    if (err) {
+      return res.status(500).json({ success: false, message: err.message });
     }
 
-    userQ.findPendingReservation(
-      order_id,
-      user_id,
-      course_id,
-      async (err, rows) => {
-        if (err) {
-          return res.status(500).json({
-            success: false,
-            message: err.message,
-          });
-        }
+    // update session email if it changed
+    if (email) req.session.user.email = email;
 
-        if (!rows || rows.length === 0) {
-          return res.status(404).json({
-            success: false,
-            message: "Pending reservation not found or expired",
-          });
-        }
-
-        const reservation = rows[0];
-
-        try {
-          const capture = await paypalService.captureOrder(order_id);
-
-          if (capture.status !== "COMPLETED") {
-            userQ.failReservation(reservation.reservation_id, () => {});
-
-            return res.status(400).json({
-              success: false,
-              message: "Payment was not completed",
-            });
-          }
-
-          const receipt_number = capture.id;
-
-          userQ.isUserRegistered(user_id, course_id, (checkErr, regRows) => {
-            if (checkErr) {
-              return res.status(500).json({
-                success: false,
-                message: checkErr.message,
-              });
-            }
-
-            if (regRows.length > 0) {
-              userQ.failReservation(reservation.reservation_id, () => {});
-
-              return res.status(409).json({
-                success: false,
-                message: "You are already registered to this course",
-              });
-            }
-
-            userQ.getCourseTakenPlaces(course_id, (placeErr, placeRows) => {
-              if (placeErr) {
-                return res.status(500).json({
-                  success: false,
-                  message: placeErr.message,
-                });
-              }
-
-              const places = placeRows[0];
-
-              const taken =
-                Number(places.registered_count) + Number(places.pending_count);
-
-              if (taken > Number(places.capacity)) {
-                userQ.failReservation(reservation.reservation_id, () => {});
-
-                return res.status(409).json({
-                  success: false,
-                  message: "Course is full",
-                });
-              }
-
-              userQ.completeCourseRegistration(
-                user_id,
-                course_id,
-                reservation.reservation_id,
-                receipt_number,
-                (err2) => {
-                  if (err2) {
-                    return res.status(500).json({
-                      success: false,
-                      message: err2.message,
-                    });
-                  }
-
-                  res.json({
-                    success: true,
-                    message:
-                      "Payment completed and user registered successfully",
-                    receipt_number,
-                  });
-                },
-              );
-            });
-          });
-        } catch (captureErr) {
-          userQ.failReservation(reservation.reservation_id, () => {});
-
-          res.status(500).json({
-            success: false,
-            message: captureErr.message,
-          });
-        }
-      },
-    );
-  },
-);
+    return res.json({ success: true, message: "Profile updated successfully" });
+  });
+});
 
 module.exports = router;

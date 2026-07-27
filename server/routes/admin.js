@@ -2,22 +2,12 @@ const express = require("express");
 const router = express.Router();
 
 const adminQ = require("../queries/adminQueries");
-const courseQ = require("../queries/courseQueries");
 
 const { requireLogin, requireAdmin } = require("../validations/authValidation");
 const {
   validateRoleUpdate,
   validateBlockedStatus,
   validateVideoUpload,
-  validateAddCourse,
-  validateLessonsDetails,
-  validateDuplicateCourse,
-  validateInstructorLessonConflict,
-  isInstructor,
-  validateCourseExistsAndCanAddLessons,
-  validateAddLessonsToExistingCourse,
-  validateInstructorLessonConflictForExistingCourse,
-  validateLessonConflictInSameCourse,
 } = require("../validations/adminValidations");
 const { checkUserExists } = require("../validations/usersValidations");
 
@@ -160,121 +150,5 @@ router.get("/instructors", requireLogin, requireAdmin, (req, res) => {
     res.json({ success: true, instructors: rows });
   });
 });
-
-// GET all courses
-// url: /api/admin/courses
-router.get("/courses", requireAdmin, (req, res) => {
-  courseQ.deactivateExpiredCourses((err) => {
-    if (err) {
-      return res.status(500).json({
-        success: false,
-        message: err.message,
-      });
-    }
-
-    courseQ.getAllCourses((err, rows) => {
-      if (err) {
-        return res.status(500).json({
-          success: false,
-          message: err.message,
-        });
-      }
-
-      res.json({
-        success: true,
-        courses: rows,
-      });
-    });
-  });
-});
-
-// GET all courses with nested lessons and attendance
-// url: /api/admin/courses/details
-router.get("/courses/details", requireLogin, requireAdmin, (req, res) => {
-  courseQ.getCoursesWithDetails((err, courses) => {
-    if (err) {
-      return res.status(500).json({
-        success: false,
-        message: err.message,
-      });
-    }
-
-    res.json({
-      success: true,
-      courses,
-    });
-  });
-});
-
-// POST add course
-// url: /api/admin/add-course
-router.post(
-  "/add-course",
-  requireAdmin,
-  isInstructor,
-  validateAddCourse,
-  validateLessonsDetails,
-  validateDuplicateCourse,
-  validateInstructorLessonConflict,
-  (req, res) => {
-    const course = req.body;
-    const lessons = req.body.lessons;
-
-    courseQ.addCourse(course, (err, result) => {
-      if (err) {
-        return res.status(500).json({
-          success: false,
-          message: err.message,
-        });
-      }
-
-      const courseId = result.insertId;
-
-      adminQ.addLessonsToCourse(courseId, lessons, (err2) => {
-        if (err2) {
-          return res.status(500).json({
-            success: false,
-            message: err2.message,
-          });
-        }
-
-        res.status(201).json({
-          success: true,
-          message: "Course and lessons added successfully",
-          course_id: courseId,
-        });
-      });
-    });
-  },
-);
-
-// POST add lessons to an existing course
-// url: /api/admin/courses/:course_id/lessons
-router.post(
-  "/courses/:course_id/lessons",
-  requireAdmin,
-  validateCourseExistsAndCanAddLessons,
-  validateAddLessonsToExistingCourse,
-  validateLessonConflictInSameCourse,
-  validateInstructorLessonConflictForExistingCourse,
-  (req, res) => {
-    const courseId = req.params.course_id;
-    const { lessons } = req.body;
-
-    adminQ.addLessonsToCourse(courseId, lessons, (err) => {
-      if (err) {
-        return res.status(500).json({
-          success: false,
-          message: err.message,
-        });
-      }
-
-      res.status(201).json({
-        success: true,
-        message: "Lessons added successfully",
-      });
-    });
-  },
-);
 
 module.exports = router;

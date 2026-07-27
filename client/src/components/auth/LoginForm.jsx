@@ -81,6 +81,7 @@ export default function LoginForm({ styles, viewState, setViewState }) {
       console.log(data);
 
       if (data.success) {
+        localStorage.setItem("user_id", data.user.user_id);
         toast.success(data.message || "Login successful!");
         if (data.user?.role === "admin") {
           navigate("/admin");

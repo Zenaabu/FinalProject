@@ -453,14 +453,16 @@ function UserProfilePage() {
   const [fieldSaving, setFieldSaving] = useState({});
   const [fieldErrors, setFieldErrors] = useState({});
 
+  const userId = localStorage.getItem("user_id");
+
   useEffect(() => {
-    fetch("/api/auth/me")
+    fetch(`/api/users/${userId}`)
       .then((r) => r.json())
       .then((data) => {
         if (data.success) setUser(data.user);
       })
       .finally(() => setLoading(false));
-  }, []);
+  }, [userId]);
 
   function saveField(fieldKey, value, onDone) {
     setFieldSaving((prev) => ({ ...prev, [fieldKey]: true }));
@@ -468,7 +470,7 @@ function UserProfilePage() {
 
     const body = { [fieldKey]: value };
 
-    fetch("/api/auth/me", {
+    fetch(`/api/users/${userId}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),

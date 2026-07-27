@@ -13,7 +13,7 @@ function CourseManagerDashboard() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    fetch("/api/admin/courses/details")
+    fetch("/api/courses/details")
       .then((res) => res.json())
       .then((data) => {
         if (!data.success)

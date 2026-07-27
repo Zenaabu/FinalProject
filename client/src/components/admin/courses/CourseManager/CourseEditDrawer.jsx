@@ -118,7 +118,7 @@ function CourseEditDrawer({ course, isOpen, onClose, onSave }) {
       // Field name mapping:
       //   form.title   → body.description  (DB column name is "description")
       //   form.user_id → body.user_id      (Israeli 9-digit ID — must NOT be cast to Number)
-      const res = await fetch(`/api/admin/courses/${course.course_id}`, {
+      const res = await fetch(`/api/courses/${course.course_id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

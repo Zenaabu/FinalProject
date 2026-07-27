@@ -11,9 +11,10 @@ function AdminSidebar() {
   const navigate = useNavigate();
 
   function handleLogout() {
-    fetch("/api/auth/logout", { method: "POST" }).finally(() =>
-      navigate("/login"),
-    );
+    fetch("/api/auth/logout", { method: "POST" }).finally(() => {
+      localStorage.removeItem("user_id");
+      navigate("/login");
+    });
   }
 
   return (

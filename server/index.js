@@ -7,6 +7,8 @@ const authRouter = require("./routes/auth");
 const adminRouter = require("./routes/admin");
 const instructorRouter = require("./routes/instructor");
 const userRouter = require("./routes/users");
+const weatherRouter = require("./routes/weather");
+const coursesRouter = require("./routes/courses");
 
 const PORT = process.env.PORT || 3001;
 
@@ -37,6 +39,8 @@ app.use("/api/auth", authRouter); // auth routes
 app.use("/api/users", userRouter); // user routes
 app.use("/api/admin", adminRouter); // admin routes
 app.use("/api/instructor", instructorRouter); // instructor routes
+app.use("/api/weather", weatherRouter); // weather routes
+app.use("/api/courses", coursesRouter); // courses routes
 
 app.get("/api", (req, res) => {
   res.json({ message: "Hello from server!" });

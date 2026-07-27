@@ -179,7 +179,7 @@ function CourseCreateForm({ onCancel, onCreated }) {
       // Field names MUST match what the server validates in adminValidations.js:
       //   description, level (lowercase), price, capacity, total_lessons,
       //   vat_percent, start_date, end_date, user_id, lessons[]
-      const res = await fetch("/api/admin/add-course", {
+      const res = await fetch("/api/courses", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

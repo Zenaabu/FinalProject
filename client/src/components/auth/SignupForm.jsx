@@ -109,7 +109,7 @@ export default function SignupForm({ styles }) {
         user_id: signUpPayload.user_id.replace(/\D/g, ""),
         phone: signUpPayload.phone.replace(/\D/g, ""),
       });
-      const response = await fetch("/api/auth/signup", {
+      const response = await fetch("/api/users/signup", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
