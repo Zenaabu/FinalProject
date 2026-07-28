@@ -1,21 +1,23 @@
 // ─── CourseEditDrawer.jsx ─────────────────────────────────────────────────────
-// Modal dialog for editing a course's details.
+// Drawer for editing a course's details. It is only mounted while open.
 //
 // Props:
-//   course   – the course object from CourseManagerDashboard
-//              (must include course_id, title, level, status, user_id,
-//               start_date, end_date, capacity, price, vat_percent, enrolled)
-//   isOpen   – boolean controlling visibility
-//   onClose  () => void
-//   onSave   (updatedCourse) => void – called with the merged updated object
+//   course       – the course object from CoursesMain
+//                  (course_id, title, level, status, user_id, start_date,
+//                   end_date, capacity, price, vat_percent, enrolled)
+//   instructors  – instructor list loaded once by CoursesMain
+//   onClose      () => void
+//   onSaved      (freshCourse) => void
 //
 // On "Save Changes":
 //   1. Client-side validation runs first.
-//   2. PUT /api/admin/courses/:course_id is called.
-//   3. The server validates the new dates/instructor against all other active
-//      courses (conflict check — no overlapping date ranges for same instructor).
-//   4. On success, onSave() is called so CourseManagerDashboard refreshes
-//      the card in its state without a full re-fetch.
+//   2. PUT /api/courses/:course_id is called.
+//   3. The server re-validates everything: the new dates must still contain the
+//      course's lessons, capacity may not drop below the number of registered
+//      users, total lessons may not drop below the scheduled lessons, and the
+//      instructor may not already be teaching at one of the lesson times.
+//   4. On success the server responds with the freshly assembled course, which
+//      is handed to onSaved() — no field-name re-mapping happens here.
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { useState, useEffect } from "react";
@@ -46,7 +48,10 @@ function formFromCourse(course) {
   return {
     title: course.title ?? "",
     level: course.level ?? "beginner",
-    status: course.status ?? "Active", // "Active" | "Inactive"
+    // course.status is a display value: "Active" | "Upcoming" | "Inactive".
+    // "Upcoming" is just an active course that has not started yet, so the
+    // editable status only has the two states the is_active column can hold.
+    status: course.status === "Inactive" ? "Inactive" : "Active",
     user_id: course.user_id ?? "", // Israeli ID string
     start_date: course.start_date ?? "",
     end_date: course.end_date ?? "",
@@ -57,27 +62,30 @@ function formFromCourse(course) {
 }
 
 /* ─────────────────────────────────────────────────────────────────────────── */
-function CourseEditDrawer({ course, isOpen, onClose, onSave }) {
+function CourseEditDrawer({ course, instructors = [], onClose, onSaved }) {
   const [form, setForm] = useState(() => formFromCourse(course));
-  const [instructors, setInstructors] = useState([]);
   const [errors, setErrors] = useState({});
   const [saving, setSaving] = useState(false);
 
-  // ── Re-sync form whenever a different course is opened ───────────────────
-  useEffect(() => {
-    setForm(formFromCourse(course));
-    setErrors({});
-  }, [course]);
+  // The drawer is mounted only while open, so the slide-in class is applied on
+  // the frame after mount — otherwise it would already be in place and the CSS
+  // transition would never run.
+  const [isOpen, setIsOpen] = useState(false);
 
-  // ── Fetch real instructors from /api/admin/instructors once ──────────────
   useEffect(() => {
-    fetch("/api/admin/instructors")
-      .then((r) => r.json())
-      .then((d) => {
-        if (d.success) setInstructors(d.instructors);
-      })
-      .catch(() => {}); // non-blocking
+    const frame = requestAnimationFrame(() => setIsOpen(true));
+    return () => cancelAnimationFrame(frame);
   }, []);
+
+  // ── Close on Escape ──────────────────────────────────────────────────────
+  useEffect(() => {
+    const onKeyDown = (e) => {
+      if (e.key === "Escape") onClose();
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [onClose]);
 
   // ── Field change handler ──────────────────────────────────────────────────
   const handleChange = (field, value) => {
@@ -139,31 +147,9 @@ function CourseEditDrawer({ course, isOpen, onClose, onSave }) {
         throw new Error(data.message || "Failed to update course.");
       }
 
-      // Step 3 – resolve the instructor display name for the header card
-      const inst = instructors.find(
-        (i) => String(i.user_id) === String(form.user_id),
-      );
-      const instructorName = inst
-        ? `${inst.first_name} ${inst.last_name}`
-        : course.instructor;
-
-      // Step 4 – notify parent with the merged updated object
-      // (keeps frontend field names like "title" so CourseHeaderCard still works)
-      onSave?.({
-        ...course,
-        title: form.title,
-        level: form.level,
-        status: form.status,
-        user_id: form.user_id,
-        instructor: instructorName,
-        start_date: form.start_date,
-        end_date: form.end_date,
-        capacity: Number(form.capacity),
-        price: Number(form.price),
-        vat_percent: Number(form.vat_percent),
-      });
-
-      onClose();
+      // Step 3 – the server returns the freshly assembled course (same shape as
+      // GET /api/courses/details), so it can be handed straight to the parent
+      onSaved?.(data.course);
     } catch (err) {
       setErrors({ server: err.message });
     } finally {

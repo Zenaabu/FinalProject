@@ -15,6 +15,7 @@ import {
   validID,
   VIEW_STATE,
 } from "./authUtils";
+import { HOME_BY_ROLE } from "./RequireRole";
 import { toast } from "sonner";
 
 const INITIAL_LOGIN_FORM = {
@@ -83,11 +84,8 @@ export default function LoginForm({ styles, viewState, setViewState }) {
       if (data.success) {
         localStorage.setItem("user_id", data.user.user_id);
         toast.success(data.message || "Login successful!");
-        if (data.user?.role === "admin") {
-          navigate("/admin");
-        } else {
-          navigate("/");
-        }
+        // each role lands in the area built for it
+        navigate(HOME_BY_ROLE[data.user?.role] ?? "/");
       } else {
         toast.error(
           data.message || "Login failed. Please check your credentials.",

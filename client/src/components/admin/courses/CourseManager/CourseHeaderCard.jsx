@@ -122,7 +122,12 @@ const STATUS_BADGE = {
   inactive: "badgeInactive",
 };
 
-function CourseHeaderCard({ course, onEditCourse }) {
+function CourseHeaderCard({
+  course,
+  instructors,
+  onCourseUpdated,
+  onLessonsChanged,
+}) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
 
@@ -191,18 +196,27 @@ function CourseHeaderCard({ course, onEditCourse }) {
       </div>
 
       {/* ── Expandable lesson list ─────────────────────────────────── */}
-      {isExpanded && <LessonAccordionList lessons={course.lessons} nested />}
+      {isExpanded && (
+        <LessonAccordionList
+          lessons={course.lessons}
+          courseId={course.course_id}
+          onLessonsChanged={onLessonsChanged}
+          nested
+        />
+      )}
 
       {/* ── Edit drawer (fixed, slides in from right) ─────────────── */}
-      <CourseEditDrawer
-        course={course}
-        isOpen={isEditOpen}
-        onClose={() => setIsEditOpen(false)}
-        onSave={(updated) => {
-          console.log("Updated:", updated);
-          onEditCourse?.(updated);
-        }}
-      />
+      {isEditOpen && (
+        <CourseEditDrawer
+          course={course}
+          instructors={instructors}
+          onClose={() => setIsEditOpen(false)}
+          onSaved={(updated) => {
+            onCourseUpdated?.(updated);
+            setIsEditOpen(false);
+          }}
+        />
+      )}
     </div>
   );
 }

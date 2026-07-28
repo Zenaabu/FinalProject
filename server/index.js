@@ -1,7 +1,9 @@
 require("dotenv").config();
 const express = require("express");
 const session = require("express-session");
+const MySQLStore = require("express-mysql-session")(session);
 
+const db = require("./DB/dbSingleton");
 const authRouter = require("./routes/auth");
 //const usersRouter = require("./routes/users");
 const adminRouter = require("./routes/admin");
@@ -20,16 +22,23 @@ app.use(express.json());
 // static files (videos)
 app.use("/uploads", express.static("server/uploads"));
 
+// sessions are persisted to MySQL (in a `sessions` table it creates itself)
+// instead of the default in-memory store, so nodemon restarting the server
+// on every file save during development doesn't log everyone out
+const sessionStore = new MySQLStore({}, db.getConnection());
+
 // the session
 app.use(
   session({
     secret: process.env.SESSION_SECRET || "dev-secret-key",
+    store: sessionStore,
     resave: false,
     saveUninitialized: false,
     cookie: {
       httpOnly: true,
       sameSite: "lax",
       secure: process.env.NODE_ENV === "production",
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     },
   }),
 );

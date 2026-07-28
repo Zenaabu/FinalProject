@@ -1,9 +1,11 @@
 // ─── LessonAccordionItem.jsx ──────────────────────────────────────────────────
 // Single expandable lesson row. Clicking anywhere on the header toggles
-// the AttendanceTable panel below it. Pencil opens inline edit form.
+// the AttendanceTable panel below it. Pencil opens inline edit form which
+// PUTs to /api/courses/:course_id/lessons/:lesson_id.
 // ──────────────────────────────────────────────────────────────────────────────
 
 import { useState } from "react";
+import { toast } from "sonner";
 import AttendanceTable from "./AttendanceTable";
 import styles from "./LessonAccordionItem.module.css";
 
@@ -42,29 +44,96 @@ function PencilIcon() {
   );
 }
 
+// students whose attendance has not been marked yet have a null status
 function attendanceSummary(students) {
-  const attended = students.filter(
-    (s) => s.attendance_status === "present" || s.attendance_status === "late",
+  const roster = students ?? [];
+
+  if (roster.length === 0) return "no students enrolled";
+
+  const marked = roster.filter((s) => s.attendance_status).length;
+
+  if (marked === 0) return `${roster.length} enrolled · not marked yet`;
+
+  const present = roster.filter(
+    (s) => s.attendance_status === "present",
   ).length;
-  return `${attended} / ${students.length} attended`;
+
+  return `${present} / ${roster.length} attended`;
 }
 
-function LessonAccordionItem({ lesson, index }) {
+function LessonAccordionItem({ lesson, courseId, onLessonsChanged }) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState(null);
+
   const [form, setForm] = useState({
-    date: lesson.date ?? "",
-    startTime: lesson.start_time ?? "",
-    endTime: lesson.end_time ?? "",
+    lesson_date: lesson.date ?? "",
+    start_time: lesson.start_time ?? "",
+    end_time: lesson.end_time ?? "",
   });
 
   const toggle = () => setIsExpanded((prev) => !prev);
-  const handleChange = (field, value) =>
-    setForm((prev) => ({ ...prev, [field]: value }));
 
-  const handleSave = () => {
-    // TODO: wire up to API
-    console.log("Lesson updated:", { lesson_id: lesson.lesson_id, ...form });
+  const handleChange = (field, value) => {
+    setForm((prev) => ({ ...prev, [field]: value }));
+    setError(null);
+  };
+
+  // ── Save: PUT only the fields that actually changed ─────────────────────
+  const handleSave = async () => {
+    const body = {};
+    if (form.lesson_date !== lesson.date) body.lesson_date = form.lesson_date;
+    if (form.start_time !== lesson.start_time)
+      body.start_time = form.start_time;
+    if (form.end_time !== lesson.end_time) body.end_time = form.end_time;
+
+    if (Object.keys(body).length === 0) {
+      setError("Nothing changed.");
+      return;
+    }
+
+    if (form.start_time >= form.end_time) {
+      setError("Start time must be before end time.");
+      return;
+    }
+
+    setSaving(true);
+    setError(null);
+
+    try {
+      const res = await fetch(
+        `/api/courses/${courseId}/lessons/${lesson.lesson_id}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        },
+      );
+
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || "Failed to update lesson.");
+      }
+
+      toast.success("Lesson updated successfully");
+      setIsEditOpen(false);
+      onLessonsChanged?.();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleCancel = () => {
+    setForm({
+      lesson_date: lesson.date ?? "",
+      start_time: lesson.start_time ?? "",
+      end_time: lesson.end_time ?? "",
+    });
+    setError(null);
     setIsEditOpen(false);
   };
 
@@ -83,12 +152,16 @@ function LessonAccordionItem({ lesson, index }) {
 
         <div className={styles.lessonInfo}>
           <div className={styles.lessonTitleRow}>
-            <span className={styles.lessonNumber}>Lesson {index}</span>
+            <span className={styles.lessonNumber}>
+              Lesson {lesson.lesson_number}
+            </span>
           </div>
           <div className={styles.lessonMeta}>
             <span>{lesson.date}</span>
             <span className={styles.dot}>·</span>
-            <span>{lesson.time}</span>
+            <span>
+              {lesson.start_time} – {lesson.end_time}
+            </span>
             <span className={styles.dot}>·</span>
             <span className={styles.attendanceSummary}>
               {attendanceSummary(lesson.students)}
@@ -113,14 +186,21 @@ function LessonAccordionItem({ lesson, index }) {
       {isEditOpen && (
         <div className={styles.editPanel}>
           <p className={styles.editTitle}>Edit Lesson Details</p>
+
+          {error && (
+            <p className={styles.editError} role="alert">
+              {error}
+            </p>
+          )}
+
           <div className={styles.editGrid}>
             <div className={styles.editField}>
               <label className={styles.editLabel}>Date</label>
               <input
                 type="date"
                 className={styles.editInput}
-                value={form.date}
-                onChange={(e) => handleChange("date", e.target.value)}
+                value={form.lesson_date}
+                onChange={(e) => handleChange("lesson_date", e.target.value)}
               />
             </div>
             <div className={styles.editField}>
@@ -128,8 +208,8 @@ function LessonAccordionItem({ lesson, index }) {
               <input
                 type="time"
                 className={styles.editInput}
-                value={form.startTime}
-                onChange={(e) => handleChange("startTime", e.target.value)}
+                value={form.start_time}
+                onChange={(e) => handleChange("start_time", e.target.value)}
               />
             </div>
             <div className={styles.editField}>
@@ -137,8 +217,8 @@ function LessonAccordionItem({ lesson, index }) {
               <input
                 type="time"
                 className={styles.editInput}
-                value={form.endTime}
-                onChange={(e) => handleChange("endTime", e.target.value)}
+                value={form.end_time}
+                onChange={(e) => handleChange("end_time", e.target.value)}
               />
             </div>
           </div>
@@ -147,13 +227,15 @@ function LessonAccordionItem({ lesson, index }) {
               className={styles.btnSave}
               type="button"
               onClick={handleSave}
+              disabled={saving}
             >
-              Save
+              {saving ? "Saving…" : "Save"}
             </button>
             <button
               className={styles.btnCancel}
               type="button"
-              onClick={() => setIsEditOpen(false)}
+              onClick={handleCancel}
+              disabled={saving}
             >
               Cancel
             </button>

@@ -1,0 +1,185 @@
+/* ============================================================
+   MyCourses.module.css
+   ============================================================ */
+
+.section {
+  width: 100%;
+  max-width: 1100px;
+}
+
+.sectionHeader {
+  margin-bottom: 1.25rem;
+  text-align: center;
+}
+
+.sectionTitle {
+  margin: 0 0 0.35rem;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--color-ocean-text);
+}
+
+.sectionSubtitle {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #64748b;
+}
+
+/* ── States ──────────────────────────────────────────────────────────────── */
+.state {
+  padding: 1.5rem;
+  color: #64748b;
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.stateError {
+  padding: 1rem 1.25rem;
+  border: 1px solid #fca5a5;
+  border-radius: 10px;
+  background: #fef2f2;
+  color: #b91c1c;
+  font-size: 0.9rem;
+}
+
+/* ── Promo grid (no enrollment yet) ─────────────────────────────────────── */
+.promoGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
+/* ── Next lesson highlight ───────────────────────────────────────────────── */
+.nextLessonCard {
+  margin-bottom: 1.5rem;
+  padding: 1.1rem 1.4rem;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #0284c7 0%, #38bdf8 100%);
+  box-shadow: 0 8px 24px rgba(2, 132, 199, 0.2);
+  color: #fff;
+}
+
+.nextLessonTag {
+  display: inline-block;
+  margin-bottom: 0.4rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.nextLessonCourse {
+  margin: 0 0 0.2rem;
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+.nextLessonWhen {
+  margin: 0;
+  font-size: 0.92rem;
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.nextLessonCardEmpty {
+  margin-bottom: 1.5rem;
+  padding: 1rem 1.25rem;
+  border: 1px dashed rgba(56, 189, 248, 0.4);
+  border-radius: 12px;
+  background: #fff;
+  color: #64748b;
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+/* ── Enrolled course grid ────────────────────────────────────────────────── */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.1rem;
+  margin-bottom: 1.25rem;
+}
+
+.card {
+  padding: 1.1rem 1.25rem 1.2rem;
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  border-radius: 12px;
+  background: var(--color-bg-white);
+  box-shadow: 0 2px 10px rgba(2, 132, 199, 0.06);
+}
+
+.cardTop {
+  display: flex;
+  gap: 0.4rem;
+  margin-bottom: 0.65rem;
+}
+
+.cardTitle {
+  margin: 0 0 0.5rem;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--color-ocean-text);
+  line-height: 1.35;
+}
+
+.cardMeta {
+  margin: 0 0 0.6rem;
+  font-size: 0.8rem;
+  color: #64748b;
+}
+
+.cardNextLesson {
+  margin: 0;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #0369a1;
+}
+
+/* ── Badges ──────────────────────────────────────────────────────────────── */
+.badge {
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.badgeRunning {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.badgeUpcoming {
+  background: #e0f2fe;
+  color: #0369a1;
+}
+
+.badgeFinished {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+.badgeLevel {
+  background: #fef3c7;
+  color: #a16207;
+  text-transform: capitalize;
+}
+
+/* ── Footer links ────────────────────────────────────────────────────────── */
+.footerLinks {
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+}
+
+.browseLink {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--color-light-accent);
+  text-decoration: none;
+}
+
+.browseLink:hover {
+  text-decoration: underline;
+}

@@ -115,7 +115,9 @@ function validateCanCreatePayPalOrder(req, res, next) {
   const { course_id } = req.params;
   const user_id = req.session.user.user_id;
 
-  userQ.expireOldReservations((err0) => {
+  // release seats held by reservations whose 10 minute window has passed,
+  // otherwise a course can look full because of abandoned checkouts
+  courseQ.expireOldReservations((err0) => {
     if (err0) {
       return res.status(500).json({
         success: false,

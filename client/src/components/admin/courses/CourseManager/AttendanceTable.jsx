@@ -1,15 +1,22 @@
-﻿// --- AttendanceTable.jsx ---
+// --- AttendanceTable.jsx ---
 // Rendered inside an expanded LessonAccordionItem.
-// Shows every student who has a row in the `attend` table for this lesson.
+// Shows every student registered to the course, with the attendance the
+// instructor recorded for this lesson. A student the instructor has not marked
+// yet has attendance_status = null and shows as "Not marked".
 // ---
 
 import styles from "./AttendanceTable.module.css";
 
 function StatusBadge({ status }) {
-  const display = status === "late" ? "absent" : status;
+  // null / undefined => the instructor has not taken attendance for this
+  // student yet
+  if (!status) {
+    return <span className={styles.badge}>Not marked</span>;
+  }
+
   return (
-    <span className={`${styles.badge} ${styles[`badge_${display}`]}`}>
-      {display.charAt(0).toUpperCase() + display.slice(1)}
+    <span className={`${styles.badge} ${styles[`badge_${status}`]}`}>
+      {status.charAt(0).toUpperCase() + status.slice(1)}
     </span>
   );
 }
@@ -18,11 +25,13 @@ function AttendanceTable({ students }) {
   // Guard: undefined / null -> empty array
   const roster = students ?? [];
 
-  // Empty state: shown when no rows exist in `attend` for this lesson yet
+  // Empty state: nobody is registered to this course yet
   if (roster.length === 0) {
     return (
       <div className={styles.emptyState}>
-        <p className={styles.emptyTitle}>No attendance records for this lesson yet.</p>
+        <p className={styles.emptyTitle}>
+          No students are registered to this course yet.
+        </p>
       </div>
     );
   }

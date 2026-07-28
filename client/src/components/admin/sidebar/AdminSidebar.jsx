@@ -1,13 +1,20 @@
 // ─── AdminSidebar.jsx ─────────────────────────────────────────────────────────
-// Root sidebar shell. Contains the brand/logo area at the top and renders
-// SidebarNav below it. This is the only component imported by AdminLayout.
+// Root sidebar shell: brand/logo area on top, SidebarNav below, logout at the
+// bottom. Defaults render the admin panel, and the props let another area
+// (currently the instructor panel) reuse the same shell with its own nav.
+// Imported by AdminLayout and InstructorLayout.
 // ──────────────────────────────────────────────────────────────────────────────
 
 import { useNavigate } from "react-router-dom";
 import SidebarNav from "./SidebarNav";
 import styles from "./AdminSidebar.module.css";
 
-function AdminSidebar() {
+function AdminSidebar({
+  subtitle = "Admin Panel",
+  items,
+  rootPath = "/admin",
+  ariaLabel = "Admin navigation",
+}) {
   const navigate = useNavigate();
 
   function handleLogout() {
@@ -22,11 +29,11 @@ function AdminSidebar() {
       {/* ── Brand area ──────────────────────────────────────────────────── */}
       <div className={styles.brand}>
         <span className={styles.brandName}>Blue Mars</span>
-        <span className={styles.brandSub}>Admin Panel</span>
+        <span className={styles.brandSub}>{subtitle}</span>
       </div>
 
       {/* ── Navigation ──────────────────────────────────────────────────── */}
-      <SidebarNav />
+      <SidebarNav items={items} rootPath={rootPath} ariaLabel={ariaLabel} />
 
       {/* ── Logout ──────────────────────────────────────────────────────── */}
       <div className={styles.logoutWrap}>

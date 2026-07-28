@@ -40,18 +40,76 @@ function findInstructorCourse(course_id, instructor_id, cb) {
   );
 }
 
-// a function that gets lesson_id, user_id and attended
-// it saves the attendance in the DB
-// if the user already in the attended table then just update the attendance
-function saveAttendance(lesson_id, user_id, attended, cb) {
+// a function that gets lesson_id and an array of { user_id, attended }
+// it saves the whole lesson attendance in one statement.
+// rows that already exist for this lesson are updated instead of inserted, so
+// an instructor can correct the attendance of a lesson they already marked
+function saveAttendance(lesson_id, records, cb) {
   const conn = db.getConnection();
+
+  const values = records.map((record) => [
+    lesson_id,
+    record.user_id,
+    record.attended,
+  ]);
 
   conn.query(
     `INSERT INTO attend (lesson_id, user_id, attended)
-     VALUES (?, ?, ?)
+     VALUES ?
      ON DUPLICATE KEY UPDATE attended = VALUES(attended)`,
-    [lesson_id, user_id, attended],
+    [values],
     cb,
+  );
+}
+
+// a function that gets a lesson_id and returns the roster of that lesson:
+// every user registered to the lesson's course, together with the attendance
+// the instructor recorded for them (NULL when not marked yet)
+function getLessonAttendance(lesson_id, cb) {
+  const conn = db.getConnection();
+
+  conn.query(
+    `SELECT
+        u.user_id,
+        u.first_name,
+        u.last_name,
+        u.email,
+        u.phone,
+        a.attended AS attendance_status
+     FROM lessons l
+     JOIN register r ON r.course_id = l.course_id
+     JOIN users    u ON u.user_id   = r.user_id
+     LEFT JOIN attend a
+            ON a.lesson_id = l.lesson_id
+           AND a.user_id   = u.user_id
+     WHERE l.lesson_id = ?
+     ORDER BY u.first_name, u.last_name`,
+    [lesson_id],
+    cb,
+  );
+}
+
+// a function that gets a course_id and a list of user_ids
+// it returns the ids among them that are NOT registered to the course
+function findUnregisteredUsers(course_id, user_ids, cb) {
+  const conn = db.getConnection();
+
+  conn.query(
+    `SELECT user_id
+     FROM register
+     WHERE course_id = ?
+       AND user_id IN (?)`,
+    [course_id, user_ids],
+    (err, rows) => {
+      if (err) return cb(err);
+
+      const registered = rows.map((row) => row.user_id);
+
+      cb(
+        null,
+        user_ids.filter((id) => !registered.includes(id)),
+      );
+    },
   );
 }
 
@@ -165,6 +223,8 @@ module.exports = {
   getCourseRegistrationsForInstructor,
   findInstructorCourse,
   saveAttendance,
+  getLessonAttendance,
+  findUnregisteredUsers,
   findInstructorLesson,
   isUserRegisteredToCourse,
   getCourseLessons,

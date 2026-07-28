@@ -4,6 +4,7 @@
 // ──────────────────────────────────────────────────────────────────────────────
 
 import { Route } from "react-router-dom";
+import RequireRole from "../auth/RequireRole";
 import AdminLayout from "./AdminLayout";
 import DashboardHome from "./dashboard/DashboardHome";
 import UsersAndRosters from "./users/UsersAndRosters";
@@ -11,7 +12,14 @@ import CoursesMain from "./courses/CoursesMain/CoursesMain";
 import UserProfilePage from "./profile/UserProfilePage";
 
 export const adminRoutes = (
-  <Route path="/admin" element={<AdminLayout />}>
+  <Route
+    path="/admin"
+    element={
+      <RequireRole roles={["admin"]}>
+        <AdminLayout />
+      </RequireRole>
+    }
+  >
     <Route index element={<DashboardHome />} />
     <Route path="courses" element={<CoursesMain />} />
     <Route path="users" element={<UsersAndRosters />} />

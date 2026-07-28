@@ -2,6 +2,9 @@ const instructorQ = require("../queries/instructorQueries");
 
 const { canTakeAttendance, areValidConstraintFields } = require("./utils");
 
+// the values the attend.attended enum column accepts
+const ATTENDANCE_VALUES = ["present", "absent"];
+
 // a middleware that validates that the current logged instructor
 // owns the course with the id in the params
 function validateInstructorOwnsCourse(req, res, next) {
@@ -74,41 +77,56 @@ function validateInstructorOwnsLesson(req, res, next) {
   });
 }
 
-// a middleware that validates attendance request body
+// a middleware that validates the attendance request body.
+// the body marks a whole lesson at once:
+//   { records: [ { user_id, attended: 'present' | 'absent' }, ... ] }
 function validateAttendanceBody(req, res, next) {
-  const { user_id, attended } = req.body;
+  const { records } = req.body;
 
-  if (!user_id) {
+  if (!records || !Array.isArray(records) || records.length === 0) {
     return res.status(400).json({
       success: false,
-      message: "User id is required",
+      message: "Attendance records are required",
     });
   }
 
-  if (attended === undefined) {
-    return res.status(400).json({
-      success: false,
-      message: "Attendance status is required",
-    });
-  }
+  const seen = new Set();
 
-  if (![true, false, 1, 0].includes(attended)) {
-    return res.status(400).json({
-      success: false,
-      message: "Invalid attendance value",
-    });
+  for (const record of records) {
+    if (!record || !record.user_id) {
+      return res.status(400).json({
+        success: false,
+        message: "Every attendance record needs a user id",
+      });
+    }
+
+    if (!ATTENDANCE_VALUES.includes(record.attended)) {
+      return res.status(400).json({
+        success: false,
+        message: "Attendance must be either present or absent",
+      });
+    }
+
+    if (seen.has(record.user_id)) {
+      return res.status(400).json({
+        success: false,
+        message: "The same user appears twice in the attendance",
+      });
+    }
+
+    seen.add(record.user_id);
   }
 
   next();
 }
 
-// a middleware that validates that the user_id, that the instructor
-// it trying to save it's attendance, is registered to the lesson
-function validateUserRegisteredToLessonCourse(req, res, next) {
-  const { user_id } = req.body;
+// a middleware that validates that every user the instructor is marking is
+// actually registered to the lesson's course
+function validateUsersRegisteredToLessonCourse(req, res, next) {
   const courseId = req.course.course_id;
+  const userIds = req.body.records.map((record) => record.user_id);
 
-  instructorQ.isUserRegisteredToCourse(user_id, courseId, (err, rows) => {
+  instructorQ.findUnregisteredUsers(courseId, userIds, (err, missing) => {
     if (err) {
       return res.status(500).json({
         success: false,
@@ -116,10 +134,10 @@ function validateUserRegisteredToLessonCourse(req, res, next) {
       });
     }
 
-    if (!rows || rows.length === 0) {
+    if (missing.length > 0) {
       return res.status(403).json({
         success: false,
-        message: "This user is not registered to this course",
+        message: `These users are not registered to this course: ${missing.join(", ")}`,
       });
     }
 
@@ -239,7 +257,7 @@ module.exports = {
   validateAttendanceAllowed,
   validateInstructorOwnsLesson,
   validateAttendanceBody,
-  validateUserRegisteredToLessonCourse,
+  validateUsersRegisteredToLessonCourse,
   validateAddConstraint,
   validateDuplicateConstraint,
   validateOverlappingConstraint,

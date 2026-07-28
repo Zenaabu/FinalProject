@@ -44,6 +44,20 @@ function updateUserBlockedStatus(user_id, is_blocked, cb) {
   );
 }
 
+// a function that returns every user with role = 'instructor'
+// used to populate the instructor dropdown when creating/editing a course
+function getInstructors(cb) {
+  const conn = db.getConnection();
+
+  conn.query(
+    `SELECT user_id, first_name, last_name
+     FROM users
+     WHERE role = 'instructor'
+     ORDER BY first_name, last_name`,
+    cb,
+  );
+}
+
 // a function that gets all the instructor constraints with the
 // instructor full name
 function getAllInstructorConstraints(cb) {
@@ -139,6 +153,40 @@ function getInstructorLessonsInRange(user_id, start_date, end_date, cb) {
   );
 }
 
+// a function that gets the user_id of an instructor, a date range and a course_id
+// it returns the instructor lessons in that range that belong to any OTHER course.
+// used when updating a course, so the course's own lessons are not reported as
+// conflicting with themselves
+function getInstructorLessonsInRangeExcludingCourse(
+  user_id,
+  start_date,
+  end_date,
+  course_id,
+  cb,
+) {
+  const conn = db.getConnection();
+
+  conn.query(
+    `SELECT
+        c.course_id,
+        l.lesson_id,
+        l.lesson_number,
+        l.lesson_date,
+        l.start_time,
+        l.end_time
+     FROM courses c
+     JOIN lessons l
+        ON c.course_id = l.course_id
+     WHERE c.user_id = ?
+     AND c.is_active = 1
+     AND c.course_id != ?
+     AND l.lesson_date BETWEEN ? AND ?
+     ORDER BY l.lesson_date, l.start_time`,
+    [user_id, course_id, start_date, end_date],
+    cb,
+  );
+}
+
 // a function that gets the course id and returns the lessons in that course
 function getLessonsByCourseId(courseId, cb) {
   const conn = db.getConnection();
@@ -152,14 +200,64 @@ function getLessonsByCourseId(courseId, cb) {
   );
 }
 
+// a function that gets a lesson_id and returns that lesson
+function findLessonById(lesson_id, cb) {
+  const conn = db.getConnection();
+
+  conn.query(
+    `SELECT *
+     FROM lessons
+     WHERE lesson_id = ?`,
+    [lesson_id],
+    cb,
+  );
+}
+
+// a function that gets a lesson_id and the fields to change
+// it updates that lesson in DB
+function updateLesson(lesson_id, fields, cb) {
+  const conn = db.getConnection();
+
+  conn.query(
+    `UPDATE lessons SET ? WHERE lesson_id = ?`,
+    [fields, lesson_id],
+    cb,
+  );
+}
+
+// a function that gets a lesson_id and returns the lesson together with the
+// instructor that teaches it and the course date range
+function findLessonWithCourse(lesson_id, cb) {
+  const conn = db.getConnection();
+
+  conn.query(
+    `SELECT
+        l.*,
+        c.user_id,
+        c.start_date,
+        c.end_date,
+        c.total_lessons
+     FROM lessons l
+     JOIN courses c ON l.course_id = c.course_id
+     WHERE l.lesson_id = ?`,
+    [lesson_id],
+    cb,
+  );
+}
+
 module.exports = {
   getAllUsers,
   updateUserRole,
   updateUserBlockedStatus,
+  getInstructors,
   getAllInstructorConstraints,
   addVideo,
   addLessonsToCourse,
   getMaxLessonNumber,
   getInstructorLessonsInRange,
+  getInstructorLessonsInRangeExcludingCourse,
   getLessonsByCourseId,
+  findLessonById,
+  updateLesson,
+  findLessonWithCourse,
 };

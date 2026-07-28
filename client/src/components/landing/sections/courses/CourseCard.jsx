@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import styles from "./CourseCard.module.css";
 
-function CourseCard({ course }) {
+function CourseCard({ course, linkTo = "/signup" }) {
   const { title, description, price, level, features, buttonLabel, image } =
     course;
 
@@ -57,7 +57,7 @@ function CourseCard({ course }) {
         </ul>
 
         {/* CTA button */}
-        <Link to="/signup" className={styles.button}>
+        <Link to={linkTo} className={styles.button}>
           {buttonLabel}
         </Link>
       </div>

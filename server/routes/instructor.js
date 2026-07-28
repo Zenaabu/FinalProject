@@ -14,11 +14,17 @@ const {
   validateAttendanceAllowed,
   validateInstructorOwnsLesson,
   validateAttendanceBody,
-  validateUserRegisteredToLessonCourse,
+  validateUsersRegisteredToLessonCourse,
   validateAddConstraint,
   validateDuplicateConstraint,
   validateOverlappingConstraint,
 } = require("../validations/instructorValidations");
+
+const {
+  canTakeAttendance,
+  formatDateOnly,
+  formatTimeOnly,
+} = require("../validations/utils");
 
 // GET instructor courses
 // url: /api/instructor/courses
@@ -71,21 +77,17 @@ router.get(
   },
 );
 
-// POST save attendance
+// GET the roster of a lesson together with the attendance already recorded
 // url: /api/instructor/lessons/:lesson_id/attendance
-router.post(
+router.get(
   "/lessons/:lesson_id/attendance",
   requireLogin,
   requireInstructor,
   validateInstructorOwnsLesson,
-  validateAttendanceBody,
-  validateUserRegisteredToLessonCourse,
-  validateAttendanceAllowed,
   (req, res) => {
     const lessonId = req.params.lesson_id;
-    const { user_id, attended } = req.body;
 
-    instructorQ.saveAttendance(lessonId, user_id, attended, (err) => {
+    instructorQ.getLessonAttendance(lessonId, (err, students) => {
       if (err) {
         return res.status(500).json({
           success: false,
@@ -95,8 +97,86 @@ router.post(
 
       res.json({
         success: true,
-        message: "Attendance saved successfully",
+        lesson: {
+          lesson_id: req.lesson.lesson_id,
+          lesson_number: req.lesson.lesson_number,
+          lesson_date: formatDateOnly(req.lesson.lesson_date),
+          start_time: formatTimeOnly(req.lesson.start_time),
+          end_time: formatTimeOnly(req.lesson.end_time),
+          // tells the client whether the Save button should be enabled
+          can_take_attendance: canTakeAttendance(
+            req.lesson.lesson_date,
+            req.lesson.start_time,
+            req.course.end_date,
+          ),
+        },
+        students,
       });
+    });
+  },
+);
+
+// POST save the attendance of a whole lesson
+// body: { records: [ { user_id, attended: 'present' | 'absent' }, ... ] }
+// url: /api/instructor/lessons/:lesson_id/attendance
+router.post(
+  "/lessons/:lesson_id/attendance",
+  requireLogin,
+  requireInstructor,
+  validateInstructorOwnsLesson,
+  validateAttendanceBody,
+  // the time window is checked before the roster so a lesson that has not
+  // started yet reports that, rather than complaining about the students
+  validateAttendanceAllowed,
+  validateUsersRegisteredToLessonCourse,
+  (req, res) => {
+    const lessonId = req.params.lesson_id;
+    const { records } = req.body;
+
+    instructorQ.saveAttendance(lessonId, records, (err) => {
+      if (err) {
+        return res.status(500).json({
+          success: false,
+          message: err.message,
+        });
+      }
+
+      // hand back the saved roster so the client shows exactly what was stored
+      instructorQ.getLessonAttendance(lessonId, (err2, students) => {
+        if (err2) {
+          return res.status(500).json({
+            success: false,
+            message: err2.message,
+          });
+        }
+
+        res.json({
+          success: true,
+          message: "Attendance saved successfully",
+          students,
+        });
+      });
+    });
+  },
+);
+
+// GET one of the instructor's courses with its lessons and attendance
+// url: /api/instructor/courses/:course_id/details
+router.get(
+  "/courses/:course_id/details",
+  requireLogin,
+  requireInstructor,
+  validateInstructorOwnsCourse,
+  (req, res) => {
+    courseQ.getCourseWithDetails(req.params.course_id, (err, course) => {
+      if (err) {
+        return res.status(500).json({
+          success: false,
+          message: err.message,
+        });
+      }
+
+      res.json({ success: true, course });
     });
   },
 );

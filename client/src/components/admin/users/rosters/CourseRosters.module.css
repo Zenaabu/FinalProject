@@ -13,6 +13,24 @@
   overflow: hidden;
 }
 
+/* ── States ──────────────────────────────────────────────────────────────── */
+.state {
+  padding: 2rem 1.5rem;
+  color: #64748b;
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.stateError {
+  margin: 1.25rem 1.5rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid #fca5a5;
+  border-radius: 8px;
+  background: #fef2f2;
+  color: #b91c1c;
+  font-size: 0.85rem;
+}
+
 /* ── Selector row ────────────────────────────────────────────────────────── */
 .selectorRow {
   display: flex;

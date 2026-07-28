@@ -5,18 +5,30 @@
 import LessonAccordionItem from "./LessonAccordionItem";
 import styles from "./LessonAccordionList.module.css";
 
-function LessonAccordionList({ lessons, nested = false }) {
+function LessonAccordionList({
+  lessons,
+  courseId,
+  onLessonsChanged,
+  nested = false,
+}) {
   return (
     <div className={nested ? styles.wrapperNested : styles.wrapper}>
       <h3 className={styles.heading}>Lessons ({lessons.length})</h3>
       <div className={styles.list}>
-        {lessons.map((lesson, index) => (
-          <LessonAccordionItem
-            key={lesson.lesson_id}
-            lesson={lesson}
-            index={index + 1}
-          />
-        ))}
+        {lessons.length === 0 ? (
+          <p className={styles.heading}>
+            This course has no lessons scheduled yet.
+          </p>
+        ) : (
+          lessons.map((lesson) => (
+            <LessonAccordionItem
+              key={lesson.lesson_id}
+              lesson={lesson}
+              courseId={courseId}
+              onLessonsChanged={onLessonsChanged}
+            />
+          ))
+        )}
       </div>
     </div>
   );

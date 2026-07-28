@@ -8,13 +8,14 @@ import { NavLink } from "react-router-dom";
 import SidebarIcon from "./SidebarIcon";
 import styles from "./SidebarItem.module.css";
 
-function SidebarItem({ item }) {
+function SidebarItem({ item, rootPath = "/admin" }) {
   return (
     <li className={styles.item}>
       <NavLink
         to={item.path}
-        // `end` prevents /admin from matching every /admin/* sub-route
-        end={item.path === "/admin"}
+        // `end` prevents the area root (e.g. /admin) from matching every one
+        // of its sub-routes
+        end={item.path === rootPath}
         className={({ isActive }) =>
           `${styles.link} ${isActive ? styles.active : ""}`
         }

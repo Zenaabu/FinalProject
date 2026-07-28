@@ -2,10 +2,12 @@
 // Standalone form card that lets an admin manager create a new surfing course.
 //
 // Props:
+//   instructors – instructor list loaded once by CoursesMain
 //   onCancel  () => void  – called when the user clicks "Cancel"
-//   onCreated (newCourse) => void  – called after a successful POST (optional)
+//   onCreated (newCourse) => void  – called after a successful POST with the
+//                                    assembled course returned by the server
 //
-// POST endpoint : /api/admin/add-course
+// POST endpoint : /api/courses
 // Field mapping (DB column → form field):
 //   description   ← form.description
 //   level         ← form.level          (must be lowercase: beginner/intermediate/advanced)
@@ -19,7 +21,7 @@
 //   lessons       ← lessons state array  (required: at least 1)
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import styles from "./CourseCreateForm.module.css";
 
 // ─── Empty lesson template ────────────────────────────────────────────────────
@@ -45,30 +47,15 @@ const INITIAL_FORM = {
 
 // ─────────────────────────────────────────────────────────────────────────────
 
-function CourseCreateForm({ onCancel, onCreated }) {
+function CourseCreateForm({ instructors = [], onCancel, onCreated }) {
   const [form, setForm] = useState(INITIAL_FORM);
 
   // ── Lessons state (each lesson: lesson_number, lesson_date, start_time, end_time) ──
   // The server requires at least one lesson when creating a course.
   const [lessons, setLessons] = useState([emptyLesson(1)]);
 
-  // ── Instructors loaded from /api/admin/instructors ────────────────────────
-  const [instructors, setInstructors] = useState([]);
-
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
-
-  // ── Fetch real instructors from DB on mount ───────────────────────────────
-  useEffect(() => {
-    fetch("/api/admin/instructors")
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success) setInstructors(data.instructors);
-      })
-      .catch(() => {
-        // Non-blocking: dropdown will just stay empty
-      });
-  }, []);
 
   // ── Course field change handler ───────────────────────────────────────────
   const handleChange = (e) => {
@@ -120,6 +107,12 @@ function CourseCreateForm({ onCancel, onCreated }) {
     if (!form.end_date) next.end_date = "End date is required.";
     if (!form.user_id) next.user_id = "Please assign an instructor.";
 
+    // The server requires a course to start in the future
+    const today = new Date().toISOString().slice(0, 10);
+    if (form.start_date && form.start_date <= today) {
+      next.start_date = "Start date must be in the future.";
+    }
+
     if (form.start_date && form.end_date && form.end_date <= form.start_date) {
       next.end_date = "End date must be after start date.";
     }
@@ -131,6 +124,19 @@ function CourseCreateForm({ onCancel, onCreated }) {
     if (hasEmptyLesson) {
       next.lessons =
         "All lesson rows must have a date, start time, and end time.";
+    } else if (form.start_date && form.end_date) {
+      // Every lesson must fall inside the course date range
+      const outside = lessons.some(
+        (l) => l.lesson_date < form.start_date || l.lesson_date > form.end_date,
+      );
+      if (outside) {
+        next.lessons = `Every lesson must fall between ${form.start_date} and ${form.end_date}.`;
+      }
+    }
+
+    // Each lesson must start before it ends
+    if (!next.lessons && lessons.some((l) => l.start_time >= l.end_time)) {
+      next.lessons = "Each lesson must start before it ends.";
     }
 
     return next;
@@ -140,23 +146,12 @@ function CourseCreateForm({ onCancel, onCreated }) {
   /**
    * handleCreateSubmit
    *
-   * VALIDATION REQUIRED BEFORE POST:
-   * ─────────────────────────────────────────────────────────────────────────
-   * Before sending the POST request to the backend, you MUST check that no
-   * existing course already has the same `user_id` (instructor) AND overlapping
-   * lesson timeframes (lesson_date + start_time / end_time). The server-side
-   * `validateDuplicateCourse` and `validateInstructorLessonConflict` middlewares
-   * already enforce this, but adding a pre-check here improves UX by catching
-   * conflicts before the network round-trip.
-   *
-   * Suggested approach:
-   *   1. Fetch GET /api/admin/courses?user_id=<id> to retrieve courses for
-   *      the selected instructor.
-   *   2. For each returned course, check if any lesson date/time overlaps with
-   *      the lessons array being submitted.
-   *   3. If a conflict is found, show a clear error and abort the POST.
-   *   4. Only proceed to POST /api/admin/add-course if no conflict is detected.
-   * ─────────────────────────────────────────────────────────────────────────
+   * The instructor / lesson timeframe conflict check is done by the server:
+   * POST /api/courses runs validateDuplicateCourse and
+   * validateInstructorLessonConflict before anything is written, and returns
+   * 409 with a readable message when the selected instructor is already
+   * teaching at one of the lesson times. That message is surfaced in the error
+   * banner, so the check is not duplicated here.
    */
   const handleCreateSubmit = async (e) => {
     e.preventDefault();
@@ -171,11 +166,7 @@ function CourseCreateForm({ onCancel, onCreated }) {
     setSubmitting(true);
 
     try {
-      // ── TODO: DUPLICATE CHECK (see JSDoc above) ──────────────────────────
-      // Add instructor / lesson timeframe overlap check here before the POST.
-      // ────────────────────────────────────────────────────────────────────
-
-      // ── POST to /api/admin/add-course ────────────────────────────────────
+      // ── POST to /api/courses ─────────────────────────────────────────────
       // Field names MUST match what the server validates in adminValidations.js:
       //   description, level (lowercase), price, capacity, total_lessons,
       //   vat_percent, start_date, end_date, user_id, lessons[]

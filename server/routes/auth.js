@@ -206,6 +206,20 @@ router.post("/reset-password", validateEmailFormat, async (req, res) => {
   });
 });
 
+// GET the logged in user of the current session
+// the client uses this to know which area (admin / instructor / user) to show
+// url: /api/auth/me
+router.get("/me", (req, res) => {
+  if (!req.session.user) {
+    return res.status(401).json({
+      success: false,
+      message: "Not logged in",
+    });
+  }
+
+  res.json({ success: true, user: req.session.user });
+});
+
 // POST logout
 // url: /api/auth/logout
 router.post("/logout", (req, res) => {

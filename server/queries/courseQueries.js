@@ -85,15 +85,28 @@ function getAllCourses(cb) {
   );
 }
 
-// a function that get all courses of specific instructor
+// a function that get all courses of specific instructor, with the number of
+// lessons in each course and how many users are registered to it
 function getCoursesByInstructorId(user_id, cb) {
   const conn = db.getConnection();
 
   conn.query(
-    `SELECT *
-     FROM courses
-     WHERE user_id = ?
-     ORDER BY start_date DESC`,
+    `SELECT
+       c.course_id,
+       c.description,
+       c.level,
+       DATE_FORMAT(c.start_date, '%Y-%m-%d') AS start_date,
+       DATE_FORMAT(c.end_date,   '%Y-%m-%d') AS end_date,
+       c.capacity,
+       c.total_lessons,
+       c.is_active,
+       (SELECT COUNT(*) FROM lessons l
+         WHERE l.course_id = c.course_id)   AS lessons_count,
+       (SELECT COUNT(*) FROM register r
+         WHERE r.course_id = c.course_id)   AS enrolled
+     FROM courses c
+     WHERE c.user_id = ?
+     ORDER BY c.start_date DESC`,
     [user_id],
     cb,
   );
@@ -125,6 +138,125 @@ function expireOldReservations(cb) {
   );
 }
 
+// a function that gets a user_id and returns every course that is open for
+// registration, with how many seats are left and whether this user is already
+// registered to it. pending reservations that have not expired still hold a
+// seat, so they count towards taken_places
+function getAvailableCourses(user_id, cb) {
+  const conn = db.getConnection();
+
+  conn.query(
+    `SELECT
+       c.course_id,
+       c.description,
+       c.level,
+       DATE_FORMAT(c.start_date, '%Y-%m-%d') AS start_date,
+       DATE_FORMAT(c.end_date,   '%Y-%m-%d') AS end_date,
+       c.capacity,
+       c.price,
+       c.vat_percent,
+       c.total_lessons,
+       CONCAT(u.first_name, ' ', u.last_name) AS instructor,
+       (SELECT COUNT(*) FROM register r
+         WHERE r.course_id = c.course_id)              AS registered_count,
+       (SELECT COUNT(*) FROM course_reservations cr
+         WHERE cr.course_id = c.course_id
+           AND cr.status    = 'pending'
+           AND cr.expires_at > NOW())                  AS pending_count,
+       (SELECT COUNT(*) FROM register r2
+         WHERE r2.course_id = c.course_id
+           AND r2.user_id   = ?)                       AS is_registered
+     FROM courses c
+     LEFT JOIN users u ON c.user_id = u.user_id
+     WHERE c.is_active = 1
+       AND c.start_date > CURDATE()
+     ORDER BY c.start_date`,
+    [user_id],
+    cb,
+  );
+}
+
+// a function that gets a user_id and returns every course that user is
+// registered to (past, running, or upcoming)
+function getMyCourses(user_id, cb) {
+  const conn = db.getConnection();
+
+  conn.query(
+    `SELECT
+       c.course_id,
+       c.description,
+       c.level,
+       DATE_FORMAT(c.start_date, '%Y-%m-%d') AS start_date,
+       DATE_FORMAT(c.end_date,   '%Y-%m-%d') AS end_date,
+       c.total_lessons,
+       c.is_active,
+       CONCAT(u.first_name, ' ', u.last_name) AS instructor
+     FROM register r
+     JOIN courses c ON r.course_id = c.course_id
+     LEFT JOIN users u ON c.user_id = u.user_id
+     WHERE r.user_id = ?
+     ORDER BY c.start_date DESC`,
+    [user_id],
+    cb,
+  );
+}
+
+// a function that gets an array of course ids and returns every lesson that
+// belongs to them, ordered so the earliest lesson of each course comes first
+function getLessonsForCourses(courseIds, cb) {
+  const conn = db.getConnection();
+
+  conn.query(
+    `SELECT lesson_id, course_id, lesson_number,
+            DATE_FORMAT(lesson_date, '%Y-%m-%d') AS date,
+            TIME_FORMAT(start_time,  '%H:%i')    AS start_time,
+            TIME_FORMAT(end_time,    '%H:%i')    AS end_time
+     FROM lessons
+     WHERE course_id IN (?)
+     ORDER BY lesson_date, start_time`,
+    [courseIds],
+    cb,
+  );
+}
+
+// a function that gets a course_id and returns every user registered to it
+// (any admin can see any course's roster — instructorQueries has the
+// instructor-scoped equivalent that also checks course ownership)
+function getCourseRegistrations(course_id, cb) {
+  const conn = db.getConnection();
+
+  conn.query(
+    `SELECT
+        u.user_id,
+        u.first_name,
+        u.last_name,
+        u.email,
+        u.phone,
+        DATE_FORMAT(r.payment_date, '%Y-%m-%d') AS payment_date,
+        r.receipt_number
+     FROM register r
+     JOIN users u ON r.user_id = u.user_id
+     WHERE r.course_id = ?
+     ORDER BY r.payment_date DESC`,
+    [course_id],
+    cb,
+  );
+}
+
+// a function that gets a course_id and returns how many users are registered
+// to that course
+function countCourseRegistrations(course_id, cb) {
+  const conn = db.getConnection();
+
+  conn.query(
+    `SELECT COUNT(*) AS enrolled
+     FROM register
+     WHERE course_id = ?`,
+    [course_id],
+    cb,
+  );
+}
+
 // a function that updates the editable fields of a course by course_id
 function updateCourse(course_id, fields, cb) {
   const conn = db.getConnection();
@@ -139,6 +271,24 @@ function updateCourse(course_id, fields, cb) {
 // a function that returns all courses with nested lessons and attendance
 // used by the admin Courses & Lessons dashboard
 function getCoursesWithDetails(cb) {
+  fetchCoursesWithDetails(null, cb);
+}
+
+// a function that returns a single course with its nested lessons and attendance
+// (the same shape as one entry of getCoursesWithDetails)
+function getCourseWithDetails(course_id, cb) {
+  fetchCoursesWithDetails(course_id, (err, courses) => {
+    if (err) return cb(err);
+
+    cb(null, courses[0] ?? null);
+  });
+}
+
+// not for export
+// a function that builds the nested course -> lessons -> students tree.
+// when course_id is null it builds it for every course, otherwise only for
+// the course with that id
+function fetchCoursesWithDetails(course_id, cb) {
   const conn = db.getConnection();
 
   // ── Step 1: courses + instructor name + enrolled count ──────────────────
@@ -160,8 +310,10 @@ function getCoursesWithDetails(cb) {
      FROM courses c
      LEFT JOIN users    u ON c.user_id    = u.user_id
      LEFT JOIN register r ON c.course_id  = r.course_id
+     WHERE (? IS NULL OR c.course_id = ?)
      GROUP BY c.course_id
      ORDER BY c.start_date DESC`,
+    [course_id, course_id],
     (err, courses) => {
       if (err) return cb(err);
       if (courses.length === 0) return cb(null, []);
@@ -191,21 +343,44 @@ function getCoursesWithDetails(cb) {
 
           const lessonIds = lessons.map((l) => l.lesson_id);
 
-          // ── Step 3: attendance for all those lessons ─────────────────
+          // ── Step 3: the roster of every lesson ───────────────────────
+          // The first half is the roster the instructor marks attendance on:
+          // everyone registered to the lesson's course, with their attend row
+          // if it exists and NULL when they have not been marked yet.
+          // The second half keeps attendance rows whose user is no longer
+          // registered to the course, so no marked attendance is ever hidden.
+          // UNION removes the rows the two halves have in common.
           conn.query(
-            `SELECT a.lesson_id,
-                    a.user_id,
+            `SELECT l.lesson_id,
+                    u.user_id,
                     CONCAT(u.first_name, ' ', u.last_name) AS name,
                     u.email,
                     a.attended AS attendance_status
+             FROM lessons l
+             JOIN register r ON r.course_id = l.course_id
+             JOIN users    u ON u.user_id   = r.user_id
+             LEFT JOIN attend a
+                    ON a.lesson_id = l.lesson_id
+                   AND a.user_id   = u.user_id
+             WHERE l.lesson_id IN (?)
+
+             UNION
+
+             SELECT a.lesson_id,
+                    u.user_id,
+                    CONCAT(u.first_name, ' ', u.last_name) AS name,
+                    u.email,
+                    a.attended
              FROM attend a
-             JOIN users u ON a.user_id = u.user_id
-             WHERE a.lesson_id IN (?)`,
-            [lessonIds],
+             JOIN users u ON u.user_id = a.user_id
+             WHERE a.lesson_id IN (?)
+
+             ORDER BY name`,
+            [lessonIds, lessonIds],
             (err3, attendance) => {
               if (err3) return cb(err3);
 
-              // Group attendance rows by lesson_id
+              // Group roster rows by lesson_id
               const attendByLesson = {};
               for (const row of attendance) {
                 if (!attendByLesson[row.lesson_id])
@@ -286,6 +461,12 @@ module.exports = {
   getCoursesByInstructorId,
   deactivateExpiredCourses,
   expireOldReservations,
+  getCourseRegistrations,
+  countCourseRegistrations,
+  getAvailableCourses,
+  getMyCourses,
+  getLessonsForCourses,
   updateCourse,
   getCoursesWithDetails,
+  getCourseWithDetails,
 };

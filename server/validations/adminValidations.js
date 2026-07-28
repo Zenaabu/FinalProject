@@ -13,6 +13,7 @@ const {
   isFutureLessonDate,
   areValidCourseUpdateFields,
   buildUpdatedCourse,
+  validateCourseUpdateDates,
 } = require("./utils");
 
 const userQ = require("../queries/usersQueries");
@@ -305,8 +306,10 @@ function isInstructor(req, res, next) {
   });
 }
 
-// a middleware that validates that there is an existing course with the same course_id
-// and the course is not active so we can add lessons
+// a middleware that validates that there is an existing course with the same
+// course_id so we can add lessons to it. lessons may be added to a running
+// course — the lesson itself still has to be in the future, which
+// validateAddLessonsToExistingCourse enforces
 function validateCourseExistsAndCanAddLessons(req, res, next) {
   const courseId = req.params.course_id;
 
@@ -322,16 +325,7 @@ function validateCourseExistsAndCanAddLessons(req, res, next) {
       });
     }
 
-    const course = rows[0];
-
-    if (course.is_active === 1) {
-      return res.status(409).json({
-        success: false,
-        message: "Cannot add lessons to an active course",
-      });
-    }
-
-    req.course = course;
+    req.course = rows[0];
     next();
   });
 }
@@ -393,6 +387,13 @@ function validateAddLessonsToExistingCourse(req, res, next) {
       return res.status(400).json({
         success: false,
         message: "Lesson number cannot be greater than total lessons",
+      });
+    }
+
+    if (!isFutureLessonDate(lesson.lesson_date)) {
+      return res.status(400).json({
+        success: false,
+        message: "A new lesson cannot be scheduled in the past",
       });
     }
   }
@@ -519,7 +520,8 @@ function validateVatUpdate(req, res, next) {
   next();
 }
 
-// a middleware that checks if the course exists
+// a middleware that checks if the course exists and attaches it to the request
+// so the middlewares after it can validate against the current values
 function validateCourseExists(req, res, next) {
   const courseId = req.params.course_id;
 
@@ -538,13 +540,16 @@ function validateCourseExists(req, res, next) {
       });
     }
 
+    req.course = rows[0];
     next();
   });
 }
 
-// a middleware that checks if lesson exists
+// a middleware that checks if lesson exists. when the route also carries a
+// course_id, the lesson must belong to that course
 function validateLessonExists(req, res, next) {
   const lessonId = req.params.lesson_id;
+  const courseId = req.params.course_id;
 
   adminQ.findLessonById(lessonId, (err, rows) => {
     if (err) {
@@ -555,6 +560,13 @@ function validateLessonExists(req, res, next) {
       return res.status(404).json({
         success: false,
         message: "Lesson not found",
+      });
+    }
+
+    if (courseId !== undefined && Number(rows[0].course_id) !== Number(courseId)) {
+      return res.status(404).json({
+        success: false,
+        message: "Lesson not found in this course",
       });
     }
 
@@ -666,6 +678,40 @@ function validateUpdatedLessonNoConflict(req, res, next) {
   });
 }
 
+// a middleware that checks that the moved lesson does not collide with a lesson
+// the instructor teaches in one of their OTHER courses
+// (validateUpdatedLessonNoConflict only looks inside the same course)
+function validateUpdatedLessonInstructorConflict(req, res, next) {
+  const courseId = req.lesson.course_id;
+  const course = req.course;
+  const updatedLesson = req.updatedLesson;
+
+  adminQ.getInstructorLessonsInRangeExcludingCourse(
+    course.user_id,
+    updatedLesson.lesson_date,
+    updatedLesson.lesson_date,
+    courseId,
+    (err, otherLessons) => {
+      if (err) {
+        return res.status(500).json({
+          success: false,
+          message: err.message,
+        });
+      }
+
+      if (hasLessonConflict(otherLessons, [updatedLesson])) {
+        return res.status(409).json({
+          success: false,
+          message:
+            "The instructor already teaches another course at this date and time",
+        });
+      }
+
+      next();
+    },
+  );
+}
+
 // a middleware that checks if the lessons date order is valid
 function validateUpdatedLessonDateOrder(req, res, next) {
   const lessonId = req.params.lesson_id;
@@ -698,9 +744,13 @@ function validateUpdatedLessonDateOrder(req, res, next) {
         message: "Lesson dates must match lesson number order",
       });
     }
-    const updatedLesson = buildUpdatedLesson(req.lesson, req.body);
 
-    if (!isFutureLessonDate(updatedLesson.lesson_date)) {
+    // only relevant when the date itself moved — a lesson that already took
+    // place is rejected earlier by validateLessonNotAlreadyPassed
+    if (
+      req.body.lesson_date !== undefined &&
+      !isFutureLessonDate(req.updatedLesson.lesson_date)
+    ) {
       return res.status(400).json({
         success: false,
         message: "Lesson date cannot be in the past",
@@ -711,32 +761,17 @@ function validateUpdatedLessonDateOrder(req, res, next) {
   });
 }
 
-// a middleware that checks if the course can be edited
-function validateCourseCanBeEdited(req, res, next) {
-  const courseId = req.params.course_id;
+// a middleware that refuses to change a lesson that has already taken place,
+// because its attendance is already recorded
+function validateLessonNotAlreadyPassed(req, res, next) {
+  if (!isFutureLessonDate(req.lesson.lesson_date)) {
+    return res.status(409).json({
+      success: false,
+      message: "Cannot edit a lesson that has already taken place",
+    });
+  }
 
-  courseQ.findCourseById(courseId, (err, rows) => {
-    if (err) {
-      return res.status(500).json({ success: false, message: err.message });
-    }
-
-    if (!rows || rows.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: "Course not found",
-      });
-    }
-
-    if (rows[0].is_active === 1) {
-      return res.status(409).json({
-        success: false,
-        message: "Cannot edit an active course",
-      });
-    }
-
-    req.course = rows[0];
-    next();
-  });
+  next();
 }
 
 // a middleware that validates the course details
@@ -757,7 +792,24 @@ function validateUpdateCourseDetails(req, res, next) {
     });
   }
 
+  if (
+    req.body.status !== undefined &&
+    !["Active", "Inactive"].includes(req.body.status)
+  ) {
+    return res.status(400).json({
+      success: false,
+      message: "Status must be either Active or Inactive",
+    });
+  }
+
   const updatedCourse = buildUpdatedCourse(req.course, req.body);
+
+  if (!updatedCourse.description || String(updatedCourse.description).trim() === "") {
+    return res.status(400).json({
+      success: false,
+      message: "Course description is required",
+    });
+  }
 
   if (!["beginner", "intermediate", "advanced"].includes(updatedCourse.level)) {
     return res.status(400).json({
@@ -777,9 +829,20 @@ function validateUpdateCourseDetails(req, res, next) {
     });
   }
 
+  const vat = Number(updatedCourse.vat_percent);
+
+  if (isNaN(vat) || vat < 0 || vat > 100) {
+    return res.status(400).json({
+      success: false,
+      message: "VAT percent must be between 0 and 100",
+    });
+  }
+
+  // an existing course keeps its original start date, so unlike creating a
+  // course the start date is allowed to be in the past here
   if (
     (req.body.start_date !== undefined || req.body.end_date !== undefined) &&
-    !validateCourseDates(updatedCourse.start_date, updatedCourse.end_date)
+    !validateCourseUpdateDates(updatedCourse.start_date, updatedCourse.end_date)
   ) {
     return res.status(400).json({
       success: false,
@@ -854,6 +917,113 @@ function validateUpdatedCourseDatesIncludeLessons(req, res, next) {
   });
 }
 
+// a middleware that makes sure the new capacity is not smaller than the number
+// of users that are already registered to the course
+function validateUpdatedCourseCapacity(req, res, next) {
+  // capacity was not touched, nothing to check
+  if (req.body.capacity === undefined) return next();
+
+  const courseId = req.params.course_id;
+
+  courseQ.countCourseRegistrations(courseId, (err, rows) => {
+    if (err) {
+      return res.status(500).json({
+        success: false,
+        message: err.message,
+      });
+    }
+
+    const enrolled = Number(rows[0].enrolled);
+
+    if (Number(req.updatedCourse.capacity) < enrolled) {
+      return res.status(409).json({
+        success: false,
+        message: `Capacity cannot be lower than the ${enrolled} users already registered`,
+      });
+    }
+
+    next();
+  });
+}
+
+// a middleware that makes sure the new total_lessons is not smaller than the
+// number of lessons the course already has
+function validateUpdatedCourseTotalLessons(req, res, next) {
+  // total_lessons was not touched, nothing to check
+  if (req.body.total_lessons === undefined) return next();
+
+  const courseId = req.params.course_id;
+
+  adminQ.getLessonsByCourseId(courseId, (err, lessons) => {
+    if (err) {
+      return res.status(500).json({
+        success: false,
+        message: err.message,
+      });
+    }
+
+    if (Number(req.updatedCourse.total_lessons) < lessons.length) {
+      return res.status(409).json({
+        success: false,
+        message: `Total lessons cannot be lower than the ${lessons.length} lessons already scheduled`,
+      });
+    }
+
+    next();
+  });
+}
+
+// a middleware that makes sure the course lessons do not collide with the other
+// lessons of the instructor. it only runs when the instructor or the course
+// dates changed, and it ignores the lessons of the course being updated
+function validateUpdatedCourseInstructorConflict(req, res, next) {
+  const changedInstructor = req.body.user_id !== undefined;
+  const changedDates =
+    req.body.start_date !== undefined || req.body.end_date !== undefined;
+
+  if (!changedInstructor && !changedDates) return next();
+
+  const courseId = req.params.course_id;
+  const updatedCourse = req.updatedCourse;
+
+  adminQ.getLessonsByCourseId(courseId, (err, courseLessons) => {
+    if (err) {
+      return res.status(500).json({
+        success: false,
+        message: err.message,
+      });
+    }
+
+    // no lessons yet, so nothing can collide
+    if (courseLessons.length === 0) return next();
+
+    adminQ.getInstructorLessonsInRangeExcludingCourse(
+      updatedCourse.user_id,
+      updatedCourse.start_date,
+      updatedCourse.end_date,
+      courseId,
+      (err2, otherLessons) => {
+        if (err2) {
+          return res.status(500).json({
+            success: false,
+            message: err2.message,
+          });
+        }
+
+        if (hasLessonConflict(otherLessons, courseLessons)) {
+          return res.status(409).json({
+            success: false,
+            message:
+              "The instructor already has a lesson at one of this course lesson times",
+          });
+        }
+
+        next();
+      },
+    );
+  });
+}
+
 module.exports = {
   validateRoleUpdate,
   validateBlockedStatus,
@@ -870,11 +1040,15 @@ module.exports = {
   validateVatUpdate,
   validateCourseExists,
   validateLessonExists,
+  validateLessonNotAlreadyPassed,
   validateLessonCourseExists,
   validateUpdateLessonDetails,
   validateUpdatedLessonNoConflict,
+  validateUpdatedLessonInstructorConflict,
   validateUpdatedLessonDateOrder,
-  validateCourseCanBeEdited,
   validateUpdateCourseDetails,
   validateUpdatedCourseDatesIncludeLessons,
+  validateUpdatedCourseCapacity,
+  validateUpdatedCourseTotalLessons,
+  validateUpdatedCourseInstructorConflict,
 };

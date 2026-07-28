@@ -325,16 +325,20 @@ function areValidCourseUpdateFields(fields) {
     "price",
     "capacity",
     "total_lessons",
+    "vat_percent",
     "start_date",
     "end_date",
     "user_id",
+    "status",
   ];
 
   return fields.every((field) => allowedFields.includes(field));
 }
 
 // a function that gets the old course data and new data
-// it returns an updated course object with the updated details
+// it returns an updated course object with the updated details.
+// the returned keys are the DB column names, so the object can be handed
+// straight to courseQueries.updateCourse
 function buildUpdatedCourse(oldCourse, newData) {
   return {
     description: newData.description ?? oldCourse.description,
@@ -342,10 +346,36 @@ function buildUpdatedCourse(oldCourse, newData) {
     price: newData.price ?? oldCourse.price,
     capacity: newData.capacity ?? oldCourse.capacity,
     total_lessons: newData.total_lessons ?? oldCourse.total_lessons,
-    start_date: newData.start_date ?? oldCourse.start_date,
-    end_date: newData.end_date ?? oldCourse.end_date,
+    vat_percent: newData.vat_percent ?? oldCourse.vat_percent,
+    start_date: formatDateOnly(newData.start_date ?? oldCourse.start_date),
+    end_date: formatDateOnly(newData.end_date ?? oldCourse.end_date),
     user_id: newData.user_id ?? oldCourse.user_id,
+    // the client sends a human readable "Active" / "Inactive" status,
+    // the DB column is the is_active flag
+    is_active:
+      newData.status !== undefined
+        ? newData.status === "Active"
+          ? 1
+          : 0
+        : oldCourse.is_active,
   };
+}
+
+// a function that gets a start date and end date of a course that is being
+// updated. unlike validateCourseDates (used when creating) it does not force
+// the start date into the future, because an already running course keeps its
+// original start date. it only refuses ranges that make no sense.
+function validateCourseUpdateDates(start_date, end_date) {
+  const startDate = new Date(start_date);
+  const endDate = new Date(end_date);
+
+  // invalid dates
+  if (isNaN(startDate) || isNaN(endDate)) return false;
+
+  // end before start
+  if (endDate <= startDate) return false;
+
+  return true;
 }
 
 // a function that gets lessonDate, startTime and courseEndDate
@@ -423,7 +453,10 @@ module.exports = {
   isFutureLessonDate,
   areValidCourseUpdateFields,
   buildUpdatedCourse,
+  validateCourseUpdateDates,
   canTakeAttendance,
+  formatDateOnly,
+  formatTimeOnly,
   areValidConstraintFields,
   areValidUserUpdateFields,
   buildUpdatedUser,

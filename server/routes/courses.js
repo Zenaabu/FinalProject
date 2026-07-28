@@ -16,6 +16,18 @@ const {
   validateAddLessonsToExistingCourse,
   validateInstructorLessonConflictForExistingCourse,
   validateLessonConflictInSameCourse,
+  validateUpdateCourseDetails,
+  validateUpdatedCourseCapacity,
+  validateUpdatedCourseTotalLessons,
+  validateUpdatedCourseDatesIncludeLessons,
+  validateUpdatedCourseInstructorConflict,
+  validateLessonExists,
+  validateLessonNotAlreadyPassed,
+  validateLessonCourseExists,
+  validateUpdateLessonDetails,
+  validateUpdatedLessonNoConflict,
+  validateUpdatedLessonInstructorConflict,
+  validateUpdatedLessonDateOrder,
 } = require("../validations/adminValidations");
 
 const courseQ = require("../queries/courseQueries");
@@ -55,6 +67,113 @@ router.get("/details", requireLogin, requireAdmin, (req, res) => {
   });
 });
 
+// GET the courses the logged in user can still register to
+// url: /api/courses/available
+router.get("/available", requireLogin, (req, res) => {
+  const user_id = req.session.user.user_id;
+
+  // free up seats held by abandoned checkouts before counting
+  courseQ.expireOldReservations((err) => {
+    if (err) {
+      return res.status(500).json({ success: false, message: err.message });
+    }
+
+    courseQ.getAvailableCourses(user_id, (err2, rows) => {
+      if (err2) {
+        return res.status(500).json({ success: false, message: err2.message });
+      }
+
+      const courses = rows.map((c) => {
+        const taken = Number(c.registered_count) + Number(c.pending_count);
+
+        return {
+          course_id: c.course_id,
+          description: c.description,
+          level: c.level,
+          start_date: c.start_date,
+          end_date: c.end_date,
+          capacity: c.capacity,
+          price: Number(c.price),
+          vat_percent: c.vat_percent,
+          total_lessons: c.total_lessons,
+          instructor: c.instructor ?? "—",
+          seats_left: Math.max(0, Number(c.capacity) - taken),
+          is_registered: Number(c.is_registered) > 0,
+        };
+      });
+
+      res.json({ success: true, courses });
+    });
+  });
+});
+
+// GET the courses the logged in user is registered to, each with its next
+// upcoming lesson (or null if the course has no lesson left to attend)
+// url: /api/courses/my-courses
+router.get("/my-courses", requireLogin, (req, res) => {
+  const user_id = req.session.user.user_id;
+
+  courseQ.getMyCourses(user_id, (err, courses) => {
+    if (err) {
+      return res.status(500).json({ success: false, message: err.message });
+    }
+
+    if (courses.length === 0) {
+      return res.json({ success: true, courses: [] });
+    }
+
+    const courseIds = courses.map((c) => c.course_id);
+
+    courseQ.getLessonsForCourses(courseIds, (err2, lessons) => {
+      if (err2) {
+        return res.status(500).json({ success: false, message: err2.message });
+      }
+
+      const lessonsByCourse = {};
+      for (const lesson of lessons) {
+        if (!lessonsByCourse[lesson.course_id]) {
+          lessonsByCourse[lesson.course_id] = [];
+        }
+        lessonsByCourse[lesson.course_id].push(lesson);
+      }
+
+      const now = new Date();
+
+      const result = courses.map((c) => {
+        const courseLessons = lessonsByCourse[c.course_id] || [];
+
+        // lessons are pre-sorted by date/time, so the first one that has not
+        // ended yet is the next lesson
+        const upcoming = courseLessons.find(
+          (l) => new Date(`${l.date}T${l.end_time}:00`) >= now,
+        );
+
+        return {
+          course_id: c.course_id,
+          description: c.description,
+          level: c.level,
+          start_date: c.start_date,
+          end_date: c.end_date,
+          total_lessons: c.total_lessons,
+          is_active: c.is_active,
+          instructor: c.instructor ?? "—",
+          next_lesson: upcoming
+            ? {
+                lesson_id: upcoming.lesson_id,
+                lesson_number: upcoming.lesson_number,
+                date: upcoming.date,
+                start_time: upcoming.start_time,
+                end_time: upcoming.end_time,
+              }
+            : null,
+        };
+      });
+
+      res.json({ success: true, courses: result });
+    });
+  });
+});
+
 // POST add course
 // url: /api/courses
 router.post(
@@ -84,12 +203,40 @@ router.post(
             .json({ success: false, message: err2.message });
         }
 
-        res.status(201).json({
-          success: true,
-          message: "Course and lessons added successfully",
-          course_id: courseId,
+        // return the assembled course so the dashboard can show it right away
+        courseQ.getCourseWithDetails(courseId, (err3, newCourse) => {
+          if (err3) {
+            return res
+              .status(500)
+              .json({ success: false, message: err3.message });
+          }
+
+          res.status(201).json({
+            success: true,
+            message: "Course and lessons added successfully",
+            course_id: courseId,
+            course: newCourse,
+          });
         });
       });
+    });
+  },
+);
+
+// GET a single course with its lessons and attendance
+// url: /api/courses/:course_id
+router.get(
+  "/:course_id",
+  requireLogin,
+  requireAdmin,
+  validateCourseExists,
+  (req, res) => {
+    courseQ.getCourseWithDetails(req.params.course_id, (err, course) => {
+      if (err) {
+        return res.status(500).json({ success: false, message: err.message });
+      }
+
+      res.json({ success: true, course });
     });
   },
 );
@@ -101,43 +248,54 @@ router.put(
   requireLogin,
   requireAdmin,
   validateCourseExists,
+  validateUpdateCourseDetails,
+  validateUpdatedCourseCapacity,
+  validateUpdatedCourseTotalLessons,
+  validateUpdatedCourseDatesIncludeLessons,
+  validateUpdatedCourseInstructorConflict,
   (req, res) => {
     const { course_id } = req.params;
-    const {
-      description,
-      level,
-      status,
-      user_id,
-      start_date,
-      end_date,
-      capacity,
-      price,
-      vat_percent,
-    } = req.body;
 
-    const fields = {};
-    if (description !== undefined) fields.description = description;
-    if (level !== undefined) fields.level = level;
-    if (status !== undefined) fields.is_active = status === "Active" ? 1 : 0;
-    if (user_id !== undefined) fields.user_id = user_id;
-    if (start_date !== undefined) fields.start_date = start_date;
-    if (end_date !== undefined) fields.end_date = end_date;
-    if (capacity !== undefined) fields.capacity = Number(capacity);
-    if (price !== undefined) fields.price = Number(price);
-    if (vat_percent !== undefined) fields.vat_percent = Number(vat_percent);
-
-    if (Object.keys(fields).length === 0) {
-      return res
-        .status(400)
-        .json({ success: false, message: "No fields to update" });
-    }
-
-    courseQ.updateCourse(course_id, fields, (err) => {
+    // req.updatedCourse is built by validateUpdateCourseDetails and already
+    // uses the DB column names
+    courseQ.updateCourse(course_id, req.updatedCourse, (err) => {
       if (err) {
         return res.status(500).json({ success: false, message: err.message });
       }
 
-      res.json({ success: true, message: "Course updated successfully" });
+      // return the fresh course so the client can refresh the card without
+      // having to re-map field names itself
+      courseQ.getCourseWithDetails(course_id, (err2, course) => {
+        if (err2) {
+          return res
+            .status(500)
+            .json({ success: false, message: err2.message });
+        }
+
+        res.json({
+          success: true,
+          message: "Course updated successfully",
+          course,
+        });
+      });
+    });
+  },
+);
+
+// GET every user registered to a course
+// url: /api/courses/:course_id/registrations
+router.get(
+  "/:course_id/registrations",
+  requireLogin,
+  requireAdmin,
+  validateCourseExists,
+  (req, res) => {
+    courseQ.getCourseRegistrations(req.params.course_id, (err, registrations) => {
+      if (err) {
+        return res.status(500).json({ success: false, message: err.message });
+      }
+
+      res.json({ success: true, registrations });
     });
   },
 );
@@ -164,6 +322,71 @@ router.post(
       res
         .status(201)
         .json({ success: true, message: "Lessons added successfully" });
+    });
+  },
+);
+
+// GET all lessons of a course
+// url: /api/courses/:course_id/lessons
+router.get(
+  "/:course_id/lessons",
+  requireLogin,
+  requireAdmin,
+  validateCourseExists,
+  (req, res) => {
+    adminQ.getLessonsByCourseId(req.params.course_id, (err, lessons) => {
+      if (err) {
+        return res.status(500).json({ success: false, message: err.message });
+      }
+
+      res.json({ success: true, lessons });
+    });
+  },
+);
+
+// PUT update a single lesson of a course
+// url: /api/courses/:course_id/lessons/:lesson_id
+router.put(
+  "/:course_id/lessons/:lesson_id",
+  requireLogin,
+  requireAdmin,
+  validateLessonExists,
+  validateLessonNotAlreadyPassed,
+  validateLessonCourseExists,
+  validateUpdateLessonDetails,
+  validateUpdatedLessonNoConflict,
+  validateUpdatedLessonInstructorConflict,
+  validateUpdatedLessonDateOrder,
+  (req, res) => {
+    const { course_id, lesson_id } = req.params;
+
+    // only the three schedule fields may change — lesson_number keeps the
+    // order of the course and is not editable
+    const fields = {
+      lesson_date: req.updatedLesson.lesson_date,
+      start_time: req.updatedLesson.start_time,
+      end_time: req.updatedLesson.end_time,
+    };
+
+    adminQ.updateLesson(lesson_id, fields, (err) => {
+      if (err) {
+        return res.status(500).json({ success: false, message: err.message });
+      }
+
+      // hand back the whole course so the accordion can refresh in one go
+      courseQ.getCourseWithDetails(course_id, (err2, course) => {
+        if (err2) {
+          return res
+            .status(500)
+            .json({ success: false, message: err2.message });
+        }
+
+        res.json({
+          success: true,
+          message: "Lesson updated successfully",
+          course,
+        });
+      });
     });
   },
 );
@@ -263,7 +486,9 @@ router.post(
             });
           }
 
-          const receipt_number = capture.id;
+          // PayPal's capture id is a string like "5O190127TN364715T" — it is
+          // kept in its own column, the receipt number is generated by the DB
+          const paypal_capture_id = capture.id;
 
           userQ.isUserRegistered(user_id, course_id, (checkErr, regRows) => {
             if (checkErr) {
@@ -308,8 +533,8 @@ router.post(
                 user_id,
                 course_id,
                 reservation.reservation_id,
-                receipt_number,
-                (err2) => {
+                paypal_capture_id,
+                (err2, receipt_number) => {
                   if (err2) {
                     return res.status(500).json({
                       success: false,
@@ -322,6 +547,7 @@ router.post(
                     message:
                       "Payment completed and user registered successfully",
                     receipt_number,
+                    paypal_capture_id,
                   });
                 },
               );
@@ -330,9 +556,16 @@ router.post(
         } catch (captureErr) {
           userQ.failReservation(reservation.reservation_id, () => {});
 
+          // PayPal's actual reason (e.g. "ORDER_ALREADY_CAPTURED" if the user
+          // hit back/forward after paying) is in the response body — axios's
+          // own message is just "Request failed with status code 422"
+          const paypalMessage =
+            captureErr.response?.data?.details?.[0]?.description ||
+            captureErr.response?.data?.message;
+
           res.status(500).json({
             success: false,
-            message: captureErr.message,
+            message: paypalMessage || captureErr.message,
           });
         }
       },

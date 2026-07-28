@@ -1,0 +1,109 @@
+// ─── InstructorCourses.jsx ────────────────────────────────────────────────────
+// Landing page of /instructor — the courses this instructor teaches.
+// Picking a course goes to /instructor/courses/:course_id, where the lessons
+// and their attendance are handled.
+// ──────────────────────────────────────────────────────────────────────────────
+
+import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
+import styles from "./InstructorCourses.module.css";
+
+function statusOf(course) {
+  const today = new Date().toISOString().slice(0, 10);
+
+  if (!course.is_active) return "Finished";
+  if (course.start_date > today) return "Upcoming";
+  if (course.end_date < today) return "Finished";
+  return "Running";
+}
+
+function InstructorCourses() {
+  const [courses, setCourses] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    fetch("/api/instructor/courses")
+      .then((res) => res.json())
+      .then((data) => {
+        if (!data.success) {
+          throw new Error(data.message || "Failed to load your courses");
+        }
+        setCourses(data.courses);
+      })
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (loading) return <div className={styles.state}>Loading your courses…</div>;
+  if (error) return <div className={styles.stateError}>Error: {error}</div>;
+
+  return (
+    <div className={styles.page}>
+      <div className={styles.pageHeader}>
+        <h1 className={styles.title}>My Courses</h1>
+        <p className={styles.subtitle}>
+          Choose a course to see its lessons and record attendance.
+        </p>
+      </div>
+
+      {courses.length === 0 ? (
+        <div className={styles.state}>
+          You are not assigned to any course yet.
+        </div>
+      ) : (
+        <div className={styles.grid}>
+          {courses.map((course) => {
+            const status = statusOf(course);
+
+            return (
+              <Link
+                key={course.course_id}
+                to={`/instructor/courses/${course.course_id}`}
+                className={styles.card}
+              >
+                <div className={styles.cardTop}>
+                  <span
+                    className={`${styles.badge} ${styles[`badge${status}`]}`}
+                  >
+                    {status}
+                  </span>
+                  <span className={`${styles.badge} ${styles.badgeLevel}`}>
+                    {course.level}
+                  </span>
+                </div>
+
+                <h2 className={styles.cardTitle}>{course.description}</h2>
+
+                <dl className={styles.meta}>
+                  <div className={styles.metaRow}>
+                    <dt>Dates</dt>
+                    <dd>
+                      {course.start_date} – {course.end_date}
+                    </dd>
+                  </div>
+                  <div className={styles.metaRow}>
+                    <dt>Lessons</dt>
+                    <dd>
+                      {course.lessons_count} of {course.total_lessons} scheduled
+                    </dd>
+                  </div>
+                  <div className={styles.metaRow}>
+                    <dt>Students</dt>
+                    <dd>
+                      {course.enrolled} / {course.capacity} enrolled
+                    </dd>
+                  </div>
+                </dl>
+
+                <span className={styles.cta}>Take attendance →</span>
+              </Link>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default InstructorCourses;

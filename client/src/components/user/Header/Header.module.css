@@ -1,0 +1,109 @@
+/* ============================================================
+   Header.module.css — User Portal
+   Matches the landing page palette via global CSS variables:
+     --color-ocean-text   #0284c7
+     --color-light-accent #38bdf8
+     --color-bg-white     #ffffff
+   ============================================================ */
+
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-bottom: 1px solid rgba(56, 189, 248, 0.15);
+  box-shadow: 0 2px 16px rgba(2, 132, 199, 0.08);
+}
+
+/* ── Top row: logo + logout ─────────────────────────────────────────────── */
+.top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 2.5rem;
+  height: 70px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.logo {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--color-ocean-text);
+  letter-spacing: 0.5px;
+}
+
+.logoutBtn {
+  padding: 0.5rem 1.1rem;
+  border: 1px solid rgba(220, 38, 38, 0.3);
+  border-radius: 8px;
+  background: rgba(220, 38, 38, 0.06);
+  color: #dc2626;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background 0.18s,
+    border-color 0.18s;
+}
+
+.logoutBtn:hover {
+  background: rgba(220, 38, 38, 0.14);
+  border-color: rgba(220, 38, 38, 0.6);
+}
+
+/* ── Bottom nav row ──────────────────────────────────────────────────────── */
+.nav {
+  border-top: 1px solid rgba(56, 189, 248, 0.15);
+  background: rgba(255, 255, 255, 0.95);
+}
+
+.navList {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  list-style: none;
+  margin: 0 auto;
+  padding: 0;
+  max-width: 1400px;
+  gap: 2rem;
+}
+
+.navLink {
+  position: relative;
+  display: inline-block;
+  padding: 0.75rem 0;
+  color: var(--color-ocean-text);
+  text-decoration: none;
+  font-size: 1.05rem;
+  font-weight: 600;
+  transition: color 0.2s ease;
+}
+
+/* Animated underline — same as the landing nav */
+.navLink::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 0%;
+  height: 2px;
+  background: var(--color-light-accent);
+  border-radius: 2px;
+  transition: width 0.25s ease;
+}
+
+.navLink:hover {
+  color: var(--color-light-accent);
+}
+
+.navLink:hover::after,
+.navLinkActive::after {
+  width: 100%;
+}
+
+.navLinkActive {
+  color: var(--color-light-accent);
+}
