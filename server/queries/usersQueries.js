@@ -261,44 +261,61 @@ function completeCourseRegistration(
   paypal_capture_id,
   cb,
 ) {
-  const conn = db.getConnection();
+  const pool = db.getConnection();
 
-  conn.beginTransaction((err) => {
-    if (err) return cb(err);
+  pool.getConnection((connErr, conn) => {
+    if (connErr) return cb(connErr);
 
-    conn.query(
-      `INSERT INTO register
-       (user_id, course_id, payment_date, paypal_capture_id)
-       VALUES (?, ?, NOW(), ?)`,
-      [user_id, course_id, paypal_capture_id],
-      (err1, result) => {
-        if (err1) {
-          return conn.rollback(() => cb(err1));
-        }
+    conn.beginTransaction((err) => {
+      if (err) {
+        conn.release();
+        return cb(err);
+      }
 
-        const receipt_number = result.insertId;
+      conn.query(
+        `INSERT INTO register
+         (user_id, course_id, payment_date, paypal_capture_id)
+         VALUES (?, ?, NOW(), ?)`,
+        [user_id, course_id, paypal_capture_id],
+        (err1, result) => {
+          if (err1) {
+            return conn.rollback(() => {
+              conn.release();
+              cb(err1);
+            });
+          }
 
-        conn.query(
-          `UPDATE course_reservations
-           SET status = 'approved'
-           WHERE reservation_id = ?`,
-          [reservation_id],
-          (err2) => {
-            if (err2) {
-              return conn.rollback(() => cb(err2));
-            }
+          const receipt_number = result.insertId;
 
-            conn.commit((err3) => {
-              if (err3) {
-                return conn.rollback(() => cb(err3));
+          conn.query(
+            `UPDATE course_reservations
+             SET status = 'approved'
+             WHERE reservation_id = ?`,
+            [reservation_id],
+            (err2) => {
+              if (err2) {
+                return conn.rollback(() => {
+                  conn.release();
+                  cb(err2);
+                });
               }
 
-              cb(null, receipt_number);
-            });
-          },
-        );
-      },
-    );
+              conn.commit((err3) => {
+                if (err3) {
+                  return conn.rollback(() => {
+                    conn.release();
+                    cb(err3);
+                  });
+                }
+
+                conn.release();
+                cb(null, receipt_number);
+              });
+            },
+          );
+        },
+      );
+    });
   });
 }
 
