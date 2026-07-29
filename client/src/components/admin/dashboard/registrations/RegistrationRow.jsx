@@ -3,10 +3,9 @@
 // ──────────────────────────────────────────────────────────────────────────────
 
 import AvatarInitials from "../shared/AvatarInitials";
-import PaymentBadge from "../shared/PaymentBadge";
 import styles from "./RegistrationRow.module.css";
 
-function RegistrationRow({ name, course, date, payment }) {
+function RegistrationRow({ name, course, date }) {
   return (
     <tr className={styles.row}>
       {/* ── Student name with avatar ───────────────────────────────────── */}
@@ -22,11 +21,6 @@ function RegistrationRow({ name, course, date, payment }) {
 
       {/* ── Registration date ──────────────────────────────────────────── */}
       <td className={styles.date}>{date}</td>
-
-      {/* ── Payment status badge ───────────────────────────────────────── */}
-      <td>
-        <PaymentBadge status={payment} />
-      </td>
     </tr>
   );
 }

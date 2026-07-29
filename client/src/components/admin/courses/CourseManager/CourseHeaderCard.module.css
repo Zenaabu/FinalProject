@@ -88,7 +88,7 @@
 
 .badgeActive   { background: #dcfce7; color: #166534; }
 .badgeUpcoming { background: #dbeafe; color: #1e40af; }
-.badgeInactive { background: #f1f5f9; color: #64748b; }
+.badgeInactive { background: #fee2e2; color: #dc2626; }
 .badgeLevel    { background: #e0f2fe; color: var(--color-ocean-text); }
 
 /* ── Details row ─────────────────────────────────────────────────────────── */

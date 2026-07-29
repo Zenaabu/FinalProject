@@ -1,8 +1,8 @@
 // ─── StatsRow.jsx ─────────────────────────────────────────────────────────────
-// Renders the four KPI cards side by side.
-// To update a stat value, edit STATS below — no other file needs changing.
+// Renders the four KPI cards side by side, backed by GET /api/admin/dashboard-stats.
 // ──────────────────────────────────────────────────────────────────────────────
 
+import { useState, useEffect } from "react";
 import StatCard from "./StatCard";
 import styles from "./StatsRow.module.css";
 
@@ -81,54 +81,73 @@ const ProfitIcon = (
   </svg>
 );
 
-/* ── Stats data ──────────────────────────────────────────────────────────── */
-const STATS = [
-  {
-    id: "courses",
-    label: "Active Courses",
-    value: "15",
-    sub: "+2 this month",
-    subColor: "#15803d",
-    iconBg: "rgba(56, 189, 248, 0.12)",
-    iconColor: "var(--color-ocean-text)",
-    icon: CoursesIcon,
-  },
-  {
-    id: "students",
-    label: "Registered Students",
-    value: "120",
-    sub: "+8 this week",
-    subColor: "#15803d",
-    iconBg: "rgba(34, 197, 94, 0.12)",
-    iconColor: "#15803d",
-    icon: StudentsIcon,
-  },
-  {
-    id: "instructors",
-    label: "Active Instructors",
-    value: "8",
-    sub: "All scheduled",
-    subColor: "#64748b",
-    iconBg: "rgba(139, 92, 246, 0.12)",
-    iconColor: "#7c3aed",
-    icon: InstructorsIcon,
-  },
-  {
-    id: "profit",
-    label: "Monthly Profit",
-    value: "₪18,500",
-    sub: "Excl. VAT (17%)",
-    subColor: "#dc2626",
-    iconBg: "rgba(34, 197, 94, 0.12)",
-    iconColor: "#15803d",
-    icon: ProfitIcon,
-  },
-];
+function formatCurrency(value) {
+  return `₪${Math.round(Number(value)).toLocaleString("en-US")}`;
+}
+
+/* ── Card styling (data comes from the API, only presentation lives here) ── */
+function buildCards(stats) {
+  return [
+    {
+      id: "courses",
+      label: "Active Courses",
+      value: stats ? stats.active_courses : "—",
+      sub: "Currently active",
+      subColor: "#64748b",
+      iconBg: "rgba(56, 189, 248, 0.12)",
+      iconColor: "var(--color-ocean-text)",
+      icon: CoursesIcon,
+    },
+    {
+      id: "students",
+      label: "Registered Students",
+      value: stats ? stats.registered_students : "—",
+      sub: stats ? `+${stats.new_students_week} this week` : "",
+      subColor: "#15803d",
+      iconBg: "rgba(34, 197, 94, 0.12)",
+      iconColor: "#15803d",
+      icon: StudentsIcon,
+    },
+    {
+      id: "instructors",
+      label: "Active Instructors",
+      value: stats ? stats.active_instructors : "—",
+      sub: "Not blocked",
+      subColor: "#64748b",
+      iconBg: "rgba(139, 92, 246, 0.12)",
+      iconColor: "#7c3aed",
+      icon: InstructorsIcon,
+    },
+    {
+      id: "profit",
+      label: "Monthly Profit",
+      value: stats ? formatCurrency(stats.monthly_profit) : "—",
+      sub: "Excl. VAT, this month",
+      subColor: "#15803d",
+      iconBg: "rgba(34, 197, 94, 0.12)",
+      iconColor: "#15803d",
+      icon: ProfitIcon,
+    },
+  ];
+}
 
 function StatsRow() {
+  const [stats, setStats] = useState(null);
+
+  useEffect(() => {
+    fetch("/api/admin/dashboard-stats")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) setStats(data.stats);
+      })
+      .catch(() => {
+        // non-blocking: cards just keep showing placeholders
+      });
+  }, []);
+
   return (
     <div className={styles.row}>
-      {STATS.map((s) => (
+      {buildCards(stats).map((s) => (
         <StatCard key={s.id} {...s} />
       ))}
     </div>

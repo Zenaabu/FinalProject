@@ -151,4 +151,31 @@ router.get("/instructors", requireLogin, requireAdmin, (req, res) => {
   });
 });
 
+// GET the KPI numbers for the admin dashboard home page
+// url: /api/admin/dashboard-stats
+router.get("/dashboard-stats", requireLogin, requireAdmin, (req, res) => {
+  adminQ.getDashboardStats((err, rows) => {
+    if (err) {
+      return res.status(500).json({ success: false, message: err.message });
+    }
+    res.json({ success: true, stats: rows[0] });
+  });
+});
+
+// GET the most recent course registrations for the admin dashboard home page
+// url: /api/admin/recent-registrations
+router.get(
+  "/recent-registrations",
+  requireLogin,
+  requireAdmin,
+  (req, res) => {
+    adminQ.getRecentRegistrations(6, (err, rows) => {
+      if (err) {
+        return res.status(500).json({ success: false, message: err.message });
+      }
+      res.json({ success: true, registrations: rows });
+    });
+  },
+);
+
 module.exports = router;

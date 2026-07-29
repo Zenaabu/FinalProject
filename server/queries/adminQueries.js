@@ -58,6 +58,52 @@ function getInstructors(cb) {
   );
 }
 
+// a function that returns the KPI numbers shown on the admin dashboard home
+// page: active courses, distinct students who ever registered, instructors
+// currently not blocked, this month's profit (course price excl. VAT summed
+// over registrations paid this month), and new students in the last 7 days
+function getDashboardStats(cb) {
+  const conn = db.getConnection();
+
+  conn.query(
+    `SELECT
+        (SELECT COUNT(*) FROM courses WHERE is_active = 1) AS active_courses,
+        (SELECT COUNT(DISTINCT user_id) FROM register) AS registered_students,
+        (SELECT COUNT(*) FROM users
+          WHERE role = 'instructor' AND is_blocked = 0) AS active_instructors,
+        (SELECT COALESCE(SUM(c.price / (1 + c.vat_percent / 100)), 0)
+           FROM register r
+           JOIN courses c ON r.course_id = c.course_id
+          WHERE MONTH(r.payment_date) = MONTH(CURDATE())
+            AND YEAR(r.payment_date) = YEAR(CURDATE())) AS monthly_profit,
+        (SELECT COUNT(DISTINCT user_id) FROM register
+          WHERE payment_date >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)) AS new_students_week`,
+    cb,
+  );
+}
+
+// a function that returns the most recent course registrations (student
+// name, course, date paid) for the admin dashboard's "Recent Registrations"
+// table
+function getRecentRegistrations(limit, cb) {
+  const conn = db.getConnection();
+
+  conn.query(
+    `SELECT
+        r.receipt_number,
+        CONCAT(u.first_name, ' ', u.last_name) AS name,
+        c.description AS course,
+        r.payment_date AS date
+     FROM register r
+     JOIN users u ON r.user_id = u.user_id
+     JOIN courses c ON r.course_id = c.course_id
+     ORDER BY r.payment_date DESC, r.receipt_number DESC
+     LIMIT ?`,
+    [limit],
+    cb,
+  );
+}
+
 // a function that gets all the instructor constraints with the
 // instructor full name
 function getAllInstructorConstraints(cb) {
@@ -250,6 +296,8 @@ module.exports = {
   updateUserRole,
   updateUserBlockedStatus,
   getInstructors,
+  getDashboardStats,
+  getRecentRegistrations,
   getAllInstructorConstraints,
   addVideo,
   addLessonsToCourse,

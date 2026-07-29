@@ -58,12 +58,18 @@ router.get("/", requireLogin, requireAdmin, (req, res) => {
 // GET all courses with nested lessons and attendance
 // url: /api/courses/details
 router.get("/details", requireLogin, requireAdmin, (req, res) => {
-  courseQ.getCoursesWithDetails((err, courses) => {
+  courseQ.deactivateExpiredCourses((err) => {
     if (err) {
       return res.status(500).json({ success: false, message: err.message });
     }
 
-    res.json({ success: true, courses });
+    courseQ.getCoursesWithDetails((err2, courses) => {
+      if (err2) {
+        return res.status(500).json({ success: false, message: err2.message });
+      }
+
+      res.json({ success: true, courses });
+    });
   });
 });
 
