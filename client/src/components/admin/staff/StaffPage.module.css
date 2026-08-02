@@ -1,0 +1,212 @@
+/* ============================================================
+   StaffPage.module.css
+   ============================================================ */
+
+.page {
+  padding: 2rem;
+}
+
+.title {
+  font-size: 1.65rem;
+  font-weight: 700;
+  color: var(--color-ocean-text);
+  margin: 0 0 0.35rem;
+}
+
+.subtitle {
+  margin: 0 0 1.5rem;
+  font-size: 0.9rem;
+  color: #64748b;
+}
+
+/* ── States ──────────────────────────────────────────────────────────────── */
+.state {
+  padding: 2rem;
+  border: 1px dashed rgba(56, 189, 248, 0.4);
+  border-radius: 12px;
+  background: #fff;
+  color: #64748b;
+  font-size: 0.95rem;
+  text-align: center;
+}
+
+.stateError {
+  padding: 1rem 1.25rem;
+  border: 1px solid #fca5a5;
+  border-radius: 10px;
+  background: #fef2f2;
+  color: #b91c1c;
+  font-size: 0.9rem;
+}
+
+/* ── Card / table ────────────────────────────────────────────────────────── */
+.card {
+  background: #fff;
+  border-radius: 14px;
+  box-shadow:
+    0 1px 10px rgba(2, 132, 199, 0.08),
+    0 1px 2px rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(56, 189, 248, 0.12);
+  overflow: hidden;
+}
+
+.tableWrap {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+
+.table thead tr {
+  border-bottom: 2px solid #f1f5f9;
+}
+
+.table thead th {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #94a3b8;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.row {
+  border-bottom: 1px solid #f1f5f9;
+  transition: background 0.15s ease;
+}
+
+.row:last-child {
+  border-bottom: none;
+}
+
+.row:hover {
+  background: #f8fafc;
+}
+
+.row td {
+  padding: 0.85rem 1rem;
+  vertical-align: middle;
+}
+
+.name {
+  font-weight: 500;
+  color: #0f172a;
+  white-space: nowrap;
+}
+
+.dates {
+  color: #334155;
+  white-space: nowrap;
+}
+
+.notes {
+  color: #64748b;
+}
+
+/* ── Status badges ───────────────────────────────────────────────────────── */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.22rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.badgePending {
+  background: #fef3c7;
+  color: #a16207;
+}
+
+.badgeApproved {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.badgeRejected {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+.pastHint {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 0.68rem;
+  color: #94a3b8;
+  font-style: italic;
+}
+
+/* ── Actions ─────────────────────────────────────────────────────────────── */
+.actions {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.btnApprove {
+  padding: 0.3rem 0.7rem;
+  border: 1px solid rgba(34, 197, 94, 0.4);
+  border-radius: 6px;
+  background: rgba(34, 197, 94, 0.08);
+  color: #15803d;
+  font-size: 0.77rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s ease;
+}
+
+.btnApprove:hover:not(:disabled) {
+  background: rgba(34, 197, 94, 0.18);
+}
+
+.btnReject {
+  padding: 0.3rem 0.7rem;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 6px;
+  background: rgba(239, 68, 68, 0.07);
+  color: #dc2626;
+  font-size: 0.77rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s ease;
+}
+
+.btnReject:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.16);
+}
+
+.btnApprove:disabled,
+.btnReject:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.muted {
+  color: #cbd5e1;
+}
+
+/* ── Expand toggle + nested panel row ───────────────────────────────────── */
+.expandBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: var(--color-ocean-text);
+  cursor: pointer;
+  padding: 0.15rem;
+}
+
+.panelCell {
+  padding: 0 1rem 1rem !important;
+  background: #f8fbff;
+}

@@ -194,6 +194,14 @@ function CourseAttendance() {
                           ? `${marked} marked`
                           : "attendance not taken"}
                       </span>
+                      {lesson.substitute_name && (
+                        <span className={styles.changedTag}>
+                          Covered by {lesson.substitute_name}
+                        </span>
+                      )}
+                      {lesson.last_change?.change_type === "rescheduled" && (
+                        <span className={styles.changedTag}>Rescheduled</span>
+                      )}
                     </button>
                   </li>
                 );
@@ -241,6 +249,14 @@ function CourseAttendance() {
                   </div>
                 )}
               </div>
+
+              {/* surfaces the most recent reschedule / substitute change made
+                  to this lesson, so the instructor doesn't miss it */}
+              {lessonInfo?.last_change && (
+                <p className={styles.changeNotice}>
+                  This lesson was changed: {lessonInfo.last_change.details}
+                </p>
+              )}
 
               {/* the server refuses attendance outside the lesson window */}
               {lessonInfo && !lessonInfo.can_take_attendance && (

@@ -322,13 +322,17 @@ function fetchCoursesWithDetails(course_id, cb) {
 
       // ── Step 2: all lessons for those courses ──────────────────────────
       conn.query(
-        `SELECT lesson_id, course_id, lesson_number,
-                DATE_FORMAT(lesson_date, '%Y-%m-%d')  AS date,
-                TIME_FORMAT(start_time,  '%H:%i')     AS start_time,
-                TIME_FORMAT(end_time,    '%H:%i')     AS end_time
-         FROM lessons
-         WHERE course_id IN (?)
-         ORDER BY course_id, lesson_number`,
+        `SELECT l.lesson_id, l.course_id, l.lesson_number,
+                DATE_FORMAT(l.lesson_date, '%Y-%m-%d')  AS date,
+                TIME_FORMAT(l.start_time,  '%H:%i')     AS start_time,
+                TIME_FORMAT(l.end_time,    '%H:%i')     AS end_time,
+                l.substitute_instructor_id,
+                su.first_name AS substitute_first_name,
+                su.last_name  AS substitute_last_name
+         FROM lessons l
+         LEFT JOIN users su ON su.user_id = l.substitute_instructor_id
+         WHERE l.course_id IN (?)
+         ORDER BY l.course_id, l.lesson_number`,
         [courseIds],
         (err2, lessons) => {
           if (err2) return cb(err2);
@@ -393,26 +397,55 @@ function fetchCoursesWithDetails(course_id, cb) {
                 });
               }
 
-              // Group lessons by course_id
-              const lessonsByCourse = {};
-              for (const lesson of lessons) {
-                if (!lessonsByCourse[lesson.course_id])
-                  lessonsByCourse[lesson.course_id] = [];
-                lessonsByCourse[lesson.course_id].push({
-                  lesson_id: lesson.lesson_id,
-                  lesson_number: lesson.lesson_number,
-                  date: lesson.date,
-                  start_time: lesson.start_time,
-                  end_time: lesson.end_time,
-                  students: attendByLesson[lesson.lesson_id] || [],
-                });
-              }
+              // ── Step 4: the most recent change made to each lesson ─────
+              // (reschedule / substitute assign-or-clear), so the instructor
+              // can see that a lesson they teach was changed
+              conn.query(
+                `SELECT lesson_id, change_type, details
+                 FROM lesson_history
+                 WHERE lesson_id IN (?)
+                 ORDER BY created_at`,
+                [lessonIds],
+                (err4, historyRows) => {
+                  if (err4) return cb(err4);
 
-              cb(
-                null,
-                courses.map((c) =>
-                  buildCourse(c, lessonsByCourse[c.course_id] || []),
-                ),
+                  // rows come oldest-first, so the last write per lesson_id
+                  // wins — that is the most recent change
+                  const lastChangeByLesson = {};
+                  for (const row of historyRows) {
+                    lastChangeByLesson[row.lesson_id] = {
+                      change_type: row.change_type,
+                      details: row.details,
+                    };
+                  }
+
+                  // Group lessons by course_id
+                  const lessonsByCourse = {};
+                  for (const lesson of lessons) {
+                    if (!lessonsByCourse[lesson.course_id])
+                      lessonsByCourse[lesson.course_id] = [];
+                    lessonsByCourse[lesson.course_id].push({
+                      lesson_id: lesson.lesson_id,
+                      lesson_number: lesson.lesson_number,
+                      date: lesson.date,
+                      start_time: lesson.start_time,
+                      end_time: lesson.end_time,
+                      substitute_instructor_id: lesson.substitute_instructor_id,
+                      substitute_name: lesson.substitute_instructor_id
+                        ? `${lesson.substitute_first_name} ${lesson.substitute_last_name}`
+                        : null,
+                      last_change: lastChangeByLesson[lesson.lesson_id] || null,
+                      students: attendByLesson[lesson.lesson_id] || [],
+                    });
+                  }
+
+                  cb(
+                    null,
+                    courses.map((c) =>
+                      buildCourse(c, lessonsByCourse[c.course_id] || []),
+                    ),
+                  );
+                },
               );
             },
           );

@@ -6,9 +6,11 @@
 
 import { Route } from "react-router-dom";
 import RequireRole from "../auth/RequireRole";
+import UserProfilePage from "../admin/profile/UserProfilePage";
 import InstructorLayout from "./InstructorLayout";
 import InstructorCourses from "./courses/InstructorCourses";
 import CourseAttendance from "./attendance/CourseAttendance";
+import InstructorConstraints from "./constraints/InstructorConstraints";
 
 export const instructorRoutes = (
   <Route
@@ -21,5 +23,7 @@ export const instructorRoutes = (
   >
     <Route index element={<InstructorCourses />} />
     <Route path="courses/:course_id" element={<CourseAttendance />} />
+    <Route path="constraints" element={<InstructorConstraints />} />
+    <Route path="profile" element={<UserProfilePage />} />
   </Route>
 );

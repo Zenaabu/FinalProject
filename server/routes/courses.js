@@ -28,12 +28,15 @@ const {
   validateUpdatedLessonNoConflict,
   validateUpdatedLessonInstructorConflict,
   validateUpdatedLessonDateOrder,
+  validateSubstituteInstructor,
+  validateRescheduledLessonAvoidsApprovedConstraint,
 } = require("../validations/adminValidations");
 
 const courseQ = require("../queries/courseQueries");
 const adminQ = require("../queries/adminQueries");
 const userQ = require("../queries/usersQueries");
 const paypalService = require("../services/paypalService");
+const { formatDateOnly, formatTimeOnly } = require("../validations/utils");
 
 // ─── Admin course endpoints ────────────────────────────────────────────────
 
@@ -363,8 +366,12 @@ router.put(
   validateUpdatedLessonNoConflict,
   validateUpdatedLessonInstructorConflict,
   validateUpdatedLessonDateOrder,
+  validateRescheduledLessonAvoidsApprovedConstraint,
   (req, res) => {
     const { course_id, lesson_id } = req.params;
+    // present only when this edit came from Staff Scheduling, resolving a
+    // specific approved instructor constraint
+    const { constraints_id } = req.query;
 
     // only the three schedule fields may change — lesson_number keeps the
     // order of the course and is not editable
@@ -374,26 +381,141 @@ router.put(
       end_time: req.updatedLesson.end_time,
     };
 
+    const dateChanged =
+      formatDateOnly(req.lesson.lesson_date) !==
+        formatDateOnly(req.updatedLesson.lesson_date) ||
+      formatTimeOnly(req.lesson.start_time) !==
+        formatTimeOnly(req.updatedLesson.start_time) ||
+      formatTimeOnly(req.lesson.end_time) !==
+        formatTimeOnly(req.updatedLesson.end_time);
+
+    // TODO: this is the reschedule path used to resolve an approved
+    // instructor constraint (see /admin/staff) — once the messaging system
+    // exists, notify the lesson's registered students that it moved here.
     adminQ.updateLesson(lesson_id, fields, (err) => {
       if (err) {
         return res.status(500).json({ success: false, message: err.message });
       }
 
-      // hand back the whole course so the accordion can refresh in one go
-      courseQ.getCourseWithDetails(course_id, (err2, course) => {
-        if (err2) {
+      function respondWithCourse() {
+        // hand back the whole course so the accordion can refresh in one go
+        courseQ.getCourseWithDetails(course_id, (err2, course) => {
+          if (err2) {
+            return res
+              .status(500)
+              .json({ success: false, message: err2.message });
+          }
+
+          res.json({
+            success: true,
+            message: "Lesson updated successfully",
+            course,
+          });
+        });
+      }
+
+      if (!dateChanged) return respondWithCourse();
+
+      const details = `Rescheduled from ${formatDateOnly(req.lesson.lesson_date)} ${formatTimeOnly(req.lesson.start_time)}–${formatTimeOnly(req.lesson.end_time)} to ${formatDateOnly(req.updatedLesson.lesson_date)} ${formatTimeOnly(req.updatedLesson.start_time)}–${formatTimeOnly(req.updatedLesson.end_time)}`;
+
+      adminQ.addLessonHistory(
+        {
+          lesson_id,
+          constraints_id: constraints_id || null,
+          change_type: "rescheduled",
+          details,
+          changed_by: req.session.user.user_id,
+        },
+        (err3) => {
+          if (err3) {
+            return res
+              .status(500)
+              .json({ success: false, message: err3.message });
+          }
+
+          respondWithCourse();
+        },
+      );
+    });
+  },
+);
+
+// PUT assign (or clear, with substitute_instructor_id: null) a substitute
+// instructor for a single lesson — used to cover a lesson that falls inside
+// an approved instructor constraint without reassigning the whole course
+// url: /api/courses/:course_id/lessons/:lesson_id/substitute
+router.put(
+  "/:course_id/lessons/:lesson_id/substitute",
+  requireLogin,
+  requireAdmin,
+  validateLessonExists,
+  validateLessonNotAlreadyPassed,
+  validateLessonCourseExists,
+  validateSubstituteInstructor,
+  (req, res) => {
+    const { course_id, lesson_id } = req.params;
+    // present only when this edit came from Staff Scheduling, resolving a
+    // specific approved instructor constraint
+    const { constraints_id } = req.query;
+
+    adminQ.updateLesson(
+      lesson_id,
+      { substitute_instructor_id: req.substituteInstructorId },
+      (err) => {
+        if (err) {
           return res
             .status(500)
-            .json({ success: false, message: err2.message });
+            .json({ success: false, message: err.message });
         }
 
-        res.json({
-          success: true,
-          message: "Lesson updated successfully",
-          course,
-        });
-      });
-    });
+        function respondWithCourse() {
+          courseQ.getCourseWithDetails(course_id, (err2, course) => {
+            if (err2) {
+              return res
+                .status(500)
+                .json({ success: false, message: err2.message });
+            }
+
+            res.json({
+              success: true,
+              message: req.substituteInstructorId
+                ? "Substitute assigned"
+                : "Substitute cleared",
+              course,
+            });
+          });
+        }
+
+        const historyEntry = req.substituteInstructorId
+          ? {
+              change_type: "substitute_assigned",
+              details: `Covered by ${req.substituteInstructorName}`,
+            }
+          : {
+              change_type: "substitute_cleared",
+              details: "Substitute removed",
+            };
+
+        adminQ.addLessonHistory(
+          {
+            lesson_id,
+            constraints_id: constraints_id || null,
+            change_type: historyEntry.change_type,
+            details: historyEntry.details,
+            changed_by: req.session.user.user_id,
+          },
+          (err3) => {
+            if (err3) {
+              return res
+                .status(500)
+                .json({ success: false, message: err3.message });
+            }
+
+            respondWithCourse();
+          },
+        );
+      },
+    );
   },
 );
 

@@ -10,6 +10,7 @@ import DashboardHome from "./dashboard/DashboardHome";
 import UsersAndRosters from "./users/UsersAndRosters";
 import CoursesMain from "./courses/CoursesMain/CoursesMain";
 import UserProfilePage from "./profile/UserProfilePage";
+import StaffPage from "./staff/StaffPage";
 
 export const adminRoutes = (
   <Route
@@ -24,8 +25,8 @@ export const adminRoutes = (
     <Route path="courses" element={<CoursesMain />} />
     <Route path="users" element={<UsersAndRosters />} />
     <Route path="profile" element={<UserProfilePage />} />
+    <Route path="staff" element={<StaffPage />} />
     {/* Future pages — uncomment as you build them:
-    <Route path="staff"      element={<StaffPage />} />
     <Route path="reports"    element={<ReportsPage />} />
     <Route path="financials" element={<FinancialsPage />} />
     */}

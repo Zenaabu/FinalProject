@@ -761,6 +761,32 @@ function validateUpdatedLessonDateOrder(req, res, next) {
   });
 }
 
+// a middleware that stops a lesson from being rescheduled onto a date the
+// course's instructor was approved as unavailable for (instructor_constraints
+// with status = 'approved') — approving a constraint means the admin is
+// handling that gap themselves, so a plain reschedule can't quietly put the
+// lesson right back on top of it
+function validateRescheduledLessonAvoidsApprovedConstraint(req, res, next) {
+  adminQ.findApprovedConstraintOnDate(
+    req.course.user_id,
+    req.updatedLesson.lesson_date,
+    (err, rows) => {
+      if (err) {
+        return res.status(500).json({ success: false, message: err.message });
+      }
+
+      if (rows.length > 0) {
+        return res.status(409).json({
+          success: false,
+          message: `The instructor was approved as unavailable on ${req.updatedLesson.lesson_date} ("${rows[0].notes}"). Choose a different date or assign a substitute instead.`,
+        });
+      }
+
+      next();
+    },
+  );
+}
+
 // a middleware that refuses to change a lesson that has already taken place,
 // because its attendance is already recorded
 function validateLessonNotAlreadyPassed(req, res, next) {
@@ -1024,6 +1050,116 @@ function validateUpdatedCourseInstructorConflict(req, res, next) {
   });
 }
 
+// a middleware that checks the instructor constraint in the params exists,
+// and attaches it to the request
+function validateConstraintExists(req, res, next) {
+  const constraintsId = req.params.constraints_id;
+
+  adminQ.findConstraintById(constraintsId, (err, rows) => {
+    if (err) {
+      return res.status(500).json({ success: false, message: err.message });
+    }
+
+    if (!rows || rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Constraint not found",
+      });
+    }
+
+    req.constraint = rows[0];
+    next();
+  });
+}
+
+// a middleware that validates the status sent when an admin decides on a
+// constraint. 'pending' is not settable here — it is only ever the untouched
+// default, never something an admin picks
+function validateConstraintStatusValue(req, res, next) {
+  const { status } = req.body;
+
+  if (status !== "approved" && status !== "rejected") {
+    return res.status(400).json({
+      success: false,
+      message: "Status must be 'approved' or 'rejected'",
+    });
+  }
+
+  next();
+}
+
+// a middleware that validates the substitute instructor sent for a lesson.
+// null clears an existing substitute. otherwise it must be a real,
+// non-blocked instructor other than the lesson's own instructor, and free of
+// a conflicting lesson at that exact date/time
+function validateSubstituteInstructor(req, res, next) {
+  const { substitute_instructor_id } = req.body;
+
+  if (substitute_instructor_id === null) {
+    req.substituteInstructorId = null;
+    return next();
+  }
+
+  if (!substitute_instructor_id) {
+    return res.status(400).json({
+      success: false,
+      message: "substitute_instructor_id is required (or null to clear)",
+    });
+  }
+
+  if (substitute_instructor_id === req.course.user_id) {
+    return res.status(400).json({
+      success: false,
+      message: "The substitute must be a different instructor",
+    });
+  }
+
+  userQ.findUserById(substitute_instructor_id, (err, rows) => {
+    if (err) {
+      return res.status(500).json({ success: false, message: err.message });
+    }
+
+    if (!rows || rows.length === 0 || rows[0].role !== "instructor") {
+      return res.status(400).json({
+        success: false,
+        message: "substitute_instructor_id must be an existing instructor",
+      });
+    }
+
+    if (rows[0].is_blocked === 1) {
+      return res.status(400).json({
+        success: false,
+        message: "This instructor is blocked",
+      });
+    }
+
+    adminQ.getInstructorLessonsInRange(
+      substitute_instructor_id,
+      req.lesson.lesson_date,
+      req.lesson.lesson_date,
+      (err2, existingLessons) => {
+        if (err2) {
+          return res
+            .status(500)
+            .json({ success: false, message: err2.message });
+        }
+
+        if (hasLessonConflict(existingLessons, [req.lesson])) {
+          return res.status(409).json({
+            success: false,
+            message:
+              "This instructor already teaches another lesson at this date and time",
+          });
+        }
+
+        req.substituteInstructorId = substitute_instructor_id;
+        req.substituteInstructorName = `${rows[0].first_name} ${rows[0].last_name}`;
+        next();
+      },
+    );
+  });
+}
+
 module.exports = {
   validateRoleUpdate,
   validateBlockedStatus,
@@ -1051,4 +1187,8 @@ module.exports = {
   validateUpdatedCourseCapacity,
   validateUpdatedCourseTotalLessons,
   validateUpdatedCourseInstructorConflict,
+  validateConstraintExists,
+  validateConstraintStatusValue,
+  validateSubstituteInstructor,
+  validateRescheduledLessonAvoidsApprovedConstraint,
 };

@@ -1,0 +1,262 @@
+/* ─── InstructorConstraints.module.css ───────────────────────────────────── */
+/* Colours follow the project design system (see UserProfilePage.module.css):  */
+/*   --color-ocean-text    #0284c7   --color-light-accent  #38bdf8            */
+/*   page bg #f0f9ff   muted text #64748b   dark text #0f172a                */
+/* ─────────────────────────────────────────────────────────────────────────── */
+
+.page {
+  max-width: 1100px;
+}
+
+.pageHeader {
+  margin-bottom: 1.75rem;
+}
+
+.title {
+  margin: 0 0 0.35rem;
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--color-ocean-text, #0284c7);
+}
+
+.subtitle {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #64748b;
+}
+
+/* ── Layout ──────────────────────────────────────────────────────────────── */
+.layout {
+  display: grid;
+  grid-template-columns: 1.3fr 1fr;
+  gap: 1.25rem;
+  align-items: start;
+}
+
+@media (max-width: 860px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  background: #fff;
+  border: 1px solid rgba(56, 189, 248, 0.18);
+  border-radius: 14px;
+  padding: 1.5rem 1.6rem;
+}
+
+.cardTitle {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--color-ocean-text, #0284c7);
+}
+
+/* ── Date range ──────────────────────────────────────────────────────────── */
+.dateRow {
+  display: flex;
+  gap: 0.9rem;
+}
+
+.dateField {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.fieldLabel {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #64748b;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.dateInput {
+  font-size: 0.9rem;
+  padding: 0.5rem 0.65rem;
+  border: 1.5px solid rgba(56, 189, 248, 0.35);
+  border-radius: 8px;
+  background: #f8fbff;
+  color: #0f172a;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.dateInput:focus {
+  border-color: var(--color-ocean-text, #0284c7);
+  background: #fff;
+}
+
+/* ── Reason picker ───────────────────────────────────────────────────────── */
+.reasonGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.65rem;
+}
+
+.reasonCard {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.7rem 0.85rem;
+  border: 1.5px solid rgba(56, 189, 248, 0.25);
+  border-radius: 10px;
+  background: #f8fbff;
+  color: #334155;
+  font-size: 0.86rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+  transition:
+    border-color 0.15s,
+    background 0.15s,
+    color 0.15s,
+    transform 0.1s;
+}
+
+.reasonCard:hover {
+  border-color: var(--color-light-accent, #38bdf8);
+  transform: translateY(-1px);
+}
+
+.reasonCardActive {
+  border-color: var(--color-ocean-text, #0284c7);
+  background: rgba(56, 189, 248, 0.12);
+  color: var(--color-ocean-text, #0284c7);
+}
+
+/* ── Other reason textarea ──────────────────────────────────────────────── */
+.textarea {
+  font-size: 0.88rem;
+  padding: 0.65rem 0.75rem;
+  border: 1.5px solid rgba(56, 189, 248, 0.35);
+  border-radius: 8px;
+  background: #f8fbff;
+  color: #0f172a;
+  outline: none;
+  resize: vertical;
+  font-family: inherit;
+  transition: border-color 0.15s;
+}
+
+.textarea:focus {
+  border-color: var(--color-ocean-text, #0284c7);
+  background: #fff;
+}
+
+/* ── Submit ──────────────────────────────────────────────────────────────── */
+.submitBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  align-self: flex-start;
+  padding: 0.6rem 1.2rem;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #fff;
+  background: var(--color-ocean-text, #0284c7);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.submitBtn:hover:not(:disabled) {
+  background: var(--color-button-hover, #0ea5e9);
+}
+
+.submitBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.formError {
+  margin: 0;
+  font-size: 0.82rem;
+  color: #dc2626;
+}
+
+/* ── History list ────────────────────────────────────────────────────────── */
+.state {
+  margin: 0;
+  font-size: 0.88rem;
+  color: #64748b;
+}
+
+.historyList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  max-height: 420px;
+  overflow-y: auto;
+}
+
+.historyItem {
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  border-radius: 10px;
+  padding: 0.65rem 0.85rem;
+  background: #f8fbff;
+}
+
+.historyItemPast {
+  opacity: 0.65;
+}
+
+.historyDates {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--color-ocean-text, #0284c7);
+  margin-bottom: 0.2rem;
+}
+
+.statusBadge {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  border-radius: 999px;
+  padding: 0.1rem 0.5rem;
+}
+
+.statusBadgePending {
+  background: #fef3c7;
+  color: #a16207;
+}
+
+.statusBadgeApproved {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.statusBadgeRejected {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+.historyHint {
+  margin-top: 0.35rem;
+  font-size: 0.76rem;
+  font-style: italic;
+  color: #94a3b8;
+}
+
+.historyNotes {
+  font-size: 0.85rem;
+  color: #334155;
+}

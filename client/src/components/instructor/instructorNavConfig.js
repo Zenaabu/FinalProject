@@ -13,4 +13,18 @@ export const INSTRUCTOR_NAV_ITEMS = [
     icon: "courses",
     path: "/instructor",
   },
+  {
+    id: "constraints",
+    labelHe: "זמינות",
+    labelEn: "Availability",
+    icon: "calendar",
+    path: "/instructor/constraints",
+  },
+  {
+    id: "profile",
+    labelHe: "פרופיל משתמש",
+    labelEn: "My Profile",
+    icon: "profile",
+    path: "/instructor/profile",
+  },
 ];

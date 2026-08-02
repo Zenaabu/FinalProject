@@ -122,13 +122,33 @@ function findInstructorLesson(lesson_id, instructor_id, cb) {
     `SELECT
         l.*,
         c.course_id,
-        c.end_date
+        c.end_date,
+        su.first_name AS substitute_first_name,
+        su.last_name  AS substitute_last_name
      FROM lessons l
      JOIN courses c
        ON l.course_id = c.course_id
+     LEFT JOIN users su ON su.user_id = l.substitute_instructor_id
      WHERE l.lesson_id = ?
        AND c.user_id = ?`,
     [lesson_id, instructor_id],
+    cb,
+  );
+}
+
+// a function that gets a lesson_id
+// it returns the most recent change made to that lesson (reschedule or
+// substitute assign/clear), or no rows if it was never changed
+function getLatestLessonChange(lesson_id, cb) {
+  const conn = db.getConnection();
+
+  conn.query(
+    `SELECT change_type, details
+     FROM lesson_history
+     WHERE lesson_id = ?
+     ORDER BY created_at DESC
+     LIMIT 1`,
+    [lesson_id],
     cb,
   );
 }
@@ -203,6 +223,26 @@ function findDuplicateConstraint(user_id, start_time, end_time, cb) {
   );
 }
 
+// a function that gets a user_id
+// it returns all constraints that instructor has submitted, most recent first
+function getConstraintsByInstructor(user_id, cb) {
+  const conn = db.getConnection();
+
+  conn.query(
+    `SELECT
+        constraints_id,
+        start_time,
+        end_time,
+        notes,
+        status
+     FROM instructor_constraints
+     WHERE user_id = ?
+     ORDER BY start_time DESC`,
+    [user_id],
+    cb,
+  );
+}
+
 // a function that gets user_id, start_time, end_time
 // it checks if instructor already has an overlapping constraint
 function findOverlappingConstraint(user_id, start_time, end_time, cb) {
@@ -231,4 +271,6 @@ module.exports = {
   addConstraint,
   findDuplicateConstraint,
   findOverlappingConstraint,
+  getConstraintsByInstructor,
+  getLatestLessonChange,
 };

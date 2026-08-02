@@ -95,22 +95,36 @@ router.get(
         });
       }
 
-      res.json({
-        success: true,
-        lesson: {
-          lesson_id: req.lesson.lesson_id,
-          lesson_number: req.lesson.lesson_number,
-          lesson_date: formatDateOnly(req.lesson.lesson_date),
-          start_time: formatTimeOnly(req.lesson.start_time),
-          end_time: formatTimeOnly(req.lesson.end_time),
-          // tells the client whether the Save button should be enabled
-          can_take_attendance: canTakeAttendance(
-            req.lesson.lesson_date,
-            req.lesson.start_time,
-            req.course.end_date,
-          ),
-        },
-        students,
+      instructorQ.getLatestLessonChange(lessonId, (err2, changeRows) => {
+        if (err2) {
+          return res.status(500).json({
+            success: false,
+            message: err2.message,
+          });
+        }
+
+        res.json({
+          success: true,
+          lesson: {
+            lesson_id: req.lesson.lesson_id,
+            lesson_number: req.lesson.lesson_number,
+            lesson_date: formatDateOnly(req.lesson.lesson_date),
+            start_time: formatTimeOnly(req.lesson.start_time),
+            end_time: formatTimeOnly(req.lesson.end_time),
+            substitute_instructor_id: req.lesson.substitute_instructor_id,
+            substitute_name: req.lesson.substitute_instructor_id
+              ? `${req.lesson.substitute_first_name} ${req.lesson.substitute_last_name}`
+              : null,
+            last_change: changeRows[0] || null,
+            // tells the client whether the Save button should be enabled
+            can_take_attendance: canTakeAttendance(
+              req.lesson.lesson_date,
+              req.lesson.start_time,
+              req.course.end_date,
+            ),
+          },
+          students,
+        });
       });
     });
   },
@@ -236,5 +250,33 @@ router.post(
     });
   },
 );
+
+// GET the constraints the logged-in instructor has submitted
+// url: /api/instructor/constraints
+router.get("/constraints", requireLogin, requireInstructor, (req, res) => {
+  const instructorId = req.session.user.user_id;
+
+  instructorQ.getConstraintsByInstructor(instructorId, (err, rows) => {
+    if (err) {
+      return res.status(500).json({
+        success: false,
+        message: err.message,
+      });
+    }
+
+    const constraints = rows.map((row) => ({
+      constraints_id: row.constraints_id,
+      start_date: formatDateOnly(row.start_time),
+      end_date: formatDateOnly(row.end_time),
+      notes: row.notes,
+      status: row.status,
+    }));
+
+    res.json({
+      success: true,
+      constraints,
+    });
+  });
+});
 
 module.exports = router;

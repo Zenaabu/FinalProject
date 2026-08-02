@@ -110,17 +110,145 @@ function getAllInstructorConstraints(cb) {
   const conn = db.getConnection();
 
   conn.query(
-    `SELECT 
+    `SELECT
         ic.constraints_id,
         ic.user_id,
         u.first_name,
         u.last_name,
         ic.start_time,
         ic.end_time,
-        ic.notes
+        ic.notes,
+        ic.status
      FROM instructor_constraints ic
      JOIN users u ON ic.user_id = u.user_id
      ORDER BY ic.start_time`,
+    cb,
+  );
+}
+
+// a function that gets a constraints_id and returns that constraint
+function findConstraintById(constraints_id, cb) {
+  const conn = db.getConnection();
+
+  conn.query(
+    `SELECT *
+     FROM instructor_constraints
+     WHERE constraints_id = ?`,
+    [constraints_id],
+    cb,
+  );
+}
+
+// a function that gets an instructor's user_id and a date ("YYYY-MM-DD")
+// it returns any APPROVED constraint of that instructor which covers that
+// date — used to stop a lesson from being rescheduled onto a date the
+// instructor was confirmed unavailable for
+function findApprovedConstraintOnDate(user_id, date, cb) {
+  const conn = db.getConnection();
+
+  conn.query(
+    `SELECT *
+     FROM instructor_constraints
+     WHERE user_id = ?
+       AND status = 'approved'
+       AND ? BETWEEN DATE(start_time) AND DATE(end_time)`,
+    [user_id, date],
+    cb,
+  );
+}
+
+// a function that gets a constraints_id and a status ('approved' | 'rejected')
+// it updates the constraint's status
+function updateConstraintStatus(constraints_id, status, cb) {
+  const conn = db.getConnection();
+
+  conn.query(
+    `UPDATE instructor_constraints
+     SET status = ?
+     WHERE constraints_id = ?`,
+    [status, constraints_id],
+    cb,
+  );
+}
+
+// a function that gets an instructor's user_id, a date range and a
+// constraints_id. it returns the lessons that instructor teaches inside that
+// range, together with the course they belong to and whoever is currently
+// covering them (if anyone) — used to show the admin what an approved
+// constraint actually affects.
+// a lesson that was already rescheduled OUT of the range because of this
+// exact constraint is still included (matched through lesson_history), so
+// the admin keeps seeing it here instead of it just disappearing once
+// resolved
+function getAffectedLessonsForConstraint(
+  user_id,
+  start_date,
+  end_date,
+  constraints_id,
+  cb,
+) {
+  const conn = db.getConnection();
+
+  conn.query(
+    `SELECT DISTINCT
+        c.course_id,
+        c.description AS course_description,
+        l.lesson_id,
+        l.lesson_number,
+        l.lesson_date,
+        l.start_time,
+        l.end_time,
+        l.substitute_instructor_id,
+        su.first_name AS substitute_first_name,
+        su.last_name AS substitute_last_name
+     FROM lessons l
+     JOIN courses c ON c.course_id = l.course_id
+     LEFT JOIN users su ON su.user_id = l.substitute_instructor_id
+     WHERE
+       (c.user_id = ? AND c.is_active = 1 AND l.lesson_date BETWEEN ? AND ?)
+       OR l.lesson_id IN (
+         SELECT lesson_id FROM lesson_history WHERE constraints_id = ?
+       )
+     ORDER BY l.lesson_date, l.start_time`,
+    [user_id, start_date, end_date, constraints_id],
+    cb,
+  );
+}
+
+// a function that gets a lesson_id, an optional constraints_id, a
+// change_type ('rescheduled' | 'substitute_assigned' | 'substitute_cleared'),
+// a human-readable details string and the admin who made the change
+// it records that change in lesson_history
+function addLessonHistory(entry, cb) {
+  const conn = db.getConnection();
+
+  conn.query(
+    `INSERT INTO lesson_history
+     (lesson_id, constraints_id, change_type, details, changed_by)
+     VALUES (?, ?, ?, ?, ?)`,
+    [
+      entry.lesson_id,
+      entry.constraints_id ?? null,
+      entry.change_type,
+      entry.details,
+      entry.changed_by ?? null,
+    ],
+    cb,
+  );
+}
+
+// a function that gets a constraints_id and returns every lesson_history row
+// tagged with it, oldest first — used to show the admin what was actually
+// done to resolve that constraint
+function getLessonHistoryForConstraint(constraints_id, cb) {
+  const conn = db.getConnection();
+
+  conn.query(
+    `SELECT lesson_id, change_type, details, created_at
+     FROM lesson_history
+     WHERE constraints_id = ?
+     ORDER BY created_at`,
+    [constraints_id],
     cb,
   );
 }
@@ -299,6 +427,12 @@ module.exports = {
   getDashboardStats,
   getRecentRegistrations,
   getAllInstructorConstraints,
+  findConstraintById,
+  findApprovedConstraintOnDate,
+  updateConstraintStatus,
+  getAffectedLessonsForConstraint,
+  addLessonHistory,
+  getLessonHistoryForConstraint,
   addVideo,
   addLessonsToCourse,
   getMaxLessonNumber,
