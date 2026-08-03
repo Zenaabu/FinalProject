@@ -4,7 +4,7 @@
 // and their attendance are handled.
 // ──────────────────────────────────────────────────────────────────────────────
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
 import styles from "./InstructorCourses.module.css";
 
@@ -17,10 +17,23 @@ function statusOf(course) {
   return "Running";
 }
 
+const TABS = [
+  { key: "Running", label: "Running" },
+  { key: "Upcoming", label: "Upcoming" },
+  { key: "Finished", label: "Finished" },
+];
+
+const EMPTY_MESSAGE = {
+  Running: "No courses running right now.",
+  Upcoming: "No upcoming courses.",
+  Finished: "No finished courses yet.",
+};
+
 function InstructorCourses() {
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [filter, setFilter] = useState("Running");
 
   useEffect(() => {
     fetch("/api/instructor/courses")
@@ -34,6 +47,26 @@ function InstructorCourses() {
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
   }, []);
+
+  const statusedCourses = useMemo(
+    () => courses.map((course) => ({ ...course, status: statusOf(course) })),
+    [courses],
+  );
+
+  const counts = useMemo(() => {
+    return statusedCourses.reduce(
+      (acc, course) => {
+        acc[course.status] += 1;
+        return acc;
+      },
+      { Running: 0, Upcoming: 0, Finished: 0 },
+    );
+  }, [statusedCourses]);
+
+  const visibleCourses = useMemo(
+    () => statusedCourses.filter((course) => course.status === filter),
+    [statusedCourses, filter],
+  );
 
   if (loading) return <div className={styles.state}>Loading your courses…</div>;
   if (error) return <div className={styles.stateError}>Error: {error}</div>;
@@ -52,55 +85,80 @@ function InstructorCourses() {
           You are not assigned to any course yet.
         </div>
       ) : (
-        <div className={styles.grid}>
-          {courses.map((course) => {
-            const status = statusOf(course);
-
-            return (
-              <Link
-                key={course.course_id}
-                to={`/instructor/courses/${course.course_id}`}
-                className={styles.card}
+        <>
+          {/* ── Status filter tabs ───────────────────────────────────────── */}
+          <div
+            className={styles.tabs}
+            role="tablist"
+            aria-label="Filter courses by status"
+          >
+            {TABS.map((tab) => (
+              <button
+                key={tab.key}
+                type="button"
+                role="tab"
+                aria-selected={filter === tab.key}
+                className={`${styles.tab} ${filter === tab.key ? styles.tabActive : ""}`}
+                onClick={() => setFilter(tab.key)}
               >
-                <div className={styles.cardTop}>
-                  <span
-                    className={`${styles.badge} ${styles[`badge${status}`]}`}
-                  >
-                    {status}
-                  </span>
-                  <span className={`${styles.badge} ${styles.badgeLevel}`}>
-                    {course.level}
-                  </span>
-                </div>
+                {tab.label}
+                <span className={styles.tabCount}>{counts[tab.key]}</span>
+              </button>
+            ))}
+          </div>
 
-                <h2 className={styles.cardTitle}>{course.description}</h2>
+          {/* ── Course grid (filtered) ───────────────────────────────────── */}
+          {visibleCourses.length === 0 ? (
+            <div className={styles.state}>{EMPTY_MESSAGE[filter]}</div>
+          ) : (
+            <div className={styles.grid}>
+              {visibleCourses.map((course) => (
+                <Link
+                  key={course.course_id}
+                  to={`/instructor/courses/${course.course_id}`}
+                  className={styles.card}
+                >
+                  <div className={styles.cardTop}>
+                    <span
+                      className={`${styles.badge} ${styles[`badge${course.status}`]}`}
+                    >
+                      {course.status}
+                    </span>
+                    <span className={`${styles.badge} ${styles.badgeLevel}`}>
+                      {course.level}
+                    </span>
+                  </div>
 
-                <dl className={styles.meta}>
-                  <div className={styles.metaRow}>
-                    <dt>Dates</dt>
-                    <dd>
-                      {course.start_date} – {course.end_date}
-                    </dd>
-                  </div>
-                  <div className={styles.metaRow}>
-                    <dt>Lessons</dt>
-                    <dd>
-                      {course.lessons_count} of {course.total_lessons} scheduled
-                    </dd>
-                  </div>
-                  <div className={styles.metaRow}>
-                    <dt>Students</dt>
-                    <dd>
-                      {course.enrolled} / {course.capacity} enrolled
-                    </dd>
-                  </div>
-                </dl>
+                  <h2 className={styles.cardTitle}>{course.description}</h2>
 
-                <span className={styles.cta}>Take attendance →</span>
-              </Link>
-            );
-          })}
-        </div>
+                  <dl className={styles.meta}>
+                    <div className={styles.metaRow}>
+                      <dt>Dates</dt>
+                      <dd>
+                        {course.start_date} – {course.end_date}
+                      </dd>
+                    </div>
+                    <div className={styles.metaRow}>
+                      <dt>Lessons</dt>
+                      <dd>
+                        {course.lessons_count} of {course.total_lessons}{" "}
+                        scheduled
+                      </dd>
+                    </div>
+                    <div className={styles.metaRow}>
+                      <dt>Students</dt>
+                      <dd>
+                        {course.enrolled} / {course.capacity} enrolled
+                      </dd>
+                    </div>
+                  </dl>
+
+                  <span className={styles.cta}>Take attendance →</span>
+                </Link>
+              ))}
+            </div>
+          )}
+        </>
       )}
     </div>
   );

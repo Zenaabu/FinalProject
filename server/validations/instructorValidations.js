@@ -145,6 +145,38 @@ function validateUsersRegisteredToLessonCourse(req, res, next) {
   });
 }
 
+// a middleware that validates the start_date/end_date query params used to
+// look up an instructor's own lessons before they submit a time-off request
+function validateLessonsInRangeQuery(req, res, next) {
+  const { start_date, end_date } = req.query;
+
+  if (!start_date || !end_date) {
+    return res.status(400).json({
+      success: false,
+      message: "start_date and end_date are required",
+    });
+  }
+
+  const start = new Date(start_date);
+  const end = new Date(end_date);
+
+  if (isNaN(start) || isNaN(end)) {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid date format",
+    });
+  }
+
+  if (end < start) {
+    return res.status(400).json({
+      success: false,
+      message: "end_date must be after start_date",
+    });
+  }
+
+  next();
+}
+
 // a middleware that validates constraint details
 function validateAddConstraint(req, res, next) {
   const sentFields = Object.keys(req.body);
@@ -258,6 +290,7 @@ module.exports = {
   validateInstructorOwnsLesson,
   validateAttendanceBody,
   validateUsersRegisteredToLessonCourse,
+  validateLessonsInRangeQuery,
   validateAddConstraint,
   validateDuplicateConstraint,
   validateOverlappingConstraint,

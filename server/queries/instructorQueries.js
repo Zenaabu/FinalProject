@@ -183,6 +183,33 @@ function getCourseLessons(course_id, cb) {
   );
 }
 
+// a function that gets a user_id and a date range
+// it returns this instructor's own lessons that fall inside that range, so
+// the frontend can warn them before they submit a time-off request that
+// overlaps lessons they're scheduled to teach
+function getLessonsInRangeForInstructor(user_id, start_date, end_date, cb) {
+  const conn = db.getConnection();
+
+  conn.query(
+    `SELECT
+        c.course_id,
+        c.description AS course_description,
+        l.lesson_id,
+        l.lesson_number,
+        l.lesson_date,
+        l.start_time,
+        l.end_time
+     FROM courses c
+     JOIN lessons l ON l.course_id = c.course_id
+     WHERE c.user_id = ?
+       AND c.is_active = 1
+       AND l.lesson_date BETWEEN ? AND ?
+     ORDER BY l.lesson_date, l.start_time`,
+    [user_id, start_date, end_date],
+    cb,
+  );
+}
+
 // a function that gets a constraint and save it at DB
 function addConstraint(constraint, cb) {
   const conn = db.getConnection();
@@ -268,6 +295,7 @@ module.exports = {
   findInstructorLesson,
   isUserRegisteredToCourse,
   getCourseLessons,
+  getLessonsInRangeForInstructor,
   addConstraint,
   findDuplicateConstraint,
   findOverlappingConstraint,

@@ -16,6 +16,8 @@ import {
   Send,
   CalendarDays,
 } from "lucide-react";
+import useSession from "../../auth/useSession";
+import LessonConflictModal from "./LessonConflictModal";
 import styles from "./InstructorConstraints.module.css";
 
 const REASONS = [
@@ -53,13 +55,16 @@ function tomorrowDate() {
 
 function InstructorConstraints() {
   const minDate = tomorrowDate();
+  const { user } = useSession();
 
   const [startDate, setStartDate] = useState(minDate);
   const [endDate, setEndDate] = useState(minDate);
   const [reason, setReason] = useState("medical");
   const [otherText, setOtherText] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [checkingConflicts, setCheckingConflicts] = useState(false);
   const [formError, setFormError] = useState(null);
+  const [conflictLessons, setConflictLessons] = useState(null);
 
   const [constraints, setConstraints] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -87,10 +92,9 @@ function InstructorConstraints() {
   const canSubmit =
     startDate && endDate && endDate >= startDate && notes.length > 0;
 
-  function handleSubmit(e) {
-    e.preventDefault();
-    if (!canSubmit || submitting) return;
-
+  // actually POSTs the request — called directly when there's no schedule
+  // conflict, or from the conflict modal's "submit anyway" button
+  function submitRequest() {
     setSubmitting(true);
     setFormError(null);
 
@@ -110,6 +114,7 @@ function InstructorConstraints() {
           return;
         }
         toast.success("Sent to the admin.");
+        setConflictLessons(null);
         setReason("medical");
         setOtherText("");
         setStartDate(minDate);
@@ -118,6 +123,34 @@ function InstructorConstraints() {
       })
       .catch(() => setFormError("Failed to send request"))
       .finally(() => setSubmitting(false));
+  }
+
+  // before sending, check whether this date range overlaps lessons the
+  // instructor is scheduled to teach — if it does, warn them first instead
+  // of submitting straight away
+  function handleSubmit(e) {
+    e.preventDefault();
+    if (!canSubmit || submitting || checkingConflicts) return;
+
+    setFormError(null);
+    setCheckingConflicts(true);
+
+    fetch(
+      `/api/instructor/constraints/lessons-in-range?start_date=${startDate}&end_date=${endDate}`,
+    )
+      .then((res) => res.json())
+      .then((data) => {
+        if (!data.success) {
+          throw new Error(data.message || "Failed to check your schedule");
+        }
+        if (data.lessons.length > 0) {
+          setConflictLessons(data.lessons);
+        } else {
+          submitRequest();
+        }
+      })
+      .catch((err) => setFormError(err.message))
+      .finally(() => setCheckingConflicts(false));
   }
 
   return (
@@ -200,10 +233,14 @@ function InstructorConstraints() {
           <button
             type="submit"
             className={styles.submitBtn}
-            disabled={!canSubmit || submitting}
+            disabled={!canSubmit || submitting || checkingConflicts}
           >
             <Send size={16} />
-            {submitting ? "Sending…" : "Send to admin"}
+            {checkingConflicts
+              ? "Checking your schedule…"
+              : submitting
+                ? "Sending…"
+                : "Send to admin"}
           </button>
         </form>
 
@@ -260,6 +297,18 @@ function InstructorConstraints() {
           )}
         </div>
       </div>
+
+      {conflictLessons && (
+        <LessonConflictModal
+          firstName={user?.first_name || "there"}
+          lessons={conflictLessons}
+          startDate={startDate}
+          endDate={endDate}
+          submitting={submitting}
+          onGoBack={() => setConflictLessons(null)}
+          onSubmitAnyway={submitRequest}
+        />
+      )}
     </div>
   );
 }

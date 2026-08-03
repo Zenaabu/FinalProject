@@ -15,6 +15,7 @@ const {
   validateInstructorOwnsLesson,
   validateAttendanceBody,
   validateUsersRegisteredToLessonCourse,
+  validateLessonsInRangeQuery,
   validateAddConstraint,
   validateDuplicateConstraint,
   validateOverlappingConstraint,
@@ -218,6 +219,50 @@ router.get(
         lessons: rows,
       });
     });
+  },
+);
+
+// GET the logged-in instructor's own lessons that fall inside a date range,
+// used to warn them before submitting a time-off request that overlaps
+// lessons they're scheduled to teach
+// url: /api/instructor/constraints/lessons-in-range?start_date=YYYY-MM-DD&end_date=YYYY-MM-DD
+router.get(
+  "/constraints/lessons-in-range",
+  requireLogin,
+  requireInstructor,
+  validateLessonsInRangeQuery,
+  (req, res) => {
+    const instructorId = req.session.user.user_id;
+    const { start_date, end_date } = req.query;
+
+    instructorQ.getLessonsInRangeForInstructor(
+      instructorId,
+      start_date,
+      end_date,
+      (err, rows) => {
+        if (err) {
+          return res.status(500).json({
+            success: false,
+            message: err.message,
+          });
+        }
+
+        const lessons = rows.map((row) => ({
+          course_id: row.course_id,
+          course_description: row.course_description,
+          lesson_id: row.lesson_id,
+          lesson_number: row.lesson_number,
+          lesson_date: formatDateOnly(row.lesson_date),
+          start_time: formatTimeOnly(row.start_time),
+          end_time: formatTimeOnly(row.end_time),
+        }));
+
+        res.json({
+          success: true,
+          lessons,
+        });
+      },
+    );
   },
 );
 
