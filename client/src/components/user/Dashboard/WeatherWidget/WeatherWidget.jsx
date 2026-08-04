@@ -12,27 +12,46 @@ const ICON_SIZE = 28;
 const USER_LEVEL = "Beginner"; // TODO: read from the user's profile once course level is tracked per user
 
 // a function that gets wave height (m), wind speed (km/h) and a surf level
-// it returns a plain-language recommendation string
+// it returns a { status, message } pair — status drives the widget's color
+// (see WeatherWidget.module.css for the palette each status maps to)
 function getSurfRecommendation(waveHeight, windSpeed, userLevel) {
   if (waveHeight == null) {
-    return "Wave data is unavailable right now — check conditions before heading out.";
+    return {
+      status: "unavailable",
+      message:
+        "Wave data is unavailable right now — check conditions before heading out.",
+    };
   }
 
   if (waveHeight > 2.0 || windSpeed >= 25) {
-    return "Advanced surfers only! High waves and strong winds.";
+    return {
+      status: "extreme",
+      message: "Advanced surfers only! High waves and strong winds.",
+    };
   }
 
   if (waveHeight > 1.2) {
-    return "Intermediate to Advanced conditions. Solid waves with some power.";
+    return {
+      status: "intermediate",
+      message: "Intermediate to Advanced conditions. Solid waves with some power.",
+    };
   }
 
   if (waveHeight > 0.6) {
-    return userLevel === "Beginner"
-      ? "Perfect clean conditions for Beginners today! Small clean waves — come surf."
-      : "Good conditions for all levels. Fun, manageable waves.";
+    return {
+      status: "clean",
+      message:
+        userLevel === "Beginner"
+          ? "Perfect clean conditions for Beginners today! Small clean waves — come surf."
+          : "Good conditions for all levels. Fun, manageable waves.",
+    };
   }
 
-  return "Very small surf today. Great for paddling practice or beginners building confidence.";
+  return {
+    status: "calm",
+    message:
+      "Very small surf today. Great for paddling practice or beginners building confidence.",
+  };
 }
 
 function WeatherWidget() {
@@ -55,7 +74,7 @@ function WeatherWidget() {
 
   if (loading) {
     return (
-      <div className={`${styles.widget} ${styles.state}`}>
+      <div className={`${styles.widget} ${styles.unavailable} ${styles.state}`}>
         <p className={styles.stateText}>Loading weather data…</p>
       </div>
     );
@@ -63,20 +82,20 @@ function WeatherWidget() {
 
   if (error) {
     return (
-      <div className={`${styles.widget} ${styles.state}`}>
+      <div className={`${styles.widget} ${styles.unavailable} ${styles.state}`}>
         <p className={styles.stateText}>{error}</p>
       </div>
     );
   }
 
-  const recommendation = getSurfRecommendation(
+  const { status, message } = getSurfRecommendation(
     weather.waveHeight,
     weather.windSpeed,
     USER_LEVEL,
   );
 
   return (
-    <div className={styles.widget}>
+    <div className={`${styles.widget} ${styles[status]}`}>
       {/* ── Top: Smart Recommendation ── */}
       <div className={styles.recommendation}>
         <div className={styles.recHeader}>
@@ -85,7 +104,7 @@ function WeatherWidget() {
             Today's Surf Recommendation — Live Update
           </h3>
         </div>
-        <p className={styles.recText}>{recommendation}</p>
+        <p className={styles.recText}>{message}</p>
       </div>
 
       {/* ── Bottom: Data Row ── */}

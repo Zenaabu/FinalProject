@@ -25,6 +25,20 @@
   background: #e0f2fe;
   color: var(--color-ocean-text);
 }
+.active,
+.approved {
+  background: #dcfce7;
+  color: #166534;
+}
+.upcoming {
+  background: #dbeafe;
+  color: #1e40af;
+}
+.inactive,
+.rejected {
+  background: #fee2e2;
+  color: #dc2626;
+}
 .default {
   background: #f1f5f9;
   color: #475569;

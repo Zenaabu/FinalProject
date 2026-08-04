@@ -82,22 +82,23 @@ function getDashboardStats(cb) {
   );
 }
 
-// a function that returns the most recent course registrations (student
-// name, course, date paid) for the admin dashboard's "Recent Registrations"
-// table
-function getRecentRegistrations(limit, cb) {
+// a function that returns the active/upcoming courses (name, start/end date)
+// for the admin dashboard's "Courses" table — inactive courses are excluded
+// since they're not useful at-a-glance information; a list of courses stays
+// roughly bounded in size, unlike registrations which grow with every
+// enrollment, so this scales better as the student base grows
+function getRecentCourses(limit, cb) {
   const conn = db.getConnection();
 
   conn.query(
     `SELECT
-        r.receipt_number,
-        CONCAT(u.first_name, ' ', u.last_name) AS name,
-        c.description AS course,
-        r.payment_date AS date
-     FROM register r
-     JOIN users u ON r.user_id = u.user_id
-     JOIN courses c ON r.course_id = c.course_id
-     ORDER BY r.payment_date DESC, r.receipt_number DESC
+        c.course_id,
+        c.description,
+        DATE_FORMAT(c.start_date, '%Y-%m-%d') AS start_date,
+        DATE_FORMAT(c.end_date, '%Y-%m-%d') AS end_date
+     FROM courses c
+     WHERE c.is_active = 1
+     ORDER BY c.start_date DESC
      LIMIT ?`,
     [limit],
     cb,
@@ -425,7 +426,7 @@ module.exports = {
   updateUserBlockedStatus,
   getInstructors,
   getDashboardStats,
-  getRecentRegistrations,
+  getRecentCourses,
   getAllInstructorConstraints,
   findConstraintById,
   findApprovedConstraintOnDate,

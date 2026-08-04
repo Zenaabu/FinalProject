@@ -1,0 +1,35 @@
+/* ============================================================
+   CourseRow.module.css
+   ============================================================ */
+
+/* ── Table row ───────────────────────────────────────────────────────────── */
+.row {
+  border-bottom: 1px solid #f1f5f9;
+  transition: background 0.15s ease;
+}
+
+.row:last-child {
+  border-bottom: none;
+}
+.row:hover {
+  background: #f8fafc;
+}
+
+.row td {
+  padding: 0.85rem 0.75rem;
+  vertical-align: middle;
+}
+
+/* ── Course name cell ────────────────────────────────────────────────────── */
+.name {
+  font-weight: 500;
+  color: #0f172a;
+  font-size: 0.9rem;
+}
+
+/* ── Date cells ──────────────────────────────────────────────────────────── */
+.date {
+  color: #94a3b8;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}

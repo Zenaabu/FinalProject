@@ -15,6 +15,7 @@ import { useState, useEffect, Fragment } from "react";
 import { toast } from "sonner";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import AffectedLessonsPanel from "./AffectedLessonsPanel";
+import ApproveConflictModal from "./ApproveConflictModal";
 import styles from "./StaffPage.module.css";
 
 function StaffPage() {
@@ -24,6 +25,9 @@ function StaffPage() {
   const [decidingId, setDecidingId] = useState(null);
   const [expandedId, setExpandedId] = useState(null);
   const [instructors, setInstructors] = useState([]);
+  const [checkingId, setCheckingId] = useState(null);
+  const [approvalTarget, setApprovalTarget] = useState(null);
+  const [approvalLessons, setApprovalLessons] = useState(null);
 
   useEffect(() => {
     fetch("/api/admin/instructor-constraints")
@@ -67,7 +71,35 @@ function StaffPage() {
         if (status === "approved") setExpandedId(constraints_id);
       })
       .catch(() => toast.error("Failed to update constraint"))
-      .finally(() => setDecidingId(null));
+      .finally(() => {
+        setDecidingId(null);
+        setApprovalTarget(null);
+        setApprovalLessons(null);
+      });
+  }
+
+  // before actually approving, check whether this date range overlaps
+  // lessons the instructor is scheduled to teach — if it does, show the same
+  // conflict warning the instructor sees before submitting, so the admin
+  // knows what they're taking on before committing to the decision
+  function handleApproveClick(c) {
+    setCheckingId(c.constraints_id);
+
+    fetch(`/api/admin/instructor-constraints/${c.constraints_id}/affected-lessons`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (!data.success) {
+          throw new Error(data.message || "Failed to check the instructor's schedule");
+        }
+        if (data.lessons.length > 0) {
+          setApprovalTarget(c);
+          setApprovalLessons(data.lessons);
+        } else {
+          decide(c.constraints_id, "approved");
+        }
+      })
+      .catch((err) => toast.error(err.message))
+      .finally(() => setCheckingId(null));
   }
 
   return (
@@ -151,10 +183,15 @@ function StaffPage() {
                               <button
                                 type="button"
                                 className={styles.btnApprove}
-                                disabled={decidingId === c.constraints_id}
-                                onClick={() => decide(c.constraints_id, "approved")}
+                                disabled={
+                                  decidingId === c.constraints_id ||
+                                  checkingId === c.constraints_id
+                                }
+                                onClick={() => handleApproveClick(c)}
                               >
-                                Approve
+                                {checkingId === c.constraints_id
+                                  ? "Checking…"
+                                  : "Approve"}
                               </button>
                               <button
                                 type="button"
@@ -190,6 +227,21 @@ function StaffPage() {
             </table>
           </div>
         </div>
+      )}
+
+      {approvalTarget && (
+        <ApproveConflictModal
+          instructorName={approvalTarget.instructor_name}
+          lessons={approvalLessons}
+          startDate={approvalTarget.start_date}
+          endDate={approvalTarget.end_date}
+          submitting={decidingId === approvalTarget.constraints_id}
+          onGoBack={() => {
+            setApprovalTarget(null);
+            setApprovalLessons(null);
+          }}
+          onApproveAnyway={() => decide(approvalTarget.constraints_id, "approved")}
+        />
       )}
     </div>
   );

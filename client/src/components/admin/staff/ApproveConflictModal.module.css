@@ -1,5 +1,7 @@
 /* ============================================================
-   LessonConflictModal.module.css
+   ApproveConflictModal.module.css
+   Same design language as the instructor's LessonConflictModal —
+   this is the admin-facing mirror of that pop-up.
    ============================================================ */
 
 /* ── Backdrop overlay ────────────────────────────────────────────────────── */
@@ -166,7 +168,7 @@
 }
 
 .btnBack,
-.btnSubmit {
+.btnApprove {
   flex: 1;
   display: flex;
   align-items: center;
@@ -183,7 +185,7 @@
 }
 
 .btnBack:disabled,
-.btnSubmit:disabled {
+.btnApprove:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
@@ -199,7 +201,7 @@
   border-color: #cbd5e1;
 }
 
-.btnSubmit {
+.btnApprove {
   border: none;
   background: linear-gradient(
     135deg,
@@ -209,6 +211,6 @@
   color: #fff;
 }
 
-.btnSubmit:hover:not(:disabled) {
+.btnApprove:hover:not(:disabled) {
   filter: brightness(1.05);
 }

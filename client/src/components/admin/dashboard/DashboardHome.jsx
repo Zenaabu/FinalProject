@@ -5,7 +5,7 @@
 
 import DashboardHeader from "./header/DashboardHeader";
 import StatsRow from "./stats/StatsRow";
-import RecentRegistrations from "./registrations/RecentRegistrations";
+import RecentCourses from "./courses/RecentCourses";
 import QuickActions from "./quickactions/QuickActions";
 import WeeklyAttendance from "./attendance/WeeklyAttendance";
 import InstructorConstraints from "./constraints/InstructorConstraints";
@@ -22,8 +22,8 @@ function DashboardHome() {
 
       {/* ── 3. Main two-column row ──────────────────────────────────── */}
       <div className={styles.mainRow}>
-        {/* Left: registrations table */}
-        <RecentRegistrations />
+        {/* Left: courses table */}
+        <RecentCourses />
 
         {/* Right: quick actions + attendance chart stacked */}
         <div className={styles.rightCol}>

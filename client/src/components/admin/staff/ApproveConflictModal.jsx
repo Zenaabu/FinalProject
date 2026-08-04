@@ -1,29 +1,31 @@
-// ─── LessonConflictModal.jsx ──────────────────────────────────────────────────
-// Shown when an instructor tries to submit a time-off request that overlaps
-// lessons they're scheduled to teach. Lists every affected lesson so they
-// know exactly what they'd be missing before they decide.
+// ─── ApproveConflictModal.jsx ─────────────────────────────────────────────────
+// Admin-facing mirror of the instructor's LessonConflictModal (same design).
+// Shown right before an admin approves a constraint that overlaps lessons the
+// instructor is scheduled to teach, so they see the impact before committing
+// to the decision instead of discovering it afterward in the affected-lessons
+// panel.
 // Props:
-//   firstName      – instructor's first name, for the greeting
-//   lessons        – [{ course_description, lesson_number, lesson_date,
-//                       start_time, end_time }]
+//   instructorName – the requesting instructor's full name
+//   lessons        – [{ lesson_id, course_description, lesson_number,
+//                        lesson_date, start_time, end_time }]
 //   startDate      – requested range start (YYYY-MM-DD)
 //   endDate        – requested range end (YYYY-MM-DD)
-//   submitting     – true while the "submit anyway" request is in flight
-//   onGoBack       – fn() called to dismiss and keep editing the form
-//   onSubmitAnyway – fn() called to send the request despite the conflicts
+//   submitting     – true while the "approve anyway" request is in flight
+//   onGoBack       – fn() called to dismiss without approving
+//   onApproveAnyway – fn() called to approve despite the conflicts
 // ──────────────────────────────────────────────────────────────────────────────
 
-import { ArrowLeft, Send, Clock } from "lucide-react";
-import styles from "./LessonConflictModal.module.css";
+import { ArrowLeft, Check, Clock } from "lucide-react";
+import styles from "./ApproveConflictModal.module.css";
 
-function LessonConflictModal({
-  firstName,
+function ApproveConflictModal({
+  instructorName,
   lessons,
   startDate,
   endDate,
   submitting,
   onGoBack,
-  onSubmitAnyway,
+  onApproveAnyway,
 }) {
   const rangeLabel =
     startDate === endDate ? startDate : `${startDate} – ${endDate}`;
@@ -33,7 +35,7 @@ function LessonConflictModal({
       <div className={styles.modal}>
         {/* ── Wavy header ─────────────────────────────────────────────── */}
         <div className={styles.header}>
-          <h2 className={styles.title}>Hold up {firstName}</h2>
+          <h2 className={styles.title}>Before you approve</h2>
           <svg
             className={styles.wave}
             viewBox="0 0 500 40"
@@ -47,12 +49,12 @@ function LessonConflictModal({
         {/* ── Text ─────────────────────────────────────────────────────── */}
         <div className={styles.body}>
           <p className={styles.message}>
-            You're scheduled to teach{" "}
+            <strong>{instructorName}</strong> is scheduled to teach{" "}
             <strong>
               {lessons.length} lesson{lessons.length > 1 ? "s" : ""}
             </strong>{" "}
-            during <strong>{rangeLabel}</strong>. If this request is
-            approved, you won't be able to teach these:
+            during <strong>{rangeLabel}</strong>. Approving this request means
+            they won't be able to teach these:
           </p>
 
           <ul className={styles.lessonList}>
@@ -73,8 +75,8 @@ function LessonConflictModal({
           </ul>
 
           <p className={styles.footnote}>
-            You can still send the request — the admin will arrange a
-            substitute or reschedule these lessons if it's approved.
+            You can still approve — you'll assign a substitute or reschedule
+            each lesson afterward from this page.
           </p>
         </div>
 
@@ -91,12 +93,12 @@ function LessonConflictModal({
           </button>
           <button
             type="button"
-            className={styles.btnSubmit}
-            onClick={onSubmitAnyway}
+            className={styles.btnApprove}
+            onClick={onApproveAnyway}
             disabled={submitting}
           >
-            <Send size={16} />
-            {submitting ? "Sending…" : "Submit request anyway"}
+            <Check size={16} />
+            {submitting ? "Approving…" : "Approve anyway"}
           </button>
         </div>
       </div>
@@ -104,4 +106,4 @@ function LessonConflictModal({
   );
 }
 
-export default LessonConflictModal;
+export default ApproveConflictModal;

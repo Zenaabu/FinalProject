@@ -274,20 +274,26 @@ router.get("/dashboard-stats", requireLogin, requireAdmin, (req, res) => {
   });
 });
 
-// GET the most recent course registrations for the admin dashboard home page
-// url: /api/admin/recent-registrations
-router.get(
-  "/recent-registrations",
-  requireLogin,
-  requireAdmin,
-  (req, res) => {
-    adminQ.getRecentRegistrations(6, (err, rows) => {
-      if (err) {
-        return res.status(500).json({ success: false, message: err.message });
-      }
-      res.json({ success: true, registrations: rows });
-    });
-  },
-);
+// GET a bounded list of courses (name + start/end date) for the admin
+// dashboard home page's "Courses" table
+// url: /api/admin/recent-courses
+router.get("/recent-courses", requireLogin, requireAdmin, (req, res) => {
+  adminQ.getRecentCourses(6, (err, rows) => {
+    if (err) {
+      return res.status(500).json({ success: false, message: err.message });
+    }
+
+    const today = new Date().toISOString().slice(0, 10);
+    const courses = rows.map((c) => ({
+      course_id: c.course_id,
+      name: c.description,
+      start_date: c.start_date,
+      end_date: c.end_date,
+      status: c.start_date > today ? "Upcoming" : "Active",
+    }));
+
+    res.json({ success: true, courses });
+  });
+});
 
 module.exports = router;

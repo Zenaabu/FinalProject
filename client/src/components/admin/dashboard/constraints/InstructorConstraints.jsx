@@ -1,42 +1,46 @@
 // ─── InstructorConstraints.jsx ────────────────────────────────────────────────
-// Full-width bottom table showing upcoming instructor time constraints.
-// The "N need review" badge count is computed dynamically from the data.
+// Full-width bottom table previewing instructor time constraints, backed by
+// GET /api/admin/instructor-constraints. Pending requests (the admin hasn't
+// approved or rejected them yet) are surfaced first and counted in the
+// "N need review" badge, since those are the ones waiting on the admin.
+// Full review (approve/reject, affected lessons) happens on /admin/staff.
 // ──────────────────────────────────────────────────────────────────────────────
 
+import { useState, useEffect, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import AvatarInitials from "../shared/AvatarInitials";
 import PaymentBadge from "../shared/PaymentBadge";
 import styles from "./InstructorConstraints.module.css";
 
-/* ── Mock data (replace with API call later) ─────────────────────────────── */
-const CONSTRAINTS = [
-  {
-    id: 1,
-    name: "Rotem Gal",
-    date: "2026-05-20",
-    time: "08:00–12:00",
-    reason: "Medical appointment",
-    status: "Noted",
-  },
-  {
-    id: 2,
-    name: "Dan Mizrahi",
-    date: "2026-05-21",
-    time: "14:00–18:00",
-    reason: "Family event",
-    status: "Pending",
-  },
-  {
-    id: 3,
-    name: "Liat Nevo",
-    date: "2026-05-22",
-    time: "09:00–11:00",
-    reason: "Training session",
-    status: "Pending",
-  },
-];
+const PREVIEW_LIMIT = 5;
 
 function InstructorConstraints() {
-  const pendingCount = CONSTRAINTS.filter((c) => c.status === "Pending").length;
+  const [constraints, setConstraints] = useState([]);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    fetch("/api/admin/instructor-constraints")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) setConstraints(data.constraints);
+      })
+      .catch(() => {
+        // non-blocking: the table just stays empty
+      });
+  }, []);
+
+  const pendingCount = useMemo(
+    () => constraints.filter((c) => c.status === "pending").length,
+    [constraints],
+  );
+
+  // pending requests need the admin's attention, so they're shown first;
+  // everything else keeps the soonest-starting constraints on top
+  const preview = useMemo(() => {
+    const pending = constraints.filter((c) => c.status === "pending");
+    const decided = constraints.filter((c) => c.status !== "pending");
+    return [...pending, ...decided].slice(0, PREVIEW_LIMIT);
+  }, [constraints]);
 
   return (
     <div className={styles.card}>
@@ -46,6 +50,13 @@ function InstructorConstraints() {
         {pendingCount > 0 && (
           <span className={styles.reviewBadge}>{pendingCount} need review</span>
         )}
+        <button
+          className={styles.viewAll}
+          type="button"
+          onClick={() => navigate("/admin/staff")}
+        >
+          View All &rsaquo;
+        </button>
       </div>
 
       {/* ── Table ───────────────────────────────────────────────────── */}
@@ -54,26 +65,30 @@ function InstructorConstraints() {
           <thead>
             <tr>
               <th>Instructor</th>
-              <th>Constraint Date</th>
-              <th>Time</th>
+              <th>Dates</th>
               <th>Reason</th>
               <th>Status</th>
             </tr>
           </thead>
           <tbody>
-            {CONSTRAINTS.map((c) => (
-              <tr key={c.id} className={styles.row}>
+            {preview.map((c) => (
+              <tr key={c.constraints_id} className={styles.row}>
                 <td>
                   <div className={styles.nameCell}>
-                    <AvatarInitials name={c.name} size={32} />
-                    <span className={styles.name}>{c.name}</span>
+                    <AvatarInitials name={c.instructor_name} size={32} />
+                    <span className={styles.name}>{c.instructor_name}</span>
                   </div>
                 </td>
-                <td className={styles.dateCell}>{c.date}</td>
-                <td className={styles.timeCell}>{c.time}</td>
-                <td className={styles.reasonCell}>{c.reason}</td>
+                <td className={styles.dateCell}>
+                  {c.start_date === c.end_date
+                    ? c.start_date
+                    : `${c.start_date} → ${c.end_date}`}
+                </td>
+                <td className={styles.reasonCell}>{c.notes}</td>
                 <td>
-                  <PaymentBadge status={c.status} />
+                  <PaymentBadge
+                    status={c.status[0].toUpperCase() + c.status.slice(1)}
+                  />
                 </td>
               </tr>
             ))}

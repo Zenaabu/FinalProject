@@ -1,5 +1,5 @@
 /* ============================================================
-   RecentRegistrations.module.css
+   RecentCourses.module.css
    ============================================================ */
 
 /* ── Card shell ──────────────────────────────────────────────────────────── */
@@ -70,4 +70,30 @@
   letter-spacing: 0.07em;
   text-transform: uppercase;
   white-space: nowrap;
+}
+
+/* ── Sortable "Status" header ────────────────────────────────────────────── */
+.sortableHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  cursor: pointer;
+  user-select: none;
+  transition: color 0.15s ease;
+}
+
+.sortableHeader:hover {
+  color: var(--color-ocean-text);
+}
+
+.sortIcon {
+  flex-shrink: 0;
+  opacity: 0.6;
+}
+
+.sortActive {
+  color: var(--color-ocean-text);
+  font-weight: 700;
+  text-transform: none;
+  letter-spacing: normal;
 }

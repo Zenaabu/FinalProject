@@ -40,6 +40,24 @@
   border: 1px solid #fecaca;
 }
 
+/* ── "View All" button ───────────────────────────────────────────────────── */
+.viewAll {
+  background: none;
+  border: none;
+  color: var(--color-ocean-text);
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 0.2rem 0.5rem;
+  border-radius: 5px;
+  transition: background 0.15s ease;
+  margin-left: auto;
+}
+
+.viewAll:hover {
+  background: rgba(56, 189, 248, 0.1);
+}
+
 /* ── Table wrapper ───────────────────────────────────────────────────────── */
 .tableWrap {
   overflow-x: auto;
@@ -101,12 +119,6 @@
 .dateCell {
   color: #475569;
   font-size: 0.85rem;
-  white-space: nowrap;
-}
-.timeCell {
-  color: #475569;
-  font-size: 0.85rem;
-  font-family: monospace;
   white-space: nowrap;
 }
 .reasonCell {
