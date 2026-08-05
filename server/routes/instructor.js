@@ -47,6 +47,51 @@ router.get("/courses", requireLogin, requireInstructor, (req, res) => {
   });
 });
 
+// GET the lessons the logged-in instructor is covering as a substitute for
+// another instructor (assigned by an admin when resolving a time-off request)
+// url: /api/instructor/substitute-lessons
+router.get(
+  "/substitute-lessons",
+  requireLogin,
+  requireInstructor,
+  (req, res) => {
+    const instructorId = req.session.user.user_id;
+
+    instructorQ.getSubstituteLessonsForInstructor(
+      instructorId,
+      (err, rows) => {
+        if (err) {
+          return res.status(500).json({
+            success: false,
+            message: err.message,
+          });
+        }
+
+        const lessons = rows.map((row) => ({
+          lesson_id: row.lesson_id,
+          lesson_number: row.lesson_number,
+          lesson_date: formatDateOnly(row.lesson_date),
+          start_time: formatTimeOnly(row.start_time),
+          end_time: formatTimeOnly(row.end_time),
+          course_id: row.course_id,
+          course_description: row.course_description,
+          original_instructor_name: `${row.original_instructor_first_name} ${row.original_instructor_last_name}`,
+          can_take_attendance: canTakeAttendance(
+            row.lesson_date,
+            row.start_time,
+            row.end_date,
+          ),
+        }));
+
+        res.json({
+          success: true,
+          lessons,
+        });
+      },
+    );
+  },
+);
+
 // GET registrations for course that belongs to logged-in instructor
 // url: /api/instructor/courses/:course_id/registrations
 router.get(
@@ -112,6 +157,8 @@ router.get(
             lesson_date: formatDateOnly(req.lesson.lesson_date),
             start_time: formatTimeOnly(req.lesson.start_time),
             end_time: formatTimeOnly(req.lesson.end_time),
+            course_id: req.lesson.course_id,
+            course_description: req.lesson.course_description,
             substitute_instructor_id: req.lesson.substitute_instructor_id,
             substitute_name: req.lesson.substitute_instructor_id
               ? `${req.lesson.substitute_first_name} ${req.lesson.substitute_last_name}`

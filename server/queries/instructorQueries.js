@@ -114,7 +114,9 @@ function findUnregisteredUsers(course_id, user_ids, cb) {
 }
 
 // a function that gets a lesson_id, instructor_id
-// it checks if a lesson belongs to a course of the logged-in instructor
+// it checks if a lesson belongs to a course of the logged-in instructor, OR
+// that the logged-in instructor is the substitute assigned to cover it —
+// either way they're allowed to view/mark it
 function findInstructorLesson(lesson_id, instructor_id, cb) {
   const conn = db.getConnection();
 
@@ -122,6 +124,7 @@ function findInstructorLesson(lesson_id, instructor_id, cb) {
     `SELECT
         l.*,
         c.course_id,
+        c.description AS course_description,
         c.end_date,
         su.first_name AS substitute_first_name,
         su.last_name  AS substitute_last_name
@@ -130,8 +133,36 @@ function findInstructorLesson(lesson_id, instructor_id, cb) {
        ON l.course_id = c.course_id
      LEFT JOIN users su ON su.user_id = l.substitute_instructor_id
      WHERE l.lesson_id = ?
-       AND c.user_id = ?`,
-    [lesson_id, instructor_id],
+       AND (c.user_id = ? OR l.substitute_instructor_id = ?)`,
+    [lesson_id, instructor_id, instructor_id],
+    cb,
+  );
+}
+
+// a function that gets an instructor_id
+// it returns the lessons where this instructor is assigned as the substitute
+// (covering for the course's own instructor), most upcoming first
+function getSubstituteLessonsForInstructor(instructor_id, cb) {
+  const conn = db.getConnection();
+
+  conn.query(
+    `SELECT
+        l.lesson_id,
+        l.lesson_number,
+        l.lesson_date,
+        l.start_time,
+        l.end_time,
+        c.course_id,
+        c.description AS course_description,
+        c.end_date,
+        ou.first_name AS original_instructor_first_name,
+        ou.last_name  AS original_instructor_last_name
+     FROM lessons l
+     JOIN courses c  ON c.course_id = l.course_id
+     JOIN users   ou ON ou.user_id  = c.user_id
+     WHERE l.substitute_instructor_id = ?
+     ORDER BY l.lesson_date, l.start_time`,
+    [instructor_id],
     cb,
   );
 }
@@ -293,6 +324,7 @@ module.exports = {
   getLessonAttendance,
   findUnregisteredUsers,
   findInstructorLesson,
+  getSubstituteLessonsForInstructor,
   isUserRegisteredToCourse,
   getCourseLessons,
   getLessonsInRangeForInstructor,

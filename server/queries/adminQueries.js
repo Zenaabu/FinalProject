@@ -303,13 +303,16 @@ function getMaxLessonNumber(courseId, cb) {
 }
 
 // a function that gets the user_id of the instructor, start_date and end_date of the
-// lesson. it returns all the lessons details of the instructor in the range of start time
-// and end time
+// lesson. it returns every lesson that instructor is on the hook to teach in that
+// range — either because they own the course, or because they were assigned as the
+// substitute covering someone else's lesson. Both count as "busy" for conflict checks
+// (e.g. before assigning them as a substitute somewhere else, or giving them a new
+// lesson of their own).
 function getInstructorLessonsInRange(user_id, start_date, end_date, cb) {
   const conn = db.getConnection();
 
   conn.query(
-    `SELECT 
+    `SELECT
         c.course_id,
         l.lesson_id,
         l.lesson_number,
@@ -317,21 +320,22 @@ function getInstructorLessonsInRange(user_id, start_date, end_date, cb) {
         l.start_time,
         l.end_time
      FROM courses c
-     JOIN lessons l 
+     JOIN lessons l
         ON c.course_id = l.course_id
-     WHERE c.user_id = ?
-     AND c.is_active = 1
+     WHERE c.is_active = 1
      AND l.lesson_date BETWEEN ? AND ?
+     AND (c.user_id = ? OR l.substitute_instructor_id = ?)
      ORDER BY l.lesson_date, l.start_time`,
-    [user_id, start_date, end_date],
+    [start_date, end_date, user_id, user_id],
     cb,
   );
 }
 
 // a function that gets the user_id of an instructor, a date range and a course_id
-// it returns the instructor lessons in that range that belong to any OTHER course.
-// used when updating a course, so the course's own lessons are not reported as
-// conflicting with themselves
+// it returns the lessons in that range, belonging to any OTHER course, that this
+// instructor is on the hook to teach — either as the owner or as the substitute
+// covering someone else's lesson. used when updating a course, so the course's own
+// lessons are not reported as conflicting with themselves
 function getInstructorLessonsInRangeExcludingCourse(
   user_id,
   start_date,
@@ -352,12 +356,12 @@ function getInstructorLessonsInRangeExcludingCourse(
      FROM courses c
      JOIN lessons l
         ON c.course_id = l.course_id
-     WHERE c.user_id = ?
-     AND c.is_active = 1
+     WHERE c.is_active = 1
      AND c.course_id != ?
      AND l.lesson_date BETWEEN ? AND ?
+     AND (c.user_id = ? OR l.substitute_instructor_id = ?)
      ORDER BY l.lesson_date, l.start_time`,
-    [user_id, course_id, start_date, end_date],
+    [course_id, start_date, end_date, user_id, user_id],
     cb,
   );
 }

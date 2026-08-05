@@ -21,6 +21,13 @@ export const INSTRUCTOR_NAV_ITEMS = [
     path: "/instructor/constraints",
   },
   {
+    id: "substitute-lessons",
+    labelHe: "שיעורי החלפה",
+    labelEn: "Substitute Lessons",
+    icon: "users",
+    path: "/instructor/substitute-lessons",
+  },
+  {
     id: "profile",
     labelHe: "פרופיל משתמש",
     labelEn: "My Profile",

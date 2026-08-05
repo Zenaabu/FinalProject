@@ -1,0 +1,238 @@
+/* ============================================================
+   SubstituteLessonAttendance.module.css
+   ============================================================ */
+
+.page {
+  max-width: 900px;
+}
+
+/* ── Header ──────────────────────────────────────────────────────────────── */
+.pageHeader {
+  margin-bottom: 1.25rem;
+}
+
+.back {
+  display: inline-block;
+  margin-bottom: 0.6rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--color-light-accent);
+  text-decoration: none;
+}
+
+.back:hover {
+  text-decoration: underline;
+}
+
+.badge {
+  display: inline-block;
+  margin-bottom: 0.5rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  background: #fef3c7;
+  color: #a16207;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+
+.title {
+  margin: 0 0 0.3rem;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--color-ocean-text);
+  line-height: 1.3;
+}
+
+.subtitle {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #64748b;
+}
+
+/* ── States ──────────────────────────────────────────────────────────────── */
+.state {
+  padding: 2rem;
+  border: 1px dashed rgba(56, 189, 248, 0.4);
+  border-radius: 12px;
+  background: #fff;
+  color: #64748b;
+  text-align: center;
+}
+
+.stateError {
+  margin: 0 0 1rem;
+  padding: 0.7rem 0.9rem;
+  border: 1px solid #fca5a5;
+  border-radius: 8px;
+  background: #fef2f2;
+  color: #b91c1c;
+  font-size: 0.85rem;
+}
+
+.notice {
+  margin: 0 0 1rem;
+  padding: 0.7rem 0.9rem;
+  border: 1px solid #fcd34d;
+  border-radius: 8px;
+  background: #fffbeb;
+  color: #92400e;
+  font-size: 0.85rem;
+  line-height: 1.45;
+}
+
+.changeNotice {
+  margin: 0 0 1rem;
+  padding: 0.7rem 0.9rem;
+  border: 1px solid #fca5a5;
+  border-radius: 8px;
+  background: #fef2f2;
+  color: #b91c1c;
+  font-size: 0.85rem;
+  font-weight: 500;
+  line-height: 1.45;
+}
+
+.paneEmpty {
+  margin: 0;
+  font-size: 0.86rem;
+  color: #94a3b8;
+  line-height: 1.5;
+}
+
+/* ── Bulk actions ────────────────────────────────────────────────────────── */
+.bulkActions {
+  display: flex;
+  gap: 0.45rem;
+  margin-bottom: 1rem;
+}
+
+.bulkBtn {
+  padding: 0.4rem 0.75rem;
+  border: 1px solid rgba(56, 189, 248, 0.45);
+  border-radius: 7px;
+  background: #fff;
+  color: var(--color-ocean-text);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.bulkBtn:hover {
+  background: #e0f2fe;
+}
+
+/* ── Table ───────────────────────────────────────────────────────────────── */
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--color-bg-white);
+}
+
+.table thead th {
+  padding: 0.5rem 0.6rem;
+  border-bottom: 1px solid rgba(56, 189, 248, 0.25);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #94a3b8;
+  text-align: left;
+}
+
+.colStatus {
+  width: 200px;
+}
+
+.table tbody td {
+  padding: 0.6rem;
+  border-bottom: 1px solid #f1f5f9;
+  font-size: 0.87rem;
+  vertical-align: middle;
+}
+
+.nameCell {
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.newTag {
+  margin-left: 0.5rem;
+  padding: 0.1rem 0.4rem;
+  border-radius: 999px;
+  background: #f1f5f9;
+  color: #94a3b8;
+  font-size: 0.66rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.emailCell {
+  color: #64748b;
+}
+
+/* ── Present / Absent toggle ─────────────────────────────────────────────── */
+.toggle {
+  display: inline-flex;
+  border: 1px solid rgba(148, 163, 184, 0.5);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.toggleBtn {
+  padding: 0.35rem 0.8rem;
+  border: none;
+  background: #fff;
+  color: #64748b;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    color 0.15s;
+}
+
+.toggleBtn:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.toggleBtn:not(:last-child) {
+  border-right: 1px solid rgba(148, 163, 184, 0.4);
+}
+
+.toggleBtn_present {
+  background: #16a34a;
+  color: #fff;
+}
+
+.toggleBtn_absent {
+  background: #dc2626;
+  color: #fff;
+}
+
+/* ── Save ────────────────────────────────────────────────────────────────── */
+.saveRow {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 1.1rem;
+}
+
+.btnSave {
+  padding: 0.6rem 1.4rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.btnSave:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
