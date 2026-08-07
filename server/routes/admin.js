@@ -2,6 +2,8 @@ const express = require("express");
 const router = express.Router();
 
 const adminQ = require("../queries/adminQueries");
+const courseQ = require("../queries/courseQueries");
+const financialsQ = require("../queries/financialsQueries");
 
 const { requireLogin, requireAdmin } = require("../validations/authValidation");
 const {
@@ -86,6 +88,50 @@ router.put(
         success: true,
         message: "Blocked status updated successfully",
       });
+    });
+  },
+);
+
+// GET the courses a specific user is currently enrolled in (excludes courses
+// that have already finished) — used by the "View Courses" row action on the
+// User Database table
+// url: /api/admin/users/:user_id/courses
+router.get(
+  "/users/:user_id/courses",
+  requireLogin,
+  requireAdmin,
+  checkUserExists,
+  (req, res) => {
+    const { user_id } = req.params;
+
+    adminQ.getActiveCoursesForUser(user_id, (err, rows) => {
+      if (err) {
+        return res.status(500).json({ success: false, message: err.message });
+      }
+
+      res.json({ success: true, courses: rows });
+    });
+  },
+);
+
+// GET the courses a specific instructor is currently teaching (running or
+// upcoming — excludes courses that have already finished) — used by the
+// "View Courses" row action on the Staff Scheduling table
+// url: /api/admin/instructors/:user_id/courses
+router.get(
+  "/instructors/:user_id/courses",
+  requireLogin,
+  requireAdmin,
+  checkUserExists,
+  (req, res) => {
+    const { user_id } = req.params;
+
+    courseQ.getActiveCoursesByInstructorId(user_id, (err, rows) => {
+      if (err) {
+        return res.status(500).json({ success: false, message: err.message });
+      }
+
+      res.json({ success: true, courses: rows });
     });
   },
 );
@@ -295,5 +341,152 @@ router.get("/recent-courses", requireLogin, requireAdmin, (req, res) => {
     res.json({ success: true, courses });
   });
 });
+
+// GET the headline KPI numbers for the admin Financials page: all-time
+// revenue, this month's revenue with % change vs last month, this month's
+// VAT collected, and the all-time average order value
+// url: /api/admin/financials/summary
+router.get("/financials/summary", requireLogin, requireAdmin, (req, res) => {
+  financialsQ.getFinancialsSummary((err, rows) => {
+    if (err) {
+      return res.status(500).json({ success: false, message: err.message });
+    }
+
+    const row = rows[0];
+    const totalRevenue = Number(row.total_revenue);
+    const monthRevenue = Number(row.month_revenue);
+    const lastMonthRevenue = Number(row.last_month_revenue);
+    const totalTransactions = Number(row.total_transactions);
+
+    const monthChangePct =
+      lastMonthRevenue > 0
+        ? ((monthRevenue - lastMonthRevenue) / lastMonthRevenue) * 100
+        : null;
+
+    res.json({
+      success: true,
+      summary: {
+        total_revenue: totalRevenue,
+        total_transactions: totalTransactions,
+        month_revenue: monthRevenue,
+        month_change_pct: monthChangePct,
+        vat_collected_month: Number(row.vat_collected_month),
+        avg_order_value:
+          totalTransactions > 0 ? totalRevenue / totalTransactions : 0,
+      },
+    });
+  });
+});
+
+// GET monthly revenue (excl. VAT) for the trailing N months (default 6),
+// oldest first, with zero-revenue months filled in so the trend line never
+// silently skips a month
+// url: /api/admin/financials/revenue-trend?months=6
+router.get(
+  "/financials/revenue-trend",
+  requireLogin,
+  requireAdmin,
+  (req, res) => {
+    const months = Math.min(Math.max(Number(req.query.months) || 6, 1), 24);
+
+    financialsQ.getRevenueTrend(months, (err, rows) => {
+      if (err) {
+        return res.status(500).json({ success: false, message: err.message });
+      }
+
+      const revenueByMonth = {};
+      for (const row of rows) revenueByMonth[row.month] = Number(row.revenue);
+
+      // walk back `months` months from the current month so every month in
+      // the window appears, even ones with no rows in `rows`
+      const trend = [];
+      const cursor = new Date();
+      cursor.setDate(1);
+      for (let i = months - 1; i >= 0; i--) {
+        const d = new Date(cursor);
+        d.setMonth(d.getMonth() - i);
+        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+        trend.push({
+          month: key,
+          month_label: d.toLocaleDateString("en-US", { month: "short" }),
+          revenue: revenueByMonth[key] || 0,
+        });
+      }
+
+      res.json({ success: true, trend });
+    });
+  },
+);
+
+// GET how PayPal checkout attempts resolved over the trailing N days
+// (default 30): started -> reached a payment decision (approved or failed)
+// -> approved, plus the abandoned/still-in-progress counts behind the
+// drop-off between those stages
+// url: /api/admin/financials/payment-funnel?days=30
+router.get(
+  "/financials/payment-funnel",
+  requireLogin,
+  requireAdmin,
+  (req, res) => {
+    const days = Math.min(Math.max(Number(req.query.days) || 30, 1), 365);
+
+    financialsQ.getPaymentFunnel(days, (err, rows) => {
+      if (err) {
+        return res.status(500).json({ success: false, message: err.message });
+      }
+
+      const row = rows[0];
+      const started = Number(row.started);
+      const approved = Number(row.approved);
+      const failed = Number(row.failed);
+      const abandoned = Number(row.abandoned);
+      const inProgress = Number(row.in_progress);
+      const reachedDecision = approved + failed;
+
+      res.json({
+        success: true,
+        period_days: days,
+        conversion_rate: started > 0 ? (approved / started) * 100 : null,
+        funnel: [
+          { stage: "started", label: "Checkout Started", count: started },
+          {
+            stage: "decision",
+            label: "Reached Payment",
+            count: reachedDecision,
+          },
+          { stage: "approved", label: "Approved", count: approved },
+        ],
+        breakdown: { failed, abandoned, in_progress: inProgress },
+      });
+    });
+  },
+);
+
+// GET revenue (excl. VAT) grouped by course level, always in beginner ->
+// intermediate -> advanced order since level is a tier, not a ranking
+// url: /api/admin/financials/revenue-by-level
+router.get(
+  "/financials/revenue-by-level",
+  requireLogin,
+  requireAdmin,
+  (req, res) => {
+    financialsQ.getRevenueByLevel((err, rows) => {
+      if (err) {
+        return res.status(500).json({ success: false, message: err.message });
+      }
+
+      const LEVEL_ORDER = ["beginner", "intermediate", "advanced"];
+      const revenueByLevel = {};
+      for (const row of rows) revenueByLevel[row.level] = Number(row.revenue);
+
+      const levels = LEVEL_ORDER.map((level) => ({
+        level,
+        revenue: revenueByLevel[level] || 0,
+      }));
+
+      res.json({ success: true, levels });
+    });
+  },
+);
 
 module.exports = router;

@@ -5,10 +5,12 @@
 // Replace INITIAL_USERS with an API call when the backend is ready.
 // ──────────────────────────────────────────────────────────────────────────────
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { BookOpen, Search } from "lucide-react";
 import AvatarInitials from "../../dashboard/shared/AvatarInitials";
 import ChangeRoleModal from "../modals/ChangeRoleModal";
 import BlockUserModal from "../modals/BlockUserModal";
+import UserCoursesModal from "../modals/UserCoursesModal";
 import styles from "./UserDatabase.module.css";
 
 /* Normalise a DB row into the shape the component uses */
@@ -35,7 +37,8 @@ function UserDatabase() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [modalUser, setModalUser] = useState(null);
-  const [modalType, setModalType] = useState(null); // "changeRole" | "blockUser"
+  const [modalType, setModalType] = useState(null); // "changeRole" | "blockUser" | "courses"
+  const [search, setSearch] = useState("");
 
   /* ── Fetch all users on mount ────────────────────────────────────────── */
   const loadUsers = useCallback(() => {
@@ -54,6 +57,17 @@ function UserDatabase() {
   useEffect(() => {
     loadUsers();
   }, [loadUsers]);
+
+  /* Filter by name or ID as the admin types — matches either field */
+  const normalizedQuery = search.trim().toLowerCase();
+  const filteredUsers = useMemo(() => {
+    if (!normalizedQuery) return users;
+    return users.filter(
+      (u) =>
+        String(u.id).includes(normalizedQuery) ||
+        u.name.toLowerCase().includes(normalizedQuery),
+    );
+  }, [users, normalizedQuery]);
 
   /* ── Helpers ─────────────────────────────────────────────────────────── */
   function openModal(user, type) {
@@ -135,11 +149,24 @@ function UserDatabase() {
 
       {!loading && !error && (
         <div className={styles.card}>
+          {/* ── Search bar ──────────────────────────────────────────────── */}
+          <div className={styles.searchBar}>
+            <Search size={16} className={styles.searchIcon} />
+            <input
+              type="text"
+              className={styles.searchInput}
+              placeholder="Search by name or ID…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+
           <div className={styles.tableWrap}>
             <table className={styles.table}>
               {/* ── Column headers ────────────────────────────────────── */}
               <thead>
                 <tr>
+                  <th>ID</th>
                   <th>Name</th>
                   <th>Email</th>
                   <th>Phone Number</th>
@@ -151,15 +178,36 @@ function UserDatabase() {
 
               {/* ── Data rows ─────────────────────────────────────────── */}
               <tbody>
-                {users.map((u) => (
-                  <tr key={u.id} className={styles.row}>
-                    {/* Name + avatar */}
-                    <td>
-                      <div className={styles.nameCell}>
-                        <AvatarInitials name={u.name} size={32} />
-                        <span className={styles.name}>{u.name}</span>
-                      </div>
-                    </td>
+                {filteredUsers.map((u) => {
+                  const idMatches =
+                    normalizedQuery &&
+                    String(u.id).includes(normalizedQuery);
+                  const nameMatches =
+                    normalizedQuery &&
+                    u.name.toLowerCase().includes(normalizedQuery);
+
+                  return (
+                    <tr key={u.id} className={styles.row}>
+                      {/* ID */}
+                      <td className={styles.id}>
+                        <span
+                          className={idMatches ? styles.fieldMatch : ""}
+                        >
+                          {u.id}
+                        </span>
+                      </td>
+
+                      {/* Name + avatar */}
+                      <td>
+                        <div className={styles.nameCell}>
+                          <AvatarInitials name={u.name} size={32} />
+                          <span
+                            className={`${styles.name} ${nameMatches ? styles.fieldMatch : ""}`}
+                          >
+                            {u.name}
+                          </span>
+                        </div>
+                      </td>
 
                     {/* Email */}
                     <td className={styles.email}>{u.email}</td>
@@ -189,6 +237,15 @@ function UserDatabase() {
                     <td>
                       <div className={styles.actions}>
                         <button
+                          className={styles.btnCourses}
+                          type="button"
+                          onClick={() => openModal(u, "courses")}
+                          title="View enrolled courses"
+                          aria-label={`View courses for ${u.name}`}
+                        >
+                          <BookOpen size={14} />
+                        </button>
+                        <button
                           className={styles.btnRole}
                           type="button"
                           onClick={() => openModal(u, "changeRole")}
@@ -205,7 +262,15 @@ function UserDatabase() {
                       </div>
                     </td>
                   </tr>
-                ))}
+                  );
+                })}
+                {filteredUsers.length === 0 && (
+                  <tr>
+                    <td colSpan={7} className={styles.noResults}>
+                      No users match "{search}"
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
@@ -226,6 +291,9 @@ function UserDatabase() {
           onConfirm={handleBlockToggle}
           onClose={closeModal}
         />
+      )}
+      {modalType === "courses" && modalUser && (
+        <UserCoursesModal user={modalUser} onClose={closeModal} />
       )}
     </>
   );

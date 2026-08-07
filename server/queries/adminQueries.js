@@ -424,8 +424,35 @@ function findLessonWithCourse(lesson_id, cb) {
   );
 }
 
+// a function that gets a user_id and returns the courses that user is
+// currently registered to and that haven't finished yet (end_date today or
+// later) — a course drops out of this list on its own once it ends, without
+// needing any extra cleanup
+function getActiveCoursesForUser(user_id, cb) {
+  const conn = db.getConnection();
+
+  conn.query(
+    `SELECT
+        c.course_id,
+        c.description,
+        c.level,
+        DATE_FORMAT(c.start_date, '%Y-%m-%d') AS start_date,
+        DATE_FORMAT(c.end_date,   '%Y-%m-%d') AS end_date,
+        CONCAT(u.first_name, ' ', u.last_name) AS instructor
+     FROM register r
+     JOIN courses c ON r.course_id = c.course_id
+     LEFT JOIN users u ON c.user_id = u.user_id
+     WHERE r.user_id = ?
+       AND c.end_date >= CURDATE()
+     ORDER BY c.start_date`,
+    [user_id],
+    cb,
+  );
+}
+
 module.exports = {
   getAllUsers,
+  getActiveCoursesForUser,
   updateUserRole,
   updateUserBlockedStatus,
   getInstructors,

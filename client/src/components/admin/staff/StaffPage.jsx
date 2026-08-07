@@ -13,9 +13,10 @@
 
 import { useState, useEffect, Fragment } from "react";
 import { toast } from "sonner";
-import { ChevronDown, ChevronRight } from "lucide-react";
+import { ChevronDown, ChevronRight, GraduationCap } from "lucide-react";
 import AffectedLessonsPanel from "./AffectedLessonsPanel";
 import ApproveConflictModal from "./ApproveConflictModal";
+import InstructorCoursesModal from "./InstructorCoursesModal";
 import styles from "./StaffPage.module.css";
 
 function StaffPage() {
@@ -28,6 +29,7 @@ function StaffPage() {
   const [checkingId, setCheckingId] = useState(null);
   const [approvalTarget, setApprovalTarget] = useState(null);
   const [approvalLessons, setApprovalLessons] = useState(null);
+  const [coursesTarget, setCoursesTarget] = useState(null);
 
   useEffect(() => {
     fetch("/api/admin/instructor-constraints")
@@ -178,34 +180,42 @@ function StaffPage() {
                           )}
                         </td>
                         <td>
-                          {c.status === "pending" && (
-                            <div className={styles.actions}>
-                              <button
-                                type="button"
-                                className={styles.btnApprove}
-                                disabled={
-                                  decidingId === c.constraints_id ||
-                                  checkingId === c.constraints_id
-                                }
-                                onClick={() => handleApproveClick(c)}
-                              >
-                                {checkingId === c.constraints_id
-                                  ? "Checking…"
-                                  : "Approve"}
-                              </button>
-                              <button
-                                type="button"
-                                className={styles.btnReject}
-                                disabled={decidingId === c.constraints_id}
-                                onClick={() => decide(c.constraints_id, "rejected")}
-                              >
-                                Reject
-                              </button>
-                            </div>
-                          )}
-                          {c.status !== "pending" && (
-                            <span className={styles.muted}>—</span>
-                          )}
+                          <div className={styles.actions}>
+                            <button
+                              type="button"
+                              className={styles.btnCourses}
+                              onClick={() => setCoursesTarget(c)}
+                              title="View teaching courses"
+                              aria-label={`View courses taught by ${c.instructor_name}`}
+                            >
+                              <GraduationCap size={14} />
+                            </button>
+                            {c.status === "pending" && (
+                              <>
+                                <button
+                                  type="button"
+                                  className={styles.btnApprove}
+                                  disabled={
+                                    decidingId === c.constraints_id ||
+                                    checkingId === c.constraints_id
+                                  }
+                                  onClick={() => handleApproveClick(c)}
+                                >
+                                  {checkingId === c.constraints_id
+                                    ? "Checking…"
+                                    : "Approve"}
+                                </button>
+                                <button
+                                  type="button"
+                                  className={styles.btnReject}
+                                  disabled={decidingId === c.constraints_id}
+                                  onClick={() => decide(c.constraints_id, "rejected")}
+                                >
+                                  Reject
+                                </button>
+                              </>
+                            )}
+                          </div>
                         </td>
                       </tr>
 
@@ -241,6 +251,16 @@ function StaffPage() {
             setApprovalLessons(null);
           }}
           onApproveAnyway={() => decide(approvalTarget.constraints_id, "approved")}
+        />
+      )}
+
+      {coursesTarget && (
+        <InstructorCoursesModal
+          instructor={{
+            user_id: coursesTarget.user_id,
+            instructor_name: coursesTarget.instructor_name,
+          }}
+          onClose={() => setCoursesTarget(null)}
         />
       )}
     </div>

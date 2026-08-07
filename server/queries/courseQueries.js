@@ -112,6 +112,37 @@ function getCoursesByInstructorId(user_id, cb) {
   );
 }
 
+// a function that gets an instructor's user_id and returns only the courses
+// they are CURRENTLY teaching — running or upcoming, i.e. not finished yet.
+// Used by the admin's Staff Scheduling "View Courses" action, so a course
+// drops off the list on its own once it ends, same as getActiveCoursesForUser
+// does for a student's enrollments.
+function getActiveCoursesByInstructorId(user_id, cb) {
+  const conn = db.getConnection();
+
+  conn.query(
+    `SELECT
+       c.course_id,
+       c.description,
+       c.level,
+       DATE_FORMAT(c.start_date, '%Y-%m-%d') AS start_date,
+       DATE_FORMAT(c.end_date,   '%Y-%m-%d') AS end_date,
+       c.capacity,
+       c.total_lessons,
+       c.is_active,
+       (SELECT COUNT(*) FROM lessons l
+         WHERE l.course_id = c.course_id)   AS lessons_count,
+       (SELECT COUNT(*) FROM register r
+         WHERE r.course_id = c.course_id)   AS enrolled
+     FROM courses c
+     WHERE c.user_id = ?
+       AND c.end_date >= CURDATE()
+     ORDER BY c.start_date`,
+    [user_id],
+    cb,
+  );
+}
+
 // a function that deactivate courses that already ended
 function deactivateExpiredCourses(cb) {
   const conn = db.getConnection();
@@ -492,6 +523,7 @@ module.exports = {
   addCourse,
   getAllCourses,
   getCoursesByInstructorId,
+  getActiveCoursesByInstructorId,
   deactivateExpiredCourses,
   expireOldReservations,
   getCourseRegistrations,
