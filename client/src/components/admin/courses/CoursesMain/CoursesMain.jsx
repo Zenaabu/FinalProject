@@ -6,13 +6,30 @@
 // ──────────────────────────────────────────────────────────────────────────────
 
 import { useState, useEffect, useCallback } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import CourseManagerDashboard from "../CourseManager/CourseManagerDashboard";
 import CourseCreateForm from "../CourseCreateForm/CourseCreateForm";
 import styles from "./CoursesMain.module.css";
 
 function CoursesMain() {
-  const [showCreateForm, setShowCreateForm] = useState(false);
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  // Quick Actions ("Create New Course") navigates here with
+  // { state: { openCreate: true } } so the form opens automatically.
+  // Consume it once and clear the state so a refresh/back-nav doesn't
+  // reopen it.
+  const [showCreateForm, setShowCreateForm] = useState(
+    Boolean(location.state?.openCreate),
+  );
+
+  useEffect(() => {
+    if (location.state?.openCreate) {
+      navigate(location.pathname, { replace: true, state: null });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const [courses, setCourses] = useState([]);
   const [instructors, setInstructors] = useState([]);

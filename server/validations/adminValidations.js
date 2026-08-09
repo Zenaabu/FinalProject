@@ -20,6 +20,10 @@ const userQ = require("../queries/usersQueries");
 const adminQ = require("../queries/adminQueries");
 const courseQ = require("../queries/courseQueries");
 
+// a course cannot be scheduled with more lessons than this — keeps course
+// length sane and avoids pathological numbers of lesson rows/roster queries
+const MAX_TOTAL_LESSONS = 12;
+
 // a middleware that validates the role (when updating it)
 function validateRoleUpdate(req, res, next) {
   const { user_id } = req.params;
@@ -154,6 +158,13 @@ function validateAddCourse(req, res, next) {
     return res.status(400).json({
       success: false,
       message: "Numbers must be valid",
+    });
+  }
+
+  if (Number(total_lessons) > MAX_TOTAL_LESSONS) {
+    return res.status(400).json({
+      success: false,
+      message: `Total lessons cannot be more than ${MAX_TOTAL_LESSONS}`,
     });
   }
 
@@ -852,6 +863,13 @@ function validateUpdateCourseDetails(req, res, next) {
     return res.status(400).json({
       success: false,
       message: "Numbers must be valid",
+    });
+  }
+
+  if (Number(updatedCourse.total_lessons) > MAX_TOTAL_LESSONS) {
+    return res.status(400).json({
+      success: false,
+      message: `Total lessons cannot be more than ${MAX_TOTAL_LESSONS}`,
     });
   }
 

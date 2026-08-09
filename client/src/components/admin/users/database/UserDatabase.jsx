@@ -5,7 +5,7 @@
 // Replace INITIAL_USERS with an API call when the backend is ready.
 // ──────────────────────────────────────────────────────────────────────────────
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { BookOpen, Search } from "lucide-react";
 import AvatarInitials from "../../dashboard/shared/AvatarInitials";
 import ChangeRoleModal from "../modals/ChangeRoleModal";
@@ -32,13 +32,22 @@ const ROLE_CLASS = {
   admin: "roleManager",
 };
 
-function UserDatabase() {
+function UserDatabase({ autoFocusSearch = false }) {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [modalUser, setModalUser] = useState(null);
   const [modalType, setModalType] = useState(null); // "changeRole" | "blockUser" | "courses"
   const [search, setSearch] = useState("");
+  const searchInputRef = useRef(null);
+
+  // The "Search Users" dashboard shortcut lands here wanting to type
+  // immediately, not click into the box first. The search input only exists
+  // once the initial fetch finishes (it's behind the !loading check below),
+  // so this has to wait on `loading` too, not just fire on mount.
+  useEffect(() => {
+    if (autoFocusSearch && !loading) searchInputRef.current?.focus();
+  }, [autoFocusSearch, loading]);
 
   /* ── Fetch all users on mount ────────────────────────────────────────── */
   const loadUsers = useCallback(() => {
@@ -153,6 +162,7 @@ function UserDatabase() {
           <div className={styles.searchBar}>
             <Search size={16} className={styles.searchIcon} />
             <input
+              ref={searchInputRef}
               type="text"
               className={styles.searchInput}
               placeholder="Search by name or ID…"

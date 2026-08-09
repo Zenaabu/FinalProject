@@ -7,7 +7,6 @@ import DashboardHeader from "./header/DashboardHeader";
 import StatsRow from "./stats/StatsRow";
 import RecentCourses from "./courses/RecentCourses";
 import QuickActions from "./quickactions/QuickActions";
-import WeeklyAttendance from "./attendance/WeeklyAttendance";
 import InstructorConstraints from "./constraints/InstructorConstraints";
 import styles from "./DashboardHome.module.css";
 
@@ -25,10 +24,9 @@ function DashboardHome() {
         {/* Left: courses table */}
         <RecentCourses />
 
-        {/* Right: quick actions + attendance chart stacked */}
+        {/* Right: quick actions */}
         <div className={styles.rightCol}>
           <QuickActions />
-          <WeeklyAttendance />
         </div>
       </div>
 

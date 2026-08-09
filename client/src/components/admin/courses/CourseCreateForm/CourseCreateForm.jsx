@@ -22,7 +22,29 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { useState } from "react";
+import {
+  Waves,
+  FileText,
+  Layers,
+  Users,
+  ListChecks,
+  Wallet,
+  Percent,
+  Calendar,
+  CalendarCheck,
+  GraduationCap,
+  CalendarClock,
+  CalendarDays,
+  Clock,
+  Plus,
+  Trash2,
+  X,
+} from "lucide-react";
 import styles from "./CourseCreateForm.module.css";
+
+// A course cannot be scheduled with more lessons than this — mirrors the
+// server-side cap in server/validations/adminValidations.js.
+const MAX_TOTAL_LESSONS = 12;
 
 // ─── Empty lesson template ────────────────────────────────────────────────────
 const emptyLesson = (number) => ({
@@ -44,6 +66,24 @@ const INITIAL_FORM = {
   end_date: "",
   user_id: "", // DB column: user_id (instructor FK)  (was: instructor_id)
 };
+
+// ─── Reusable icon-circle field wrapper (mirrors the UserProfilePage look) ────
+function Field({ icon: Icon, label, error, span2, children }) {
+  return (
+    <div
+      className={`${styles.field} ${span2 ? styles.colSpan2 : ""} ${error ? styles.fieldError : ""}`}
+    >
+      <div className={styles.fieldIconCircle}>
+        <Icon size={18} />
+      </div>
+      <div className={styles.fieldBody}>
+        <label className={styles.label}>{label}</label>
+        {children}
+        {error && <span className={styles.errorMsg}>{error}</span>}
+      </div>
+    </div>
+  );
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -102,6 +142,8 @@ function CourseCreateForm({ instructors = [], onCancel, onCreated }) {
       next.description = "Course description is required.";
     if (!form.capacity) next.capacity = "Capacity is required.";
     if (!form.total_lessons) next.total_lessons = "Total lessons is required.";
+    else if (Number(form.total_lessons) > MAX_TOTAL_LESSONS)
+      next.total_lessons = `Total lessons cannot be more than ${MAX_TOTAL_LESSONS}.`;
     if (!form.price) next.price = "Price is required.";
     if (!form.start_date) next.start_date = "Start date is required.";
     if (!form.end_date) next.end_date = "End date is required.";
@@ -212,10 +254,15 @@ function CourseCreateForm({ instructors = [], onCancel, onCreated }) {
     <div className={styles.card}>
       {/* ── Card header ───────────────────────────────────────────────────── */}
       <div className={styles.cardHeader}>
-        <h2 className={styles.cardTitle}>Create New Course</h2>
-        <p className={styles.cardSubtitle}>
-          Fill in the details below to add a new surfing course.
-        </p>
+        <div className={styles.cardHeaderIcon}>
+          <Waves size={22} />
+        </div>
+        <div>
+          <h2 className={styles.cardTitle}>Create New Course</h2>
+          <p className={styles.cardSubtitle}>
+            Fill in the details below to add a new surfing course.
+          </p>
+        </div>
       </div>
 
       {/* ── Server-level error banner ──────────────────────────────────────── */}
@@ -230,14 +277,19 @@ function CourseCreateForm({ instructors = [], onCancel, onCreated }) {
         {/* ══════════════════════════════════════════════════════════════════
             SECTION 1 — Course Details (2-column grid)
         ══════════════════════════════════════════════════════════════════ */}
-        <div className={styles.sectionTitle}>Course Details</div>
+        <div className={styles.sectionTitle}>
+          <FileText size={14} />
+          Course Details
+        </div>
 
         <div className={styles.grid}>
           {/* ── Course Description (spans both columns) ─────────────────── */}
-          <div className={`${styles.field} ${styles.colSpan2}`}>
-            <label className={styles.label} htmlFor="ccf-description">
-              Course Description / Title
-            </label>
+          <Field
+            icon={FileText}
+            label="Course Description / Title"
+            error={errors.description}
+            span2
+          >
             <input
               id="ccf-description"
               className={`${styles.input} ${errors.description ? styles.inputError : ""}`}
@@ -247,16 +299,10 @@ function CourseCreateForm({ instructors = [], onCancel, onCreated }) {
               value={form.description}
               onChange={handleChange}
             />
-            {errors.description && (
-              <span className={styles.errorMsg}>{errors.description}</span>
-            )}
-          </div>
+          </Field>
 
           {/* ── Level ───────────────────────────────────────────────────── */}
-          <div className={styles.field}>
-            <label className={styles.label} htmlFor="ccf-level">
-              Level
-            </label>
+          <Field icon={Layers} label="Level">
             <select
               id="ccf-level"
               className={styles.select}
@@ -269,13 +315,14 @@ function CourseCreateForm({ instructors = [], onCancel, onCreated }) {
               <option value="intermediate">Intermediate</option>
               <option value="advanced">Advanced</option>
             </select>
-          </div>
+          </Field>
 
           {/* ── Capacity ────────────────────────────────────────────────── */}
-          <div className={styles.field}>
-            <label className={styles.label} htmlFor="ccf-capacity">
-              Capacity (students)
-            </label>
+          <Field
+            icon={Users}
+            label="Capacity (students)"
+            error={errors.capacity}
+          >
             <input
               id="ccf-capacity"
               className={`${styles.input} ${errors.capacity ? styles.inputError : ""}`}
@@ -286,36 +333,29 @@ function CourseCreateForm({ instructors = [], onCancel, onCreated }) {
               value={form.capacity}
               onChange={handleChange}
             />
-            {errors.capacity && (
-              <span className={styles.errorMsg}>{errors.capacity}</span>
-            )}
-          </div>
+          </Field>
 
           {/* ── Total Lessons ───────────────────────────────────────────── */}
-          <div className={styles.field}>
-            <label className={styles.label} htmlFor="ccf-total-lessons">
-              Total Lessons
-            </label>
+          <Field
+            icon={ListChecks}
+            label={`Total Lessons (max ${MAX_TOTAL_LESSONS})`}
+            error={errors.total_lessons}
+          >
             <input
               id="ccf-total-lessons"
               className={`${styles.input} ${errors.total_lessons ? styles.inputError : ""}`}
               type="number"
               name="total_lessons"
               min="1"
+              max={MAX_TOTAL_LESSONS}
               placeholder="e.g. 8"
               value={form.total_lessons}
               onChange={handleChange}
             />
-            {errors.total_lessons && (
-              <span className={styles.errorMsg}>{errors.total_lessons}</span>
-            )}
-          </div>
+          </Field>
 
           {/* ── Price ───────────────────────────────────────────────────── */}
-          <div className={styles.field}>
-            <label className={styles.label} htmlFor="ccf-price">
-              Price (₪)
-            </label>
+          <Field icon={Wallet} label="Price (₪)" error={errors.price}>
             <input
               id="ccf-price"
               className={`${styles.input} ${errors.price ? styles.inputError : ""}`}
@@ -327,16 +367,10 @@ function CourseCreateForm({ instructors = [], onCancel, onCreated }) {
               value={form.price}
               onChange={handleChange}
             />
-            {errors.price && (
-              <span className={styles.errorMsg}>{errors.price}</span>
-            )}
-          </div>
+          </Field>
 
           {/* ── VAT ─────────────────────────────────────────────────────── */}
-          <div className={styles.field}>
-            <label className={styles.label} htmlFor="ccf-vat">
-              VAT (%)
-            </label>
+          <Field icon={Percent} label="VAT (%)">
             <input
               id="ccf-vat"
               className={styles.input}
@@ -347,13 +381,10 @@ function CourseCreateForm({ instructors = [], onCancel, onCreated }) {
               value={form.vat_percent}
               onChange={handleChange}
             />
-          </div>
+          </Field>
 
           {/* ── Start Date ──────────────────────────────────────────────── */}
-          <div className={styles.field}>
-            <label className={styles.label} htmlFor="ccf-start-date">
-              Start Date
-            </label>
+          <Field icon={Calendar} label="Start Date" error={errors.start_date}>
             <input
               id="ccf-start-date"
               className={`${styles.input} ${errors.start_date ? styles.inputError : ""}`}
@@ -362,16 +393,10 @@ function CourseCreateForm({ instructors = [], onCancel, onCreated }) {
               value={form.start_date}
               onChange={handleChange}
             />
-            {errors.start_date && (
-              <span className={styles.errorMsg}>{errors.start_date}</span>
-            )}
-          </div>
+          </Field>
 
           {/* ── End Date ────────────────────────────────────────────────── */}
-          <div className={styles.field}>
-            <label className={styles.label} htmlFor="ccf-end-date">
-              End Date
-            </label>
+          <Field icon={CalendarCheck} label="End Date" error={errors.end_date}>
             <input
               id="ccf-end-date"
               className={`${styles.input} ${errors.end_date ? styles.inputError : ""}`}
@@ -380,16 +405,15 @@ function CourseCreateForm({ instructors = [], onCancel, onCreated }) {
               value={form.end_date}
               onChange={handleChange}
             />
-            {errors.end_date && (
-              <span className={styles.errorMsg}>{errors.end_date}</span>
-            )}
-          </div>
+          </Field>
 
           {/* ── Assigned Instructor (spans both columns) ─────────────────── */}
-          <div className={`${styles.field} ${styles.colSpan2}`}>
-            <label className={styles.label} htmlFor="ccf-instructor">
-              Assigned Instructor
-            </label>
+          <Field
+            icon={GraduationCap}
+            label="Assigned Instructor"
+            error={errors.user_id}
+            span2
+          >
             <select
               id="ccf-instructor"
               className={`${styles.select} ${errors.user_id ? styles.inputError : ""}`}
@@ -408,10 +432,7 @@ function CourseCreateForm({ instructors = [], onCancel, onCreated }) {
                 </option>
               ))}
             </select>
-            {errors.user_id && (
-              <span className={styles.errorMsg}>{errors.user_id}</span>
-            )}
-          </div>
+          </Field>
         </div>
         {/* /grid */}
 
@@ -422,6 +443,7 @@ function CourseCreateForm({ instructors = [], onCancel, onCreated }) {
             lesson_number is assigned automatically (1-based index).
         ══════════════════════════════════════════════════════════════════ */}
         <div className={styles.sectionTitle}>
+          <CalendarClock size={14} />
           Lessons
           <span className={styles.sectionHint}>
             (at least 1 required — must fall within the course dates)
@@ -445,9 +467,10 @@ function CourseCreateForm({ instructors = [], onCancel, onCreated }) {
               {/* Date */}
               <div className={styles.lessonField}>
                 <label
-                  className={styles.label}
+                  className={styles.lessonLabel}
                   htmlFor={`ccf-lesson-date-${index}`}
                 >
+                  <CalendarDays size={13} />
                   Date
                 </label>
                 <input
@@ -464,9 +487,10 @@ function CourseCreateForm({ instructors = [], onCancel, onCreated }) {
               {/* Start time */}
               <div className={styles.lessonField}>
                 <label
-                  className={styles.label}
+                  className={styles.lessonLabel}
                   htmlFor={`ccf-lesson-start-${index}`}
                 >
+                  <Clock size={13} />
                   Start
                 </label>
                 <input
@@ -483,9 +507,10 @@ function CourseCreateForm({ instructors = [], onCancel, onCreated }) {
               {/* End time */}
               <div className={styles.lessonField}>
                 <label
-                  className={styles.label}
+                  className={styles.lessonLabel}
                   htmlFor={`ccf-lesson-end-${index}`}
                 >
+                  <Clock size={13} />
                   End
                 </label>
                 <input
@@ -507,7 +532,7 @@ function CourseCreateForm({ instructors = [], onCancel, onCreated }) {
                   onClick={() => handleRemoveLesson(index)}
                   aria-label={`Remove lesson ${lesson.lesson_number}`}
                 >
-                  ✕
+                  <Trash2 size={14} />
                 </button>
               )}
             </div>
@@ -524,7 +549,8 @@ function CourseCreateForm({ instructors = [], onCancel, onCreated }) {
             lessons.length >= Number(form.total_lessons)
           }
         >
-          + Add Lesson
+          <Plus size={15} />
+          Add Lesson
         </button>
 
         {/* ── Action buttons ────────────────────────────────────────────── */}
@@ -535,6 +561,7 @@ function CourseCreateForm({ instructors = [], onCancel, onCreated }) {
             onClick={onCancel}
             disabled={submitting}
           >
+            <X size={15} />
             Cancel
           </button>
 
@@ -548,6 +575,7 @@ function CourseCreateForm({ instructors = [], onCancel, onCreated }) {
             className={`btn-primary ${styles.btnSubmit}`}
             disabled={submitting}
           >
+            <Waves size={15} />
             {submitting ? "Creating…" : "Create Course"}
           </button>
         </div>
