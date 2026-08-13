@@ -6,6 +6,8 @@ import {
   calculateVolumeLiters,
 } from "./volumeMath";
 
+const MAX_WEIGHT_KG = 200;
+
 const SKILL_TIPS = {
   beginner:
     "Extra volume keeps you stable and paddling early — exactly what you want while you're learning.",
@@ -30,6 +32,11 @@ function VolumeCalculatorForm() {
       setResult(null);
       return;
     }
+    if (weightKg > MAX_WEIGHT_KG) {
+      setError(`Weight can't be more than ${MAX_WEIGHT_KG}kg.`);
+      setResult(null);
+      return;
+    }
 
     setError("");
     setResult(calculateVolumeLiters(weightKg, skillLevel, fitnessLevel));
@@ -47,6 +54,7 @@ function VolumeCalculatorForm() {
               id="weight"
               type="number"
               min="1"
+              max={MAX_WEIGHT_KG}
               step="0.5"
               inputMode="decimal"
               placeholder="e.g. 75"
