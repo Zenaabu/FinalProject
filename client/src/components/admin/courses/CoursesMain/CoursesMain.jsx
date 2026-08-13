@@ -18,14 +18,20 @@ function CoursesMain() {
 
   // Quick Actions ("Create New Course") navigates here with
   // { state: { openCreate: true } } so the form opens automatically.
-  // Consume it once and clear the state so a refresh/back-nav doesn't
-  // reopen it.
+  // The dashboard's Courses table navigates here with
+  // { state: { openCourseId } } so that course's accordion opens
+  // automatically instead of the admin having to find and click it again.
+  // Both are consumed once and cleared so a refresh/back-nav doesn't replay
+  // them.
   const [showCreateForm, setShowCreateForm] = useState(
     Boolean(location.state?.openCreate),
   );
+  const [initialExpandedCourseId] = useState(
+    location.state?.openCourseId ?? null,
+  );
 
   useEffect(() => {
-    if (location.state?.openCreate) {
+    if (location.state?.openCreate || location.state?.openCourseId) {
       navigate(location.pathname, { replace: true, state: null });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -126,6 +132,7 @@ function CoursesMain() {
         error={error}
         onCourseUpdated={handleCourseUpdated}
         onLessonsChanged={loadCourses}
+        initialExpandedCourseId={initialExpandedCourseId}
       />
     </div>
   );

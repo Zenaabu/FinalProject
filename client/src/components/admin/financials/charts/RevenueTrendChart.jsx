@@ -1,5 +1,10 @@
 // ─── RevenueTrendChart.jsx ────────────────────────────────────────────────────
-// Monthly revenue trend (excl. VAT), backed by GET /api/admin/financials/revenue-trend.
+// Daily revenue trend (excl. VAT) for the selected date range, backed by
+// GET /api/admin/financials/revenue-trend. Used to show a fixed trailing
+// 6-month view regardless of what the admin cared about; now it always
+// tracks the same [startDate, endDate] window as the rest of the page (this
+// month by default), so it reads as "this period, day by day" instead of a
+// stale multi-month history.
 // Single series over time -> area chart, one hue, direct tooltip on hover.
 // ──────────────────────────────────────────────────────────────────────────────
 
@@ -14,8 +19,6 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import styles from "./RevenueTrendChart.module.css";
-
-const MONTHS_WINDOW = 6;
 
 function formatCurrency(value) {
   return `₪${Math.round(Number(value)).toLocaleString("en-US")}`;
@@ -34,11 +37,14 @@ function CustomTooltip({ active, payload, label }) {
   );
 }
 
-function RevenueTrendChart() {
+function RevenueTrendChart({ startDate, endDate }) {
   const [trend, setTrend] = useState(null);
 
   useEffect(() => {
-    fetch(`/api/admin/financials/revenue-trend?months=${MONTHS_WINDOW}`)
+    setTrend(null);
+    fetch(
+      `/api/admin/financials/revenue-trend?startDate=${startDate}&endDate=${endDate}`,
+    )
       .then((res) => res.json())
       .then((data) => {
         if (data.success) setTrend(data.trend);
@@ -46,14 +52,19 @@ function RevenueTrendChart() {
       .catch(() => {
         // non-blocking: chart just keeps showing its empty state
       });
-  }, []);
+  }, [startDate, endDate]);
+
+  // Recharts renders every tick by default — fine for a month (~30 points),
+  // but a long custom range would overlap labels, so thin them out.
+  const tickInterval =
+    trend && trend.length > 31 ? Math.ceil(trend.length / 15) : 0;
 
   return (
     <div className={styles.card}>
       {/* ── Card header ───────────────────────────────────────────────── */}
       <div className={styles.cardHeader}>
         <h2 className={styles.title}>Revenue Trend</h2>
-        <span className={styles.period}>Last {MONTHS_WINDOW} months, excl. VAT</span>
+        <span className={styles.period}>Daily, excl. VAT</span>
       </div>
 
       {/* ── Chart ─────────────────────────────────────────────────────── */}
@@ -69,7 +80,8 @@ function RevenueTrendChart() {
               </defs>
               <CartesianGrid stroke="#f1f5f9" vertical={false} />
               <XAxis
-                dataKey="month_label"
+                dataKey="day_label"
+                interval={tickInterval}
                 tick={{ fontSize: 11, fill: "#94a3b8" }}
                 axisLine={{ stroke: "#e2e8f0" }}
                 tickLine={false}
@@ -88,7 +100,7 @@ function RevenueTrendChart() {
                 stroke="#0284c7"
                 strokeWidth={2}
                 fill="url(#revenueFill)"
-                dot={{ r: 3.5, fill: "#fff", stroke: "#0284c7", strokeWidth: 2 }}
+                dot={trend.length <= 31 ? { r: 3.5, fill: "#fff", stroke: "#0284c7", strokeWidth: 2 } : false}
                 activeDot={{ r: 5 }}
               />
             </AreaChart>

@@ -43,7 +43,7 @@ const StudentsIcon = (
   </svg>
 );
 
-const InstructorsIcon = (
+const ClockIcon = (
   <svg
     xmlns="http://www.w3.org/2000/svg"
     width="20"
@@ -56,14 +56,12 @@ const InstructorsIcon = (
     strokeLinejoin="round"
     aria-hidden="true"
   >
-    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-    <circle cx="9" cy="7" r="4" />
-    <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-    <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+    <circle cx="12" cy="12" r="10" />
+    <polyline points="12 6 12 12 16 14" />
   </svg>
 );
 
-const ProfitIcon = (
+const AlertIcon = (
   <svg
     xmlns="http://www.w3.org/2000/svg"
     width="20"
@@ -76,14 +74,11 @@ const ProfitIcon = (
     strokeLinejoin="round"
     aria-hidden="true"
   >
-    <line x1="12" y1="1" x2="12" y2="23" />
-    <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+    <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+    <line x1="12" y1="9" x2="12" y2="13" />
+    <line x1="12" y1="17" x2="12.01" y2="17" />
   </svg>
 );
-
-function formatCurrency(value) {
-  return `₪${Math.round(Number(value)).toLocaleString("en-US")}`;
-}
 
 /* ── Card styling (data comes from the API, only presentation lives here) ── */
 function buildCards(stats) {
@@ -109,24 +104,30 @@ function buildCards(stats) {
       icon: StudentsIcon,
     },
     {
-      id: "instructors",
-      label: "Active Instructors",
-      value: stats ? stats.active_instructors : "—",
-      sub: "Not blocked",
-      subColor: "#64748b",
+      id: "pending-constraints",
+      label: "Pending Constraints",
+      value: stats ? stats.pending_constraints : "—",
+      sub:
+        stats && stats.pending_constraints > 0
+          ? "Awaiting approval"
+          : "All caught up",
+      subColor: stats && stats.pending_constraints > 0 ? "#b45309" : "#64748b",
       iconBg: "rgba(139, 92, 246, 0.12)",
       iconColor: "#7c3aed",
-      icon: InstructorsIcon,
+      icon: ClockIcon,
     },
     {
-      id: "profit",
-      label: "Monthly Profit",
-      value: stats ? formatCurrency(stats.monthly_profit) : "—",
-      sub: "Excl. VAT, this month",
-      subColor: "#15803d",
-      iconBg: "rgba(34, 197, 94, 0.12)",
-      iconColor: "#15803d",
-      icon: ProfitIcon,
+      id: "at-risk",
+      label: "Courses Starting Soon",
+      value: stats ? stats.at_risk_courses : "—",
+      sub:
+        stats && stats.at_risk_courses > 0
+          ? "Under 50% capacity, within 7 days"
+          : "None under 50% capacity",
+      subColor: stats && stats.at_risk_courses > 0 ? "#dc2626" : "#15803d",
+      iconBg: "rgba(220, 38, 38, 0.12)",
+      iconColor: "#dc2626",
+      icon: AlertIcon,
     },
   ];
 }

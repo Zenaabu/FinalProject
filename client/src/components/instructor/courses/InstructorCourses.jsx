@@ -6,6 +6,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
+import { AlertTriangle } from "lucide-react";
 import styles from "./InstructorCourses.module.css";
 
 function statusOf(course) {
@@ -35,6 +36,13 @@ function InstructorCourses() {
   const [error, setError] = useState(null);
   const [filter, setFilter] = useState("Running");
 
+  // Substitute lessons don't show up in "My Courses" at all (see
+  // SubstituteLessons.jsx), so without this banner an instructor assigned to
+  // cover one has no way to find out unless they happen to click that page
+  // on their own. This is the landing page after login — the one place a
+  // persistent (non-dismissing) heads-up is guaranteed to be seen.
+  const [upcomingSubstituteCount, setUpcomingSubstituteCount] = useState(0);
+
   useEffect(() => {
     fetch("/api/instructor/courses")
       .then((res) => res.json())
@@ -46,6 +54,20 @@ function InstructorCourses() {
       })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
+  }, []);
+
+  useEffect(() => {
+    fetch("/api/instructor/substitute-lessons")
+      .then((res) => res.json())
+      .then((data) => {
+        if (!data.success) return;
+        setUpcomingSubstituteCount(
+          data.lessons.filter((l) => l.needs_attention).length,
+        );
+      })
+      .catch(() => {
+        // non-blocking: banner just stays hidden
+      });
   }, []);
 
   const statusedCourses = useMemo(
@@ -73,6 +95,17 @@ function InstructorCourses() {
 
   return (
     <div className={styles.page}>
+      {upcomingSubstituteCount > 0 && (
+        <Link to="/instructor/substitute-lessons" className={styles.subBanner}>
+          <AlertTriangle size={18} className={styles.subBannerIcon} />
+          <span className={styles.subBannerText}>
+            You've been assigned {upcomingSubstituteCount} substitute{" "}
+            {upcomingSubstituteCount === 1 ? "lesson" : "lessons"} to cover.
+          </span>
+          <span className={styles.subBannerCta}>View →</span>
+        </Link>
+      )}
+
       <div className={styles.pageHeader}>
         <h1 className={styles.title}>My Courses</h1>
         <p className={styles.subtitle}>

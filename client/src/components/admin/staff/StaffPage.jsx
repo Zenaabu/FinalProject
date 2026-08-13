@@ -11,13 +11,37 @@
 // lesson to a new date (lessons are never cancelled).
 // ──────────────────────────────────────────────────────────────────────────
 
-import { useState, useEffect, Fragment } from "react";
+import { useState, useEffect, useCallback, useMemo, Fragment } from "react";
 import { toast } from "sonner";
-import { ChevronDown, ChevronRight, GraduationCap } from "lucide-react";
+import { ChevronDown, ChevronRight, GraduationCap, AlertTriangle } from "lucide-react";
 import AffectedLessonsPanel from "./AffectedLessonsPanel";
 import ApproveConflictModal from "./ApproveConflictModal";
 import InstructorCoursesModal from "./InstructorCoursesModal";
+import StaffDateRangeForm, { currentMonthRange } from "./StaffDateRangeForm";
 import styles from "./StaffPage.module.css";
+
+// true when the constraint's own [start_date, end_date] span overlaps
+// [start, end] at all — same overlap rule CourseManagerDashboard uses for
+// its own date-range search, for consistency across the admin panel
+function overlapsDateRange(constraint, start, end) {
+  if (start && constraint.end_date < start) return false;
+  if (end && constraint.start_date > end) return false;
+  return true;
+}
+
+function formatRangeLabel(startDate, endDate) {
+  const opts = { day: "numeric", month: "short", year: "numeric" };
+  const start = new Date(`${startDate}T00:00:00`).toLocaleDateString(
+    "en-GB",
+    opts,
+  );
+  if (startDate === endDate) return start;
+  const end = new Date(`${endDate}T00:00:00`).toLocaleDateString(
+    "en-GB",
+    opts,
+  );
+  return `${start} – ${end}`;
+}
 
 function StaffPage() {
   const [constraints, setConstraints] = useState([]);
@@ -30,6 +54,18 @@ function StaffPage() {
   const [approvalTarget, setApprovalTarget] = useState(null);
   const [approvalLessons, setApprovalLessons] = useState(null);
   const [coursesTarget, setCoursesTarget] = useState(null);
+
+  // The admin shouldn't have to look through every request ever submitted
+  // by default — just this month's, with a date-range search to go back.
+  const [range, setRange] = useState(currentMonthRange);
+
+  const visibleConstraints = useMemo(
+    () =>
+      constraints.filter((c) =>
+        overlapsDateRange(c, range.startDate, range.endDate),
+      ),
+    [constraints, range],
+  );
 
   useEffect(() => {
     fetch("/api/admin/instructor-constraints")
@@ -48,6 +84,21 @@ function StaffPage() {
       .then((data) => {
         if (data.success) setInstructors(data.instructors);
       });
+  }, []);
+
+  // Keeps a constraint row's "still needs attention" badge in sync as the
+  // admin resolves its affected lessons one by one inside the expanded
+  // panel, instead of only refreshing on a full page reload. Stable
+  // identity (empty deps + functional update) on purpose — see the
+  // matching comment in AffectedLessonsPanel.jsx.
+  const handleResolvedCountChange = useCallback((constraints_id, count) => {
+    setConstraints((prev) =>
+      prev.map((c) =>
+        c.constraints_id === constraints_id
+          ? { ...c, unresolved_lesson_count: count }
+          : c,
+      ),
+    );
   }, []);
 
   function decide(constraints_id, status) {
@@ -108,8 +159,15 @@ function StaffPage() {
     <div className={styles.page}>
       <h1 className={styles.title}>Staff Scheduling</h1>
       <p className={styles.subtitle}>
-        Dates instructors have reported they can't teach.
+        Dates instructors have reported they can't teach. Showing{" "}
+        {formatRangeLabel(range.startDate, range.endDate)}.
       </p>
+
+      <StaffDateRangeForm
+        startDate={range.startDate}
+        endDate={range.endDate}
+        onApply={(startDate, endDate) => setRange({ startDate, endDate })}
+      />
 
       {loading && <div className={styles.state}>Loading…</div>}
       {error && <div className={styles.stateError}>Error: {error}</div>}
@@ -118,7 +176,17 @@ function StaffPage() {
         <div className={styles.state}>No constraints reported yet.</div>
       )}
 
-      {!loading && !error && constraints.length > 0 && (
+      {!loading &&
+        !error &&
+        constraints.length > 0 &&
+        visibleConstraints.length === 0 && (
+          <div className={styles.state}>
+            No requests between {range.startDate} and {range.endDate}. Search
+            a different range to see older requests.
+          </div>
+        )}
+
+      {!loading && !error && visibleConstraints.length > 0 && (
         <div className={styles.card}>
           <div className={styles.tableWrap}>
             <table className={styles.table}>
@@ -133,7 +201,7 @@ function StaffPage() {
                 </tr>
               </thead>
               <tbody>
-                {constraints.map((c) => {
+                {visibleConstraints.map((c) => {
                   const isExpanded = expandedId === c.constraints_id;
                   const isPastUnanswered =
                     c.status === "pending" &&
@@ -178,6 +246,25 @@ function StaffPage() {
                               date passed, no decision
                             </span>
                           )}
+                          {c.status === "approved" &&
+                            c.unresolved_lesson_count > 0 && (
+                              <button
+                                type="button"
+                                className={styles.unresolvedHint}
+                                onClick={() =>
+                                  setExpandedId(
+                                    isExpanded ? null : c.constraints_id,
+                                  )
+                                }
+                              >
+                                <AlertTriangle size={12} />
+                                {c.unresolved_lesson_count}{" "}
+                                {c.unresolved_lesson_count === 1
+                                  ? "lesson"
+                                  : "lessons"}{" "}
+                                still need a decision
+                              </button>
+                            )}
                         </td>
                         <td>
                           <div className={styles.actions}>
@@ -226,6 +313,12 @@ function StaffPage() {
                               constraintsId={c.constraints_id}
                               originalInstructorId={c.user_id}
                               instructors={instructors}
+                              onResolvedCountChange={(count) =>
+                                handleResolvedCountChange(
+                                  c.constraints_id,
+                                  count,
+                                )
+                              }
                             />
                           </td>
                         </tr>

@@ -33,9 +33,12 @@ function LessonRow({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
 
-  const candidates = instructors.filter(
-    (i) => i.user_id !== excludeInstructorId,
-  );
+  // Instructors who are actually free at this lesson's exact date/time —
+  // fetched fresh each time the substitute form opens, instead of showing
+  // every instructor and letting the admin discover a conflict only after
+  // picking one and getting the "already teaches another lesson" error.
+  const [availableInstructors, setAvailableInstructors] = useState(null);
+  const [loadingAvailable, setLoadingAvailable] = useState(false);
 
   // once anything has been logged for this lesson against this constraint,
   // the decision is final — no more actions, no clearing
@@ -53,6 +56,35 @@ function LessonRow({
     setSubstitutePick(lesson.substitute_instructor_id || "");
     setError(null);
     setMode("substitute");
+    setAvailableInstructors(null);
+    setLoadingAvailable(true);
+
+    const params = new URLSearchParams({
+      date: lesson.lesson_date,
+      start_time: lesson.start_time,
+      end_time: lesson.end_time,
+      exclude_instructor_id: excludeInstructorId,
+    });
+
+    fetch(`/api/admin/instructors/available-for-lesson?${params}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (!data.success) {
+          throw new Error(
+            data.message || "Failed to load available instructors",
+          );
+        }
+        setAvailableInstructors(data.instructors);
+      })
+      .catch(() => {
+        // fall back to every instructor rather than blocking the admin
+        // entirely — they'll still get the conflict error on submit if
+        // they pick someone who turns out to be busy
+        setAvailableInstructors(
+          instructors.filter((i) => i.user_id !== excludeInstructorId),
+        );
+      })
+      .finally(() => setLoadingAvailable(false));
   }
 
   function openReschedule() {
@@ -181,9 +213,16 @@ function LessonRow({
             className={styles.select}
             value={substitutePick}
             onChange={(e) => setSubstitutePick(e.target.value)}
+            disabled={loadingAvailable}
           >
-            <option value="">Choose an instructor…</option>
-            {candidates.map((i) => (
+            <option value="">
+              {loadingAvailable
+                ? "Checking availability…"
+                : availableInstructors && availableInstructors.length === 0
+                  ? "No one is free at this time"
+                  : "Choose an instructor…"}
+            </option>
+            {(availableInstructors || []).map((i) => (
               <option key={i.user_id} value={i.user_id}>
                 {i.first_name} {i.last_name}
               </option>
@@ -193,7 +232,7 @@ function LessonRow({
             type="button"
             className={styles.saveBtn}
             onClick={submitSubstitute}
-            disabled={!substitutePick || saving}
+            disabled={!substitutePick || saving || loadingAvailable}
           >
             {saving ? "…" : "Assign"}
           </button>
@@ -242,7 +281,12 @@ function LessonRow({
   );
 }
 
-function AffectedLessonsPanel({ constraintsId, originalInstructorId, instructors }) {
+function AffectedLessonsPanel({
+  constraintsId,
+  originalInstructorId,
+  instructors,
+  onResolvedCountChange,
+}) {
   const [lessons, setLessons] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -256,9 +300,22 @@ function AffectedLessonsPanel({ constraintsId, originalInstructorId, instructors
           throw new Error(data.message || "Failed to load affected lessons");
         }
         setLessons(data.lessons);
+        // keeps the collapsed-row "still needs attention" badge on
+        // StaffPage in sync as the admin resolves lessons one by one,
+        // instead of it only refreshing on a full page reload
+        onResolvedCountChange?.(
+          data.lessons.filter((l) => !l.history || l.history.length === 0)
+            .length,
+        );
       })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
+    // onResolvedCountChange intentionally excluded: StaffPage passes a new
+    // inline function every render, and including it here would recreate
+    // `load` (and retrigger the effect below) on every StaffPage re-render —
+    // including the very re-render this callback itself causes, which would
+    // loop. constraintsId is the only thing that should ever re-run this.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [constraintsId]);
 
   useEffect(() => {

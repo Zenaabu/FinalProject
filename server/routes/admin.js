@@ -159,6 +159,9 @@ router.get(
         end_date: formatDateOnly(row.end_time),
         notes: row.notes,
         status: row.status,
+        // only meaningful once approved — a pending/rejected constraint has
+        // no lessons that need reassigning yet
+        unresolved_lesson_count: Number(row.unresolved_lesson_count),
       }));
 
       res.json({
@@ -309,6 +312,42 @@ router.get("/instructors", requireLogin, requireAdmin, (req, res) => {
   });
 });
 
+// GET instructors free to substitute a specific lesson slot — excludes the
+// lesson's own instructor and anyone already teaching/substituting another
+// lesson that overlaps this exact date/time, so the admin only ever sees
+// choices that will actually succeed instead of picking one and hitting the
+// "already teaches another lesson" conflict error
+// url: /api/admin/instructors/available-for-lesson?date=2026-08-15&start_time=14:00&end_time=16:00&exclude_instructor_id=123456789
+router.get(
+  "/instructors/available-for-lesson",
+  requireLogin,
+  requireAdmin,
+  (req, res) => {
+    const { date, start_time, end_time, exclude_instructor_id } = req.query;
+
+    if (!date || !start_time || !end_time || !exclude_instructor_id) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "date, start_time, end_time and exclude_instructor_id are required",
+      });
+    }
+
+    adminQ.getAvailableInstructorsForSlot(
+      exclude_instructor_id,
+      date,
+      start_time,
+      end_time,
+      (err, rows) => {
+        if (err) {
+          return res.status(500).json({ success: false, message: err.message });
+        }
+        res.json({ success: true, instructors: rows });
+      },
+    );
+  },
+);
+
 // GET the KPI numbers for the admin dashboard home page
 // url: /api/admin/dashboard-stats
 router.get("/dashboard-stats", requireLogin, requireAdmin, (req, res) => {
@@ -342,95 +381,163 @@ router.get("/recent-courses", requireLogin, requireAdmin, (req, res) => {
   });
 });
 
-// GET the headline KPI numbers for the admin Financials page: all-time
-// revenue, this month's revenue with % change vs last month, this month's
-// VAT collected, and the all-time average order value
-// url: /api/admin/financials/summary
+// ── Financials date-range helpers ─────────────────────────────────────────
+// All four /financials/* endpoints below are scoped to a [startDate,
+// endDate] window the admin controls from the client's date-range search
+// (default: the current month). These are read-only GET filters, so — same
+// spirit as the months/days clamping the old endpoints used — malformed or
+// missing dates just fall back to a sane default instead of a 400.
+const DATE_ONLY_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+function isValidDateOnly(value) {
+  return DATE_ONLY_RE.test(value) && !isNaN(new Date(value));
+}
+
+function toDateOnly(date) {
+  return date.toISOString().slice(0, 10);
+}
+
+function currentMonthRange() {
+  const now = new Date();
+  const start = new Date(now.getFullYear(), now.getMonth(), 1);
+  return { startDate: toDateOnly(start), endDate: toDateOnly(now) };
+}
+
+// Resolves the requested range from the query string, defaulting to (and
+// falling back to, on anything invalid) the current month.
+function resolveDateRange(req) {
+  const { startDate, endDate } = req.query;
+
+  if (
+    isValidDateOnly(startDate) &&
+    isValidDateOnly(endDate) &&
+    startDate <= endDate
+  ) {
+    return { startDate, endDate };
+  }
+
+  return currentMonthRange();
+}
+
+// The immediately-preceding period of equal length, used for the "vs
+// previous period" comparison — generalizes "vs last month" to any range.
+function previousPeriod(startDate, endDate) {
+  const start = new Date(`${startDate}T00:00:00`);
+  const end = new Date(`${endDate}T00:00:00`);
+  const lengthDays = Math.round((end - start) / 86400000) + 1;
+
+  const prevEnd = new Date(start);
+  prevEnd.setDate(prevEnd.getDate() - 1);
+  const prevStart = new Date(prevEnd);
+  prevStart.setDate(prevStart.getDate() - (lengthDays - 1));
+
+  return {
+    prevStartDate: toDateOnly(prevStart),
+    prevEndDate: toDateOnly(prevEnd),
+  };
+}
+
+// GET the headline money KPIs for the admin Financials page, scoped to
+// [startDate, endDate]: period revenue, period transactions, period VAT
+// collected, average order value, and % change vs the previous period of
+// equal length
+// url: /api/admin/financials/summary?startDate=2026-08-01&endDate=2026-08-11
 router.get("/financials/summary", requireLogin, requireAdmin, (req, res) => {
-  financialsQ.getFinancialsSummary((err, rows) => {
-    if (err) {
-      return res.status(500).json({ success: false, message: err.message });
-    }
+  const { startDate, endDate } = resolveDateRange(req);
+  const { prevStartDate, prevEndDate } = previousPeriod(startDate, endDate);
 
-    const row = rows[0];
-    const totalRevenue = Number(row.total_revenue);
-    const monthRevenue = Number(row.month_revenue);
-    const lastMonthRevenue = Number(row.last_month_revenue);
-    const totalTransactions = Number(row.total_transactions);
+  financialsQ.getFinancialsSummary(
+    startDate,
+    endDate,
+    prevStartDate,
+    prevEndDate,
+    (err, rows) => {
+      if (err) {
+        return res.status(500).json({ success: false, message: err.message });
+      }
 
-    const monthChangePct =
-      lastMonthRevenue > 0
-        ? ((monthRevenue - lastMonthRevenue) / lastMonthRevenue) * 100
-        : null;
+      const row = rows[0];
+      const periodRevenue = Number(row.period_revenue);
+      const periodTransactions = Number(row.period_transactions);
+      const prevPeriodRevenue = Number(row.prev_period_revenue);
 
-    res.json({
-      success: true,
-      summary: {
-        total_revenue: totalRevenue,
-        total_transactions: totalTransactions,
-        month_revenue: monthRevenue,
-        month_change_pct: monthChangePct,
-        vat_collected_month: Number(row.vat_collected_month),
-        avg_order_value:
-          totalTransactions > 0 ? totalRevenue / totalTransactions : 0,
-      },
-    });
-  });
+      const changePct =
+        prevPeriodRevenue > 0
+          ? ((periodRevenue - prevPeriodRevenue) / prevPeriodRevenue) * 100
+          : null;
+
+      res.json({
+        success: true,
+        start_date: startDate,
+        end_date: endDate,
+        summary: {
+          period_revenue: periodRevenue,
+          period_transactions: periodTransactions,
+          period_vat: Number(row.period_vat),
+          avg_order_value:
+            periodTransactions > 0 ? periodRevenue / periodTransactions : 0,
+          change_pct: changePct,
+        },
+      });
+    },
+  );
 });
 
-// GET monthly revenue (excl. VAT) for the trailing N months (default 6),
-// oldest first, with zero-revenue months filled in so the trend line never
-// silently skips a month
-// url: /api/admin/financials/revenue-trend?months=6
+// GET daily revenue (excl. VAT) for [startDate, endDate], with zero-revenue
+// days filled in so the trend line never silently skips a day
+// url: /api/admin/financials/revenue-trend?startDate=2026-08-01&endDate=2026-08-11
 router.get(
   "/financials/revenue-trend",
   requireLogin,
   requireAdmin,
   (req, res) => {
-    const months = Math.min(Math.max(Number(req.query.months) || 6, 1), 24);
+    const { startDate, endDate } = resolveDateRange(req);
 
-    financialsQ.getRevenueTrend(months, (err, rows) => {
+    financialsQ.getRevenueTrend(startDate, endDate, (err, rows) => {
       if (err) {
         return res.status(500).json({ success: false, message: err.message });
       }
 
-      const revenueByMonth = {};
-      for (const row of rows) revenueByMonth[row.month] = Number(row.revenue);
-
-      // walk back `months` months from the current month so every month in
-      // the window appears, even ones with no rows in `rows`
-      const trend = [];
-      const cursor = new Date();
-      cursor.setDate(1);
-      for (let i = months - 1; i >= 0; i--) {
-        const d = new Date(cursor);
-        d.setMonth(d.getMonth() - i);
-        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-        trend.push({
-          month: key,
-          month_label: d.toLocaleDateString("en-US", { month: "short" }),
-          revenue: revenueByMonth[key] || 0,
-        });
+      const revenueByDay = {};
+      for (const row of rows) {
+        revenueByDay[row.day] = Number(row.revenue);
       }
 
-      res.json({ success: true, trend });
+      // walk every day in [startDate, endDate] so the chart never silently
+      // skips a day that had no registrations
+      const trend = [];
+      const cursor = new Date(`${startDate}T00:00:00`);
+      const end = new Date(`${endDate}T00:00:00`);
+      while (cursor <= end) {
+        const key = toDateOnly(cursor);
+        trend.push({
+          day: key,
+          day_label: cursor.toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+          }),
+          revenue: revenueByDay[key] || 0,
+        });
+        cursor.setDate(cursor.getDate() + 1);
+      }
+
+      res.json({ success: true, start_date: startDate, end_date: endDate, trend });
     });
   },
 );
 
-// GET how PayPal checkout attempts resolved over the trailing N days
-// (default 30): started -> reached a payment decision (approved or failed)
-// -> approved, plus the abandoned/still-in-progress counts behind the
-// drop-off between those stages
-// url: /api/admin/financials/payment-funnel?days=30
+// GET how PayPal checkout attempts resolved in [startDate, endDate]: started
+// -> reached a payment decision (approved or failed) -> approved, plus the
+// abandoned/still-in-progress counts behind the drop-off between those stages
+// url: /api/admin/financials/payment-funnel?startDate=2026-08-01&endDate=2026-08-11
 router.get(
   "/financials/payment-funnel",
   requireLogin,
   requireAdmin,
   (req, res) => {
-    const days = Math.min(Math.max(Number(req.query.days) || 30, 1), 365);
+    const { startDate, endDate } = resolveDateRange(req);
 
-    financialsQ.getPaymentFunnel(days, (err, rows) => {
+    financialsQ.getPaymentFunnel(startDate, endDate, (err, rows) => {
       if (err) {
         return res.status(500).json({ success: false, message: err.message });
       }
@@ -445,7 +552,8 @@ router.get(
 
       res.json({
         success: true,
-        period_days: days,
+        start_date: startDate,
+        end_date: endDate,
         conversion_rate: started > 0 ? (approved / started) * 100 : null,
         funnel: [
           { stage: "started", label: "Checkout Started", count: started },
@@ -462,15 +570,18 @@ router.get(
   },
 );
 
-// GET revenue (excl. VAT) grouped by course level, always in beginner ->
-// intermediate -> advanced order since level is a tier, not a ranking
-// url: /api/admin/financials/revenue-by-level
+// GET revenue (excl. VAT) grouped by course level for [startDate, endDate],
+// always in beginner -> intermediate -> advanced order since level is a
+// tier, not a ranking
+// url: /api/admin/financials/revenue-by-level?startDate=2026-08-01&endDate=2026-08-11
 router.get(
   "/financials/revenue-by-level",
   requireLogin,
   requireAdmin,
   (req, res) => {
-    financialsQ.getRevenueByLevel((err, rows) => {
+    const { startDate, endDate } = resolveDateRange(req);
+
+    financialsQ.getRevenueByLevel(startDate, endDate, (err, rows) => {
       if (err) {
         return res.status(500).json({ success: false, message: err.message });
       }
@@ -484,7 +595,7 @@ router.get(
         revenue: revenueByLevel[level] || 0,
       }));
 
-      res.json({ success: true, levels });
+      res.json({ success: true, start_date: startDate, end_date: endDate, levels });
     });
   },
 );

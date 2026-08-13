@@ -63,3 +63,18 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+/* ── Unread-count badge (e.g. pending substitute lessons) ───────────────── */
+.badge {
+  flex-shrink: 0;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: #dc2626;
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
+}

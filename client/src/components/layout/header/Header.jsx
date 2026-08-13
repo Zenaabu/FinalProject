@@ -1,6 +1,7 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import styles from "./header.module.css";
 import logo from "../../../assets/bluemarsLogo.png";
+import surfboardIcon from "../../../assets/surfboard.png";
 
 // ─── Navbar Component ─────────────────────────────────────────────────────────
 // The outermost <nav> uses the CSS class `navbar` which is a flex container.
@@ -65,8 +66,20 @@ function Navbar() {
           </li>
         </ul>
 
-        {/* ── RIGHT: Auth Buttons ──────────────────────────────────────── */}
+        {/* ── RIGHT: Volume Calculator + Auth Buttons ─────────────────────── */}
         <div className={styles.navAuth}>
+          <Link to="/volume-calculator" className={styles.volumeLink}>
+            <img
+              src={surfboardIcon}
+              alt=""
+              className={styles.volumeIcon}
+              aria-hidden="true"
+            />
+            <span>
+              Find Your Volume
+              <small>Board volume calculator</small>
+            </span>
+          </Link>
           <Link to="/login" className={styles.btnOutline}>
             Log In
           </Link>

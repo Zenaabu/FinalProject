@@ -144,6 +144,30 @@
   font-style: italic;
 }
 
+/* An approved constraint whose affected lessons aren't all resolved yet —
+   still needs a substitute assigned or a reschedule before it's really
+   "done". Clickable: opens the same panel the expand chevron does. */
+.unresolvedHint {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin-top: 0.3rem;
+  padding: 0.15rem 0.5rem;
+  border: 1px solid #fca5a5;
+  border-radius: 999px;
+  background: #fef2f2;
+  color: #b91c1c;
+  font-size: 0.68rem;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.unresolvedHint:hover {
+  background: #fee2e2;
+}
+
 /* ── Actions ─────────────────────────────────────────────────────────────── */
 .actions {
   display: flex;

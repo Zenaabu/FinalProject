@@ -44,6 +44,7 @@ function CourseManagerDashboard({
   error,
   onCourseUpdated,
   onLessonsChanged,
+  initialExpandedCourseId = null,
 }) {
   const [filter, setFilter] = useState("all");
 
@@ -199,6 +200,7 @@ function CourseManagerDashboard({
             instructors={instructors}
             onCourseUpdated={onCourseUpdated}
             onLessonsChanged={onLessonsChanged}
+            startExpanded={course.course_id === initialExpandedCourseId}
           />
         ))
       )}

@@ -59,9 +59,13 @@ function getInstructors(cb) {
 }
 
 // a function that returns the KPI numbers shown on the admin dashboard home
-// page: active courses, distinct students who ever registered, instructors
-// currently not blocked, this month's profit (course price excl. VAT summed
-// over registrations paid this month), and new students in the last 7 days
+// page: active courses, distinct students who ever registered, instructor
+// constraints still awaiting an approve/reject decision, courses starting
+// within the next 7 days that are still under 50% enrolled (capacity minus
+// registered + unexpired-pending, same "taken seats" formula used by
+// getAvailableCourses' seats_left — the low-enrollment-before-start problem,
+// surfaced instead of left for an admin to notice on their own), and new
+// students in the last 7 days
 function getDashboardStats(cb) {
   const conn = db.getConnection();
 
@@ -69,13 +73,20 @@ function getDashboardStats(cb) {
     `SELECT
         (SELECT COUNT(*) FROM courses WHERE is_active = 1) AS active_courses,
         (SELECT COUNT(DISTINCT user_id) FROM register) AS registered_students,
-        (SELECT COUNT(*) FROM users
-          WHERE role = 'instructor' AND is_blocked = 0) AS active_instructors,
-        (SELECT COALESCE(SUM(c.price / (1 + c.vat_percent / 100)), 0)
-           FROM register r
-           JOIN courses c ON r.course_id = c.course_id
-          WHERE MONTH(r.payment_date) = MONTH(CURDATE())
-            AND YEAR(r.payment_date) = YEAR(CURDATE())) AS monthly_profit,
+        (SELECT COUNT(*) FROM instructor_constraints
+          WHERE status = 'pending') AS pending_constraints,
+        (SELECT COUNT(*)
+           FROM courses c
+          WHERE c.is_active = 1
+            AND c.start_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 7 DAY)
+            AND (
+              (SELECT COUNT(*) FROM register r WHERE r.course_id = c.course_id)
+              +
+              (SELECT COUNT(*) FROM course_reservations cr
+                WHERE cr.course_id = c.course_id
+                  AND cr.status = 'pending'
+                  AND cr.expires_at > NOW())
+            ) < c.capacity * 0.5) AS at_risk_courses,
         (SELECT COUNT(DISTINCT user_id) FROM register
           WHERE payment_date >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)) AS new_students_week`,
     cb,
@@ -105,8 +116,18 @@ function getRecentCourses(limit, cb) {
   );
 }
 
-// a function that gets all the instructor constraints with the
-// instructor full name
+// a function that gets all the instructor constraints with the instructor
+// full name, newest submitted first (constraints_id is an auto-increment PK
+// with no rows ever renumbered, so it doubles as a creation-order column —
+// there's no created_at on this table).
+// unresolved_lesson_count mirrors getAffectedLessonsForConstraint's own
+// "which lessons does this constraint touch" logic (course taught by this
+// instructor with a lesson_date inside the constraint's range, OR any lesson
+// already tagged to this constraint via lesson_history) minus whichever of
+// those already have a lesson_history row for this constraint — i.e. lessons
+// still needing a substitute assigned or a reschedule. Lets the Staff page
+// show "still needs attention" on an approved constraint's row without the
+// admin having to expand it to find out.
 function getAllInstructorConstraints(cb) {
   const conn = db.getConnection();
 
@@ -119,10 +140,27 @@ function getAllInstructorConstraints(cb) {
         ic.start_time,
         ic.end_time,
         ic.notes,
-        ic.status
+        ic.status,
+        (
+          SELECT COUNT(*)
+          FROM lessons l
+          JOIN courses c ON c.course_id = l.course_id
+          WHERE (
+              (c.user_id = ic.user_id AND c.is_active = 1
+               AND l.lesson_date BETWEEN DATE(ic.start_time) AND DATE(ic.end_time))
+              OR l.lesson_id IN (
+                SELECT lesson_id FROM lesson_history
+                 WHERE constraints_id = ic.constraints_id
+              )
+            )
+            AND l.lesson_id NOT IN (
+              SELECT lesson_id FROM lesson_history
+               WHERE constraints_id = ic.constraints_id
+            )
+        ) AS unresolved_lesson_count
      FROM instructor_constraints ic
      JOIN users u ON ic.user_id = u.user_id
-     ORDER BY ic.start_time`,
+     ORDER BY ic.constraints_id DESC`,
     cb,
   );
 }
@@ -366,6 +404,45 @@ function getInstructorLessonsInRangeExcludingCourse(
   );
 }
 
+// a function that gets a lesson's date/time window and the instructor to
+// exclude (the course's own instructor, who can't substitute for themself)
+// it returns every non-blocked instructor who does NOT already teach or
+// substitute-teach a lesson (in an active course) overlapping that exact
+// date/time — same overlap rule as validateSubstituteInstructor's own
+// hasLessonConflict check, done in SQL so the admin only ever sees
+// instructors who can actually take the lesson instead of picking one and
+// then hitting the "already teaches another lesson" conflict error
+function getAvailableInstructorsForSlot(
+  excludeUserId,
+  lessonDate,
+  startTime,
+  endTime,
+  cb,
+) {
+  const conn = db.getConnection();
+
+  conn.query(
+    `SELECT u.user_id, u.first_name, u.last_name
+     FROM users u
+     WHERE u.role = 'instructor'
+       AND u.is_blocked = 0
+       AND u.user_id != ?
+       AND NOT EXISTS (
+         SELECT 1
+         FROM lessons l
+         JOIN courses c ON c.course_id = l.course_id
+         WHERE c.is_active = 1
+           AND (c.user_id = u.user_id OR l.substitute_instructor_id = u.user_id)
+           AND l.lesson_date = ?
+           AND l.start_time < ?
+           AND l.end_time > ?
+       )
+     ORDER BY u.first_name, u.last_name`,
+    [excludeUserId, lessonDate, endTime, startTime],
+    cb,
+  );
+}
+
 // a function that gets the course id and returns the lessons in that course
 function getLessonsByCourseId(courseId, cb) {
   const conn = db.getConnection();
@@ -470,6 +547,7 @@ module.exports = {
   getMaxLessonNumber,
   getInstructorLessonsInRange,
   getInstructorLessonsInRangeExcludingCourse,
+  getAvailableInstructorsForSlot,
   getLessonsByCourseId,
   findLessonById,
   updateLesson,

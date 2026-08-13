@@ -8,7 +8,7 @@ import { NavLink } from "react-router-dom";
 import SidebarIcon from "./SidebarIcon";
 import styles from "./SidebarItem.module.css";
 
-function SidebarItem({ item, rootPath = "/admin" }) {
+function SidebarItem({ item, rootPath = "/admin", badge = 0 }) {
   return (
     <li className={styles.item}>
       <NavLink
@@ -25,6 +25,7 @@ function SidebarItem({ item, rootPath = "/admin" }) {
           <SidebarIcon name={item.icon} />
         </span>
         <span className={styles.label}>{item.labelEn}</span>
+        {badge > 0 && <span className={styles.badge}>{badge}</span>}
       </NavLink>
     </li>
   );

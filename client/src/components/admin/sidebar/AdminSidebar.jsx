@@ -14,6 +14,7 @@ function AdminSidebar({
   items,
   rootPath = "/admin",
   ariaLabel = "Admin navigation",
+  badges = {},
 }) {
   const navigate = useNavigate();
 
@@ -33,7 +34,12 @@ function AdminSidebar({
       </div>
 
       {/* ── Navigation ──────────────────────────────────────────────────── */}
-      <SidebarNav items={items} rootPath={rootPath} ariaLabel={ariaLabel} />
+      <SidebarNav
+        items={items}
+        rootPath={rootPath}
+        ariaLabel={ariaLabel}
+        badges={badges}
+      />
 
       {/* ── Logout ──────────────────────────────────────────────────────── */}
       <div className={styles.logoutWrap}>

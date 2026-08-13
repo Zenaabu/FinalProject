@@ -3,7 +3,7 @@
 // lesson list below. Each course in the dashboard renders one of these.
 // ──────────────────────────────────────────────────────────────────────────────
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import LessonAccordionList from "./LessonAccordionList";
 import CourseEditDrawer from "./CourseEditDrawer";
 import styles from "./CourseHeaderCard.module.css";
@@ -127,9 +127,21 @@ function CourseHeaderCard({
   instructors,
   onCourseUpdated,
   onLessonsChanged,
+  startExpanded = false,
 }) {
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(startExpanded);
   const [isEditOpen, setIsEditOpen] = useState(false);
+  const cardRef = useRef(null);
+
+  // Arriving here from the dashboard's "click a course" shortcut — scroll
+  // it into view since the list is start-date-descending and the target
+  // course might be well below the fold.
+  useEffect(() => {
+    if (startExpanded) {
+      cardRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const toggle = () => setIsExpanded((prev) => !prev);
 
@@ -137,7 +149,10 @@ function CourseHeaderCard({
   const statusClass = styles[STATUS_BADGE[statusKey] ?? "badgeActive"];
 
   return (
-    <div className={`${styles.card} ${isExpanded ? styles.cardExpanded : ""}`}>
+    <div
+      ref={cardRef}
+      className={`${styles.card} ${isExpanded ? styles.cardExpanded : ""}`}
+    >
       {/* ── Clickable toggle area (title row + details row) ─────────── */}
       <div
         className={styles.toggle}

@@ -2,12 +2,27 @@
 // A single <tr> inside the dashboard's Courses table.
 // ──────────────────────────────────────────────────────────────────────────────
 
+import { useNavigate } from "react-router-dom";
 import PaymentBadge from "../shared/PaymentBadge";
 import styles from "./CourseRow.module.css";
 
-function CourseRow({ name, start_date, end_date, status }) {
+function CourseRow({ course_id, name, start_date, end_date, status }) {
+  const navigate = useNavigate();
+
+  // Jumps to Courses & Lessons with this course's accordion already open,
+  // instead of making the admin find and click it again over there.
+  function openInCourseManager() {
+    navigate("/admin/courses", { state: { openCourseId: course_id } });
+  }
+
   return (
-    <tr className={styles.row}>
+    <tr
+      className={styles.row}
+      role="button"
+      tabIndex={0}
+      onClick={openInCourseManager}
+      onKeyDown={(e) => e.key === "Enter" && openInCourseManager()}
+    >
       {/* ── Course name ────────────────────────────────────────────────── */}
       <td className={styles.name}>{name}</td>
 

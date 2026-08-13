@@ -23,8 +23,6 @@ import {
 import { XCircle, Clock, Timer } from "lucide-react";
 import styles from "./PaymentFunnelChart.module.css";
 
-const DAYS_WINDOW = 30;
-
 const STAGE_COLORS = ["#38bdf8", "#0284c7", "#075985"];
 
 function CustomTooltip({ active, payload }) {
@@ -80,11 +78,14 @@ function renderDropLabel({ x, y, index, data }) {
   );
 }
 
-function PaymentFunnelChart() {
+function PaymentFunnelChart({ startDate, endDate }) {
   const [data, setData] = useState(null);
 
   useEffect(() => {
-    fetch(`/api/admin/financials/payment-funnel?days=${DAYS_WINDOW}`)
+    setData(null);
+    fetch(
+      `/api/admin/financials/payment-funnel?startDate=${startDate}&endDate=${endDate}`,
+    )
       .then((res) => res.json())
       .then((res) => {
         if (!res.success) return;
@@ -104,7 +105,7 @@ function PaymentFunnelChart() {
       .catch(() => {
         // non-blocking: chart just keeps showing its empty state
       });
-  }, []);
+  }, [startDate, endDate]);
 
   return (
     <div className={styles.card}>
@@ -112,7 +113,7 @@ function PaymentFunnelChart() {
       <div className={styles.cardHeader}>
         <div>
           <h2 className={styles.title}>Payment Funnel</h2>
-          <span className={styles.period}>Last {DAYS_WINDOW} days &middot; PayPal checkouts</span>
+          <span className={styles.period}>Selected period &middot; PayPal checkouts</span>
         </div>
         {data?.conversionRate !== null && data?.conversionRate !== undefined && (
           <div className={styles.conversion}>

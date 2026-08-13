@@ -92,11 +92,58 @@
   width: 100%;
 }
 
-/* ── 5. RIGHT – AUTH BUTTONS ─────────────────────────────────────────────── */
+/* ── 5. RIGHT – VOLUME CALCULATOR + AUTH BUTTONS ─────────────────────────── */
 .navAuth {
   display: flex;
   align-items: center;
   gap: 0.85rem;
+}
+
+/* Surfboard volume calculator chip — deliberately distinct from .navLink */
+.volumeLink {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  text-decoration: none;
+  background: rgba(56, 189, 248, 0.1);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  border-radius: 999px;
+  padding: 0.35rem 0.9rem 0.35rem 0.5rem;
+  transition:
+    background 0.2s ease,
+    transform 0.2s ease;
+}
+
+.volumeLink:hover {
+  background: rgba(56, 189, 248, 0.2);
+  transform: translateY(-1px);
+}
+
+.volumeIcon {
+  width: 26px;
+  height: 26px;
+  object-fit: contain;
+  transform: rotate(-25deg);
+  transition: transform 0.2s ease;
+}
+
+.volumeLink:hover .volumeIcon {
+  transform: rotate(-15deg);
+}
+
+.volumeLink span {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--color-ocean-text);
+}
+
+.volumeLink small {
+  font-size: 0.66rem;
+  font-weight: 500;
+  color: #64748b;
 }
 
 /* Log In — outline button */

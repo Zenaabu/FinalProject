@@ -10,6 +10,46 @@
   margin-bottom: 1.75rem;
 }
 
+/* ── Substitute-lesson banner ────────────────────────────────────────────── */
+/* Persistent (not dismissible) heads-up shown on the landing page whenever
+   the instructor has an upcoming substitute lesson they haven't taught yet */
+.subBanner {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin-bottom: 1.25rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid #fca5a5;
+  border-radius: 10px;
+  background: #fef2f2;
+  color: #991b1b;
+  text-decoration: none;
+  transition: background 0.15s ease;
+}
+
+.subBanner:hover {
+  background: #fee2e2;
+}
+
+.subBannerIcon {
+  flex-shrink: 0;
+  color: #dc2626;
+}
+
+.subBannerText {
+  flex: 1;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.subBannerCta {
+  flex-shrink: 0;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #dc2626;
+  white-space: nowrap;
+}
+
 .title {
   margin: 0 0 0.35rem;
   font-size: 1.6rem;

@@ -141,7 +141,12 @@ function findInstructorLesson(lesson_id, instructor_id, cb) {
 
 // a function that gets an instructor_id
 // it returns the lessons where this instructor is assigned as the substitute
-// (covering for the course's own instructor), most upcoming first
+// (covering for the course's own instructor), most upcoming first.
+// has_attendance is whether *any* attend row exists for that lesson yet —
+// the actual proof the substitute lesson was taught, used by the route to
+// decide whether the "you have a substitute lesson" alert can clear. A
+// date-only check would clear the alert at midnight whether or not the
+// lesson was actually covered; this doesn't.
 function getSubstituteLessonsForInstructor(instructor_id, cb) {
   const conn = db.getConnection();
 
@@ -156,7 +161,10 @@ function getSubstituteLessonsForInstructor(instructor_id, cb) {
         c.description AS course_description,
         c.end_date,
         ou.first_name AS original_instructor_first_name,
-        ou.last_name  AS original_instructor_last_name
+        ou.last_name  AS original_instructor_last_name,
+        EXISTS (
+          SELECT 1 FROM attend a WHERE a.lesson_id = l.lesson_id
+        ) AS has_attendance
      FROM lessons l
      JOIN courses c  ON c.course_id = l.course_id
      JOIN users   ou ON ou.user_id  = c.user_id
@@ -266,7 +274,9 @@ function addConstraint(constraint, cb) {
 
 // a function that gets user_id, start_time, end_time
 // it checks if there is a duplicate constraints that already have the same data
-// in DB
+// in DB — a previously rejected constraint doesn't count: rejected just
+// means "you're still expected to teach", not a standing claim on those
+// dates, so the instructor must be free to ask again
 function findDuplicateConstraint(user_id, start_time, end_time, cb) {
   const conn = db.getConnection();
 
@@ -275,7 +285,8 @@ function findDuplicateConstraint(user_id, start_time, end_time, cb) {
      FROM instructor_constraints
      WHERE user_id = ?
        AND start_time = ?
-       AND end_time = ?`,
+       AND end_time = ?
+       AND status != 'rejected'`,
     [user_id, start_time, end_time],
     cb,
   );
@@ -302,7 +313,9 @@ function getConstraintsByInstructor(user_id, cb) {
 }
 
 // a function that gets user_id, start_time, end_time
-// it checks if instructor already has an overlapping constraint
+// it checks if instructor already has an overlapping constraint — same
+// "rejected doesn't count" reasoning as findDuplicateConstraint, otherwise a
+// rejected request would permanently block ever asking for that period again
 function findOverlappingConstraint(user_id, start_time, end_time, cb) {
   const conn = db.getConnection();
 
@@ -311,7 +324,8 @@ function findOverlappingConstraint(user_id, start_time, end_time, cb) {
      FROM instructor_constraints
      WHERE user_id = ?
        AND start_time < ?
-       AND end_time > ?`,
+       AND end_time > ?
+       AND status != 'rejected'`,
     [user_id, end_time, start_time],
     cb,
   );

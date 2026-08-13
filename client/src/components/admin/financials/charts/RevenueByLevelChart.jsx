@@ -48,11 +48,14 @@ function CustomTooltip({ active, payload }) {
   );
 }
 
-function RevenueByLevelChart() {
+function RevenueByLevelChart({ startDate, endDate }) {
   const [levels, setLevels] = useState(null);
 
   useEffect(() => {
-    fetch("/api/admin/financials/revenue-by-level")
+    setLevels(null);
+    fetch(
+      `/api/admin/financials/revenue-by-level?startDate=${startDate}&endDate=${endDate}`,
+    )
       .then((res) => res.json())
       .then((data) => {
         if (data.success) setLevels(data.levels);
@@ -60,14 +63,14 @@ function RevenueByLevelChart() {
       .catch(() => {
         // non-blocking: chart just keeps showing its empty state
       });
-  }, []);
+  }, [startDate, endDate]);
 
   return (
     <div className={styles.card}>
       {/* ── Card header ───────────────────────────────────────────────── */}
       <div className={styles.cardHeader}>
         <h2 className={styles.title}>Revenue by Level</h2>
-        <span className={styles.period}>All time, excl. VAT</span>
+        <span className={styles.period}>Selected period, excl. VAT</span>
       </div>
 
       {/* ── Chart ─────────────────────────────────────────────────────── */}

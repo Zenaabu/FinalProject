@@ -12,12 +12,18 @@ function SidebarNav({
   items = NAV_ITEMS,
   rootPath = "/admin",
   ariaLabel = "Admin navigation",
+  badges = {},
 }) {
   return (
     <nav className={styles.nav} aria-label={ariaLabel}>
       <ul className={styles.list}>
         {items.map((item) => (
-          <SidebarItem key={item.id} item={item} rootPath={rootPath} />
+          <SidebarItem
+            key={item.id}
+            item={item}
+            rootPath={rootPath}
+            badge={badges[item.id] || 0}
+          />
         ))}
       </ul>
     </nav>
