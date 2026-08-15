@@ -35,6 +35,7 @@ const {
 const courseQ = require("../queries/courseQueries");
 const adminQ = require("../queries/adminQueries");
 const userQ = require("../queries/usersQueries");
+const settingsQ = require("../queries/settingsQueries");
 const paypalService = require("../services/paypalService");
 const { formatDateOnly, formatTimeOnly } = require("../validations/utils");
 
@@ -117,7 +118,13 @@ router.get("/available", requireLogin, (req, res) => {
 });
 
 // GET the courses the logged in user is registered to, each with its next
-// upcoming lesson (or null if the course has no lesson left to attend)
+// upcoming lesson (or null if the course has no lesson left to attend) and
+// its full lesson list (so the "My Courses" page can expand a course into
+// every lesson it has, not just the next one). The dashboard shows at most
+// one "this week" bar per course — its next_lesson, if due within 7 days —
+// never every lesson in that course at once, so a tightly-packed course
+// (lessons on back-to-back days) doesn't flood the student with everything
+// up front; the next lesson only appears once the current one is done.
 // url: /api/courses/my-courses
 router.get("/my-courses", requireLogin, (req, res) => {
   const user_id = req.session.user.user_id;
@@ -175,6 +182,14 @@ router.get("/my-courses", requireLogin, (req, res) => {
                 end_time: upcoming.end_time,
               }
             : null,
+          // full lesson list, already sorted date/time ascending by the query
+          lessons: courseLessons.map((l) => ({
+            lesson_id: l.lesson_id,
+            lesson_number: l.lesson_number,
+            date: l.date,
+            start_time: l.start_time,
+            end_time: l.end_time,
+          })),
         };
       });
 
@@ -195,36 +210,48 @@ router.post(
   validateDuplicateCourse,
   validateInstructorLessonConflict,
   (req, res) => {
-    const course = req.body;
     const lessons = req.body.lessons;
 
-    courseQ.addCourse(course, (err, result) => {
-      if (err) {
-        return res.status(500).json({ success: false, message: err.message });
+    // VAT is a single school-wide rate set from Financials, not something
+    // chosen per course — always use the current rate, ignoring anything
+    // the client might send.
+    settingsQ.getVatPercent((errVat, vatRows) => {
+      if (errVat) {
+        return res
+          .status(500)
+          .json({ success: false, message: errVat.message });
       }
 
-      const courseId = result.insertId;
+      const course = { ...req.body, vat_percent: vatRows[0].vat_percent };
 
-      adminQ.addLessonsToCourse(courseId, lessons, (err2) => {
-        if (err2) {
-          return res
-            .status(500)
-            .json({ success: false, message: err2.message });
+      courseQ.addCourse(course, (err, result) => {
+        if (err) {
+          return res.status(500).json({ success: false, message: err.message });
         }
 
-        // return the assembled course so the dashboard can show it right away
-        courseQ.getCourseWithDetails(courseId, (err3, newCourse) => {
-          if (err3) {
+        const courseId = result.insertId;
+
+        adminQ.addLessonsToCourse(courseId, lessons, (err2) => {
+          if (err2) {
             return res
               .status(500)
-              .json({ success: false, message: err3.message });
+              .json({ success: false, message: err2.message });
           }
 
-          res.status(201).json({
-            success: true,
-            message: "Course and lessons added successfully",
-            course_id: courseId,
-            course: newCourse,
+          // return the assembled course so the dashboard can show it right away
+          courseQ.getCourseWithDetails(courseId, (err3, newCourse) => {
+            if (err3) {
+              return res
+                .status(500)
+                .json({ success: false, message: err3.message });
+            }
+
+            res.status(201).json({
+              success: true,
+              message: "Course and lessons added successfully",
+              course_id: courseId,
+              course: newCourse,
+            });
           });
         });
       });

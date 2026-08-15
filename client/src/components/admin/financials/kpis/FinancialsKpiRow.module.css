@@ -23,3 +23,15 @@
     flex: 1 1 100%;
   }
 }
+
+/* ── "Click here to change the VAT" hint ────────────────────────────────── */
+.vatHint {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-weight: 700;
+  background: rgba(124, 58, 237, 0.12);
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+}
+

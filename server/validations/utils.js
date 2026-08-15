@@ -325,7 +325,6 @@ function areValidCourseUpdateFields(fields) {
     "price",
     "capacity",
     "total_lessons",
-    "vat_percent",
     "start_date",
     "end_date",
     "user_id",

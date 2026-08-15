@@ -27,9 +27,28 @@
 
 /* ── Course name cell ────────────────────────────────────────────────────── */
 .name {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.3rem;
   font-weight: 500;
   color: #0f172a;
   font-size: 0.9rem;
+}
+
+.underCapacityBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.12rem 0.5rem;
+  border-radius: 999px;
+  background: #fef3c7;
+  color: #b45309;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
 }
 
 /* ── Date cells ──────────────────────────────────────────────────────────── */

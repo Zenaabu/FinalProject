@@ -167,3 +167,85 @@
   font-weight: 600;
   color: #0369a1;
 }
+
+/* ── All-lessons accordion ──────────────────────────────────────────────── */
+.lessonsToggle {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 0.75rem;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--color-ocean-text);
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.lessonsToggle:hover {
+  color: var(--color-light-accent);
+}
+
+.toggleIcon {
+  transition: transform 0.2s ease;
+}
+
+.toggleIconOpen {
+  transform: rotate(180deg);
+}
+
+.lessonsList {
+  list-style: none;
+  margin: 0.6rem 0 0;
+  padding: 0;
+  max-height: 220px;
+  overflow-y: auto;
+  border-top: 1px solid #f1f5f9;
+}
+
+.lessonRow {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.45rem 0.1rem;
+  border-bottom: 1px solid #f8fafc;
+  font-size: 0.78rem;
+}
+
+.lessonNumber {
+  width: 1.6rem;
+  flex-shrink: 0;
+  font-weight: 700;
+  color: #94a3b8;
+}
+
+.lessonDate {
+  flex-shrink: 0;
+  color: #334155;
+}
+
+.lessonTime {
+  flex: 1;
+  color: #64748b;
+}
+
+.lessonStatus {
+  flex-shrink: 0;
+  padding: 0.12rem 0.45rem;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.lessonStatusDone {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+.lessonStatusUpcoming {
+  background: #e0f2fe;
+  color: #0369a1;
+}

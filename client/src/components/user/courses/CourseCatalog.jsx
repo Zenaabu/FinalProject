@@ -140,11 +140,9 @@ function CourseCatalog() {
                 </dl>
 
                 <div className={styles.priceRow}>
+                  {/* course.price is already VAT-inclusive — it's exactly
+                      what PayPal charges, so show it as one final price */}
                   <span className={styles.price}>₪{course.price}</span>
-                  <span className={styles.priceUnit}>
-                    {" "}
-                    +{course.vat_percent}% VAT
-                  </span>
                 </div>
 
                 <button

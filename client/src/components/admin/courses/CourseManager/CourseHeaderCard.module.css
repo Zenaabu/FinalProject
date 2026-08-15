@@ -91,6 +91,14 @@
 .badgeInactive { background: #fee2e2; color: #dc2626; }
 .badgeLevel    { background: #e0f2fe; color: var(--color-ocean-text); }
 
+.badgeUnderCapacity {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  background: #fef3c7;
+  color: #b45309;
+}
+
 /* ── Details row ─────────────────────────────────────────────────────────── */
 .detailsRow {
   display: flex;

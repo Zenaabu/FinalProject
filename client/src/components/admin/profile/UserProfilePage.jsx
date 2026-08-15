@@ -6,8 +6,18 @@
 // ──────────────────────────────────────────────────────────────────────────────
 
 import { useState, useEffect, useRef } from "react";
+import { useLocation } from "react-router-dom";
 import { toast } from "sonner";
 import styles from "./UserProfilePage.module.css";
+
+// ── Display-only date formatting (dd/mm/yyyy) ──────────────────────────────────
+// The <input type="date"> still needs its value in ISO (yyyy-mm-dd) — this is
+// only for the read-only text shown before the pencil is clicked.
+function formatDateDMY(isoDate) {
+  const [y, m, d] = String(isoDate).split("-");
+  if (!y || !m || !d) return isoDate;
+  return `${d}/${m}/${y}`;
+}
 
 // ── Password validation (mirrors server/validations/utils.js) ─────────────────
 function getPasswordErrors(password) {
@@ -171,15 +181,25 @@ const PencilIcon = () => (
 );
 
 // ── Password change field (two inputs + live requirements) ────────────────────
-function PasswordField({ onSave, saving, serverError }) {
-  const [editing, setEditing] = useState(false);
+function PasswordField({ onSave, saving, serverError, startOpen = false }) {
+  const [editing, setEditing] = useState(startOpen);
   const [newPw, setNewPw] = useState("");
   const [confirmPw, setConfirmPw] = useState("");
   const newPwRef = useRef(null);
+  const fieldRef = useRef(null);
 
   useEffect(() => {
     if (editing && newPwRef.current) newPwRef.current.focus();
   }, [editing]);
+
+  // Arriving here from the dashboard's "Change Password" quick action —
+  // scroll the field into view since it's opened automatically, off-screen.
+  useEffect(() => {
+    if (startOpen) {
+      fieldRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   function handleCancel() {
     setNewPw("");
@@ -206,7 +226,10 @@ function PasswordField({ onSave, saving, serverError }) {
   }
 
   return (
-    <div className={`${styles.field} ${editing ? styles.fieldEditing : ""}`}>
+    <div
+      ref={fieldRef}
+      className={`${styles.field} ${editing ? styles.fieldEditing : ""}`}
+    >
       <div className={styles.fieldIconCircle}>
         <FieldIcon type="password" />
       </div>
@@ -368,7 +391,12 @@ function ProfileField({
     if (e.key === "Escape") handleCancel();
   }
 
-  const displayValue = type === "password" ? "•".repeat(10) : value || "—";
+  const displayValue =
+    type === "password"
+      ? "•".repeat(10)
+      : type === "date" && value
+        ? formatDateDMY(value)
+        : value || "—";
 
   return (
     <div className={`${styles.field} ${locked ? styles.fieldLocked : ""}`}>
@@ -448,12 +476,14 @@ function ProfileField({
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 function UserProfilePage() {
+  const location = useLocation();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [fieldSaving, setFieldSaving] = useState({});
   const [fieldErrors, setFieldErrors] = useState({});
 
   const userId = localStorage.getItem("user_id");
+  const openPassword = Boolean(location.state?.openPassword);
 
   useEffect(() => {
     fetch(`/api/users/${userId}`)
@@ -601,6 +631,7 @@ function UserProfilePage() {
             onSave={(v, done) => saveField("password", v, done)}
             saving={fieldSaving.password}
             serverError={fieldErrors.password}
+            startOpen={openPassword}
           />
           <ProfileField
             label="USER ID"

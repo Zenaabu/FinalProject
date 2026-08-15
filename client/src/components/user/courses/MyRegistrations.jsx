@@ -2,16 +2,27 @@
 // /user/my-courses — every course the logged-in user has ever registered to,
 // split into "Current & Upcoming" and "Previous" so finished courses don't get
 // lost among the ones still running. Same data source as the compact widget
-// on the dashboard (GET /api/courses/my-courses), just the full list.
+// on the dashboard (GET /api/courses/my-courses), just the full list — each
+// course card can expand to show every one of its lessons (not just the next
+// one), since the API also returns the full `lessons` array per course.
 // ──────────────────────────────────────────────────────────────────────────────
 
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { ChevronDown } from "lucide-react";
 import { statusOf } from "../courseStatus";
 import styles from "./MyRegistrations.module.css";
 
+// a lesson is "Completed" once its end time has passed, otherwise "Upcoming"
+function lessonStatus(lesson) {
+  const end = new Date(`${lesson.date}T${lesson.end_time}:00`);
+  return end < new Date() ? "Completed" : "Upcoming";
+}
+
 function CourseCard({ course }) {
   const status = statusOf(course);
+  const [isExpanded, setIsExpanded] = useState(false);
+  const lessons = course.lessons ?? [];
 
   return (
     <div className={styles.card}>
@@ -50,6 +61,53 @@ function CourseCard({ course }) {
             ? "This course has ended."
             : "No more lessons scheduled."}
       </p>
+
+      {lessons.length > 0 && (
+        <>
+          <button
+            type="button"
+            className={styles.lessonsToggle}
+            aria-expanded={isExpanded}
+            onClick={() => setIsExpanded((prev) => !prev)}
+          >
+            <ChevronDown
+              size={14}
+              className={`${styles.toggleIcon} ${isExpanded ? styles.toggleIconOpen : ""}`}
+            />
+            {isExpanded
+              ? "Hide all lessons"
+              : `View all lessons (${lessons.length})`}
+          </button>
+
+          {isExpanded && (
+            <ul className={styles.lessonsList}>
+              {lessons.map((lesson) => {
+                const lStatus = lessonStatus(lesson);
+                return (
+                  <li key={lesson.lesson_id} className={styles.lessonRow}>
+                    <span className={styles.lessonNumber}>
+                      #{lesson.lesson_number}
+                    </span>
+                    <span className={styles.lessonDate}>{lesson.date}</span>
+                    <span className={styles.lessonTime}>
+                      {lesson.start_time}–{lesson.end_time}
+                    </span>
+                    <span
+                      className={`${styles.lessonStatus} ${
+                        lStatus === "Completed"
+                          ? styles.lessonStatusDone
+                          : styles.lessonStatusUpcoming
+                      }`}
+                    >
+                      {lStatus}
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </>
+      )}
     </div>
   );
 }

@@ -2,8 +2,9 @@
 // Sticky header for the user portal: logo + nav + logout.
 // ──────────────────────────────────────────────────────────────────────────────
 
-import { NavLink, useNavigate } from "react-router-dom";
+import { NavLink, Link, useNavigate } from "react-router-dom";
 import styles from "./Header.module.css";
+import surfboardIcon from "../../../assets/surfboard.png";
 
 const NAV_LINKS = [
   { to: "/user", label: "Dashboard", end: true },
@@ -26,13 +27,29 @@ function Header() {
     <header className={styles.header}>
       <div className={styles.top}>
         <span className={styles.logo}>Blue Mars</span>
-        <button
-          type="button"
-          className={styles.logoutBtn}
-          onClick={handleLogout}
-        >
-          Logout
-        </button>
+
+        <div className={styles.topRight}>
+          <Link to="/volume-calculator" className={styles.volumeLink}>
+            <img
+              src={surfboardIcon}
+              alt=""
+              className={styles.volumeIcon}
+              aria-hidden="true"
+            />
+            <span>
+              Find Your Volume
+              <small>Board volume calculator</small>
+            </span>
+          </Link>
+
+          <button
+            type="button"
+            className={styles.logoutBtn}
+            onClick={handleLogout}
+          >
+            Logout
+          </button>
+        </div>
       </div>
 
       <nav className={styles.nav}>

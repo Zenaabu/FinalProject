@@ -3,7 +3,7 @@
 // ──────────────────────────────────────────────────────────────────────────────
 
 import { useNavigate } from "react-router-dom";
-import { ClipboardList, Search } from "lucide-react";
+import { ClipboardList, Search, KeyRound } from "lucide-react";
 import ActionButton from "./ActionButton";
 import styles from "./QuickActions.module.css";
 
@@ -58,6 +58,17 @@ function QuickActions() {
         navigate("/admin/users", {
           state: { tab: "users", autoFocusSearch: true },
         }),
+    },
+    {
+      id: "change-password",
+      label: "Change Password",
+      icon: <KeyRound size={18} />,
+      variant: "neutral",
+      // Jumps to the admin's own profile page (RequireRole gates /user/*
+      // to role "user", so an admin navigating there would just get bounced
+      // straight back here) with the password field already open in edit
+      // mode, so this is a one-click shortcut instead of two.
+      onClick: () => navigate("/admin/profile", { state: { openPassword: true } }),
     },
   ];
 

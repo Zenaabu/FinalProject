@@ -98,6 +98,26 @@ function PeopleIcon() {
   );
 }
 
+function WarningIcon() {
+  return (
+    <svg
+      width="11"
+      height="11"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+      <line x1="12" y1="9" x2="12" y2="13" />
+      <line x1="12" y1="17" x2="12.01" y2="17" />
+    </svg>
+  );
+}
+
 function PencilIcon() {
   return (
     <svg
@@ -148,6 +168,15 @@ function CourseHeaderCard({
   const statusKey = course.status.toLowerCase();
   const statusClass = styles[STATUS_BADGE[statusKey] ?? "badgeActive"];
 
+  // same "under 50% capacity" problem the dashboard's KPI counts, surfaced
+  // per course here — only for courses that haven't started yet, since once
+  // a course is already running its capacity isn't something the admin can
+  // still act on
+  const isUnderCapacity =
+    statusKey === "upcoming" &&
+    Number(course.capacity) > 0 &&
+    Number(course.enrolled) < Number(course.capacity) * 0.5;
+
   return (
     <div
       ref={cardRef}
@@ -174,6 +203,12 @@ function CourseHeaderCard({
               <span className={`${styles.badge} ${styles.badgeLevel}`}>
                 {course.level}
               </span>
+              {isUnderCapacity && (
+                <span className={`${styles.badge} ${styles.badgeUnderCapacity}`}>
+                  <WarningIcon />
+                  Under 50% Capacity
+                </span>
+              )}
             </div>
           </div>
           <button

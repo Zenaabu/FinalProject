@@ -76,3 +76,14 @@
   background: #22c55e;
   color: #fff;
 }
+
+/* neutral — soft slate button, solid slate icon box (for account/settings
+   actions that aren't tied to course/user management) */
+.neutral {
+  background: rgba(100, 116, 139, 0.12);
+  color: #334155;
+}
+.neutral .iconWrap {
+  background: #64748b;
+  color: #fff;
+}

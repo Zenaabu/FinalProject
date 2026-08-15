@@ -121,7 +121,6 @@ function validateAddCourse(req, res, next) {
     price,
     capacity,
     total_lessons,
-    vat_percent,
     start_date,
     end_date,
   } = req.body;
@@ -132,7 +131,6 @@ function validateAddCourse(req, res, next) {
     !price ||
     !capacity ||
     !total_lessons ||
-    !vat_percent ||
     !start_date ||
     !end_date
   ) {
@@ -152,8 +150,7 @@ function validateAddCourse(req, res, next) {
   if (
     Number(price) <= 0 ||
     Number(capacity) <= 0 ||
-    Number(total_lessons) <= 0 ||
-    Number(vat_percent) < 0
+    Number(total_lessons) <= 0
   ) {
     return res.status(400).json({
       success: false,
@@ -870,15 +867,6 @@ function validateUpdateCourseDetails(req, res, next) {
     return res.status(400).json({
       success: false,
       message: `Total lessons cannot be more than ${MAX_TOTAL_LESSONS}`,
-    });
-  }
-
-  const vat = Number(updatedCourse.vat_percent);
-
-  if (isNaN(vat) || vat < 0 || vat > 100) {
-    return res.status(400).json({
-      success: false,
-      message: "VAT percent must be between 0 and 100",
     });
   }
 

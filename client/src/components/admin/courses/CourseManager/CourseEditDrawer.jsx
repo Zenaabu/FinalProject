@@ -4,7 +4,9 @@
 // Props:
 //   course       – the course object from CoursesMain
 //                  (course_id, title, level, status, user_id, start_date,
-//                   end_date, capacity, price, vat_percent, enrolled)
+//                   end_date, capacity, price, enrolled)
+//                  VAT is not editable here — it's a single school-wide rate
+//                  set from the admin Financials page.
 //   instructors  – instructor list loaded once by CoursesMain
 //   onClose      () => void
 //   onSaved      (freshCourse) => void
@@ -57,7 +59,6 @@ function formFromCourse(course) {
     end_date: course.end_date ?? "",
     capacity: course.capacity ?? "",
     price: course.price ?? "",
-    vat_percent: course.vat_percent ?? 17,
   };
 }
 
@@ -138,7 +139,6 @@ function CourseEditDrawer({ course, instructors = [], onClose, onSaved }) {
           end_date: form.end_date,
           capacity: Number(form.capacity),
           price: Number(form.price),
-          vat_percent: Number(form.vat_percent),
         }),
       });
 
@@ -378,22 +378,6 @@ function CourseEditDrawer({ course, instructors = [], onClose, onSaved }) {
                 {errors.price && (
                   <span className={styles.errorMsg}>{errors.price}</span>
                 )}
-              </div>
-
-              {/* VAT */}
-              <div className={styles.field}>
-                <label className={styles.label} htmlFor="edit-vat">
-                  VAT (%)
-                </label>
-                <input
-                  id="edit-vat"
-                  className={styles.input}
-                  type="number"
-                  min="0"
-                  max="100"
-                  value={form.vat_percent}
-                  onChange={(e) => handleChange("vat_percent", e.target.value)}
-                />
               </div>
             </div>
           </div>

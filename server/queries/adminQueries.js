@@ -93,11 +93,14 @@ function getDashboardStats(cb) {
   );
 }
 
-// a function that returns the active/upcoming courses (name, start/end date)
-// for the admin dashboard's "Courses" table — inactive courses are excluded
-// since they're not useful at-a-glance information; a list of courses stays
-// roughly bounded in size, unlike registrations which grow with every
-// enrollment, so this scales better as the student base grows
+// a function that returns the active/upcoming courses (name, start/end date,
+// capacity, and seats taken) for the admin dashboard's "Courses" table —
+// inactive courses are excluded since they're not useful at-a-glance
+// information; a list of courses stays roughly bounded in size, unlike
+// registrations which grow with every enrollment, so this scales better as
+// the student base grows. capacity/taken are included so the route can flag
+// the same under-50%-capacity courses the "Courses Starting Soon" KPI
+// counts, without the admin having to guess which ones they are.
 function getRecentCourses(limit, cb) {
   const conn = db.getConnection();
 
@@ -106,7 +109,16 @@ function getRecentCourses(limit, cb) {
         c.course_id,
         c.description,
         DATE_FORMAT(c.start_date, '%Y-%m-%d') AS start_date,
-        DATE_FORMAT(c.end_date, '%Y-%m-%d') AS end_date
+        DATE_FORMAT(c.end_date, '%Y-%m-%d') AS end_date,
+        c.capacity,
+        (
+          (SELECT COUNT(*) FROM register r WHERE r.course_id = c.course_id)
+          +
+          (SELECT COUNT(*) FROM course_reservations cr
+            WHERE cr.course_id = c.course_id
+              AND cr.status = 'pending'
+              AND cr.expires_at > NOW())
+        ) AS taken
      FROM courses c
      WHERE c.is_active = 1
      ORDER BY c.start_date DESC

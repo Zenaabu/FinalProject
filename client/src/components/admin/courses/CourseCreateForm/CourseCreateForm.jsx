@@ -14,7 +14,8 @@
 //   capacity      ← form.capacity
 //   total_lessons ← form.total_lessons
 //   price         ← form.price
-//   vat_percent   ← form.vat_percent
+//   (vat_percent is not sent — the server always uses the current
+//    school-wide rate set from the admin Financials page)
 //   start_date    ← form.start_date
 //   end_date      ← form.end_date
 //   user_id       ← form.user_id        (instructor)
@@ -29,7 +30,6 @@ import {
   Users,
   ListChecks,
   Wallet,
-  Percent,
   Calendar,
   CalendarCheck,
   GraduationCap,
@@ -61,7 +61,6 @@ const INITIAL_FORM = {
   capacity: "",
   total_lessons: "",
   price: "",
-  vat_percent: 17, // DB column: vat_percent  (was: vat) — default VAT in Israel
   start_date: "",
   end_date: "",
   user_id: "", // DB column: user_id (instructor FK)  (was: instructor_id)
@@ -221,7 +220,6 @@ function CourseCreateForm({ instructors = [], onCancel, onCreated }) {
           capacity: Number(form.capacity),
           total_lessons: Number(form.total_lessons),
           price: Number(form.price),
-          vat_percent: Number(form.vat_percent),
           start_date: form.start_date,
           end_date: form.end_date,
           // user_id is an Israeli ID number (9-digit string, may have a leading zero).
@@ -365,20 +363,6 @@ function CourseCreateForm({ instructors = [], onCancel, onCreated }) {
               step="0.01"
               placeholder="e.g. 1200"
               value={form.price}
-              onChange={handleChange}
-            />
-          </Field>
-
-          {/* ── VAT ─────────────────────────────────────────────────────── */}
-          <Field icon={Percent} label="VAT (%)">
-            <input
-              id="ccf-vat"
-              className={styles.input}
-              type="number"
-              name="vat_percent"
-              min="0"
-              max="100"
-              value={form.vat_percent}
               onChange={handleChange}
             />
           </Field>

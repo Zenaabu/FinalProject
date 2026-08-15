@@ -7,9 +7,10 @@
 // one system.
 // ──────────────────────────────────────────────────────────────────────────────
 
-import { useState, useEffect } from "react";
-import { DollarSign, TrendingUp, TrendingDown, Receipt, Wallet } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { DollarSign, TrendingUp, TrendingDown, Receipt, Wallet, Pencil } from "lucide-react";
 import StatCard from "../../dashboard/stats/StatCard";
+import VatEditModal from "../vatSettings/VatEditModal";
 import styles from "./FinancialsKpiRow.module.css";
 
 function formatCurrency(value) {
@@ -21,7 +22,7 @@ function formatPct(value) {
   return `${rounded > 0 ? "+" : ""}${rounded}%`;
 }
 
-function buildCards(summary) {
+function buildCards(summary, onVatClick) {
   const changePct = summary?.change_pct;
   const hasChange = changePct !== null && changePct !== undefined;
   const isUp = hasChange && changePct >= 0;
@@ -51,11 +52,17 @@ function buildCards(summary) {
       id: "vat-collected",
       label: "VAT Collected",
       value: summary ? formatCurrency(summary.period_vat) : "—",
-      sub: "In selected period",
-      subColor: "#64748b",
+      sub: (
+        <span className={styles.vatHint}>
+          <Pencil size={12} strokeWidth={2.75} />
+          Click here to change the VAT
+        </span>
+      ),
+      subColor: "#7c3aed",
       iconBg: "rgba(139, 92, 246, 0.12)",
       iconColor: "#7c3aed",
       icon: <Receipt size={20} />,
+      onClick: onVatClick,
     },
     {
       id: "avg-order",
@@ -72,9 +79,9 @@ function buildCards(summary) {
 
 function FinancialsKpiRow({ startDate, endDate }) {
   const [summary, setSummary] = useState(null);
+  const [isVatModalOpen, setIsVatModalOpen] = useState(false);
 
-  useEffect(() => {
-    setSummary(null);
+  const fetchSummary = useCallback(() => {
     fetch(
       `/api/admin/financials/summary?startDate=${startDate}&endDate=${endDate}`,
     )
@@ -87,11 +94,28 @@ function FinancialsKpiRow({ startDate, endDate }) {
       });
   }, [startDate, endDate]);
 
+  useEffect(() => {
+    setSummary(null);
+    fetchSummary();
+  }, [fetchSummary]);
+
   return (
     <div className={styles.row}>
-      {buildCards(summary).map((c) => (
+      {buildCards(summary, () => setIsVatModalOpen(true)).map((c) => (
         <StatCard key={c.id} {...c} />
       ))}
+
+      {isVatModalOpen && (
+        <VatEditModal
+          onClose={() => setIsVatModalOpen(false)}
+          onSaved={() => {
+            setIsVatModalOpen(false);
+            // the new rate changes every course's stored VAT, so the
+            // period figures (revenue excl. VAT, VAT collected) shift too
+            fetchSummary();
+          }}
+        />
+      )}
     </div>
   );
 }

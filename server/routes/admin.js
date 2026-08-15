@@ -4,6 +4,7 @@ const router = express.Router();
 const adminQ = require("../queries/adminQueries");
 const courseQ = require("../queries/courseQueries");
 const financialsQ = require("../queries/financialsQueries");
+const settingsQ = require("../queries/settingsQueries");
 
 const { requireLogin, requireAdmin } = require("../validations/authValidation");
 const {
@@ -12,6 +13,7 @@ const {
   validateVideoUpload,
   validateConstraintExists,
   validateConstraintStatusValue,
+  validateVatUpdate,
 } = require("../validations/adminValidations");
 const { checkUserExists } = require("../validations/usersValidations");
 const { formatDateOnly, formatTimeOnly } = require("../validations/utils");
@@ -360,7 +362,12 @@ router.get("/dashboard-stats", requireLogin, requireAdmin, (req, res) => {
 });
 
 // GET a bounded list of courses (name + start/end date) for the admin
-// dashboard home page's "Courses" table
+// dashboard home page's "Courses" table, each flagged with under_capacity
+// using the exact same rule as the "Courses Starting Soon" KPI
+// (getDashboardStats' at_risk_courses) — starting within 7 days and under
+// 50% enrolled — so the courses flagged here always add up to that number.
+// Only courses that haven't started yet are ever flagged — once a course is
+// already running, its capacity isn't something the admin can still act on.
 // url: /api/admin/recent-courses
 router.get("/recent-courses", requireLogin, requireAdmin, (req, res) => {
   adminQ.getRecentCourses(6, (err, rows) => {
@@ -369,13 +376,27 @@ router.get("/recent-courses", requireLogin, requireAdmin, (req, res) => {
     }
 
     const today = new Date().toISOString().slice(0, 10);
-    const courses = rows.map((c) => ({
-      course_id: c.course_id,
-      name: c.description,
-      start_date: c.start_date,
-      end_date: c.end_date,
-      status: c.start_date > today ? "Upcoming" : "Active",
-    }));
+    const weekFromNow = new Date();
+    weekFromNow.setDate(weekFromNow.getDate() + 7);
+    const weekFromNowStr = weekFromNow.toISOString().slice(0, 10);
+
+    const courses = rows.map((c) => {
+      const capacity = Number(c.capacity);
+      const taken = Number(c.taken);
+      const startingSoon =
+        c.start_date > today && c.start_date <= weekFromNowStr;
+
+      return {
+        course_id: c.course_id,
+        name: c.description,
+        start_date: c.start_date,
+        end_date: c.end_date,
+        status: c.start_date > today ? "Upcoming" : "Active",
+        capacity,
+        enrolled: taken,
+        under_capacity: startingSoon && taken < capacity * 0.5,
+      };
+    });
 
     res.json({ success: true, courses });
   });
@@ -596,6 +617,37 @@ router.get(
       }));
 
       res.json({ success: true, start_date: startDate, end_date: endDate, levels });
+    });
+  },
+);
+
+// GET the current school-wide VAT rate
+// url: /api/admin/financials/vat-rate
+router.get("/financials/vat-rate", requireLogin, requireAdmin, (req, res) => {
+  settingsQ.getVatPercent((err, rows) => {
+    if (err) {
+      return res.status(500).json({ success: false, message: err.message });
+    }
+
+    res.json({ success: true, vat_percent: Number(rows[0].vat_percent) });
+  });
+});
+
+// PUT the school-wide VAT rate — applies immediately to every course, since
+// VAT is one rate the whole school charges, not something set per course
+// url: /api/admin/financials/vat-rate
+router.put(
+  "/financials/vat-rate",
+  requireLogin,
+  requireAdmin,
+  validateVatUpdate,
+  (req, res) => {
+    settingsQ.updateVatPercent(req.vat_percent, (err) => {
+      if (err) {
+        return res.status(500).json({ success: false, message: err.message });
+      }
+
+      res.json({ success: true, vat_percent: req.vat_percent });
     });
   },
 );

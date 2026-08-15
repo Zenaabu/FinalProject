@@ -166,6 +166,14 @@ function LessonAccordionItem({ lesson, courseId, onLessonsChanged }) {
             <span className={styles.attendanceSummary}>
               {attendanceSummary(lesson.students)}
             </span>
+            {lesson.substitute_name && (
+              <>
+                <span className={styles.dot}>·</span>
+                <span className={styles.coveredBadge}>
+                  Covered by {lesson.substitute_name}
+                </span>
+              </>
+            )}
           </div>
         </div>
 

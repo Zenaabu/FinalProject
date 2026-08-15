@@ -95,6 +95,15 @@
   color: var(--color-ocean-text);
 }
 
+.coveredBadge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #92400e;
+  background: #fef9c3;
+  border-radius: 999px;
+  padding: 0.15rem 0.55rem;
+}
+
 /* ── Edit button ─────────────────────────────────────────────────────────── */
 .btnEdit {
   background: none;

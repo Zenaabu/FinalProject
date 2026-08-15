@@ -3,10 +3,18 @@
 // ──────────────────────────────────────────────────────────────────────────────
 
 import { useNavigate } from "react-router-dom";
+import { AlertTriangle } from "lucide-react";
 import PaymentBadge from "../shared/PaymentBadge";
 import styles from "./CourseRow.module.css";
 
-function CourseRow({ course_id, name, start_date, end_date, status }) {
+function CourseRow({
+  course_id,
+  name,
+  start_date,
+  end_date,
+  status,
+  under_capacity,
+}) {
   const navigate = useNavigate();
 
   // Jumps to Courses & Lessons with this course's accordion already open,
@@ -24,7 +32,15 @@ function CourseRow({ course_id, name, start_date, end_date, status }) {
       onKeyDown={(e) => e.key === "Enter" && openInCourseManager()}
     >
       {/* ── Course name ────────────────────────────────────────────────── */}
-      <td className={styles.name}>{name}</td>
+      <td className={styles.name}>
+        {name}
+        {under_capacity && (
+          <span className={styles.underCapacityBadge}>
+            <AlertTriangle size={11} />
+            Under 50% capacity
+          </span>
+        )}
+      </td>
 
       {/* ── Start / end dates ─────────────────────────────────────────── */}
       <td className={styles.date}>{start_date}</td>
