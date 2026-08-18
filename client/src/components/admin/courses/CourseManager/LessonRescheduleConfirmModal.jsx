@@ -55,8 +55,8 @@ function LessonRescheduleConfirmModal({
         <p className={styles.message}>
           This lesson's date or time is changing. The{" "}
           <strong>{roster.length}</strong>{" "}
-          {roster.length === 1 ? "student" : "students"} below will get an
-          email with the new time as soon as you save.
+          {roster.length === 1 ? "student" : "students"} below will get an email
+          with the new time as soon as you save.
           {instructorName && (
             <>
               {" "}
