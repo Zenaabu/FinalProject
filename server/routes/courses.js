@@ -37,7 +37,12 @@ const adminQ = require("../queries/adminQueries");
 const userQ = require("../queries/usersQueries");
 const settingsQ = require("../queries/settingsQueries");
 const paypalService = require("../services/paypalService");
-const { formatDateOnly, formatTimeOnly } = require("../validations/utils");
+const {
+  formatDateOnly,
+  formatTimeOnly,
+  sendLessonRescheduleEmail,
+  sendInstructorRescheduleEmail,
+} = require("../validations/utils");
 
 // ─── Admin course endpoints ────────────────────────────────────────────────
 
@@ -380,6 +385,28 @@ router.get(
   },
 );
 
+// POST run every reschedule validation without committing anything — lets
+// the client confirm which students will be emailed only once the save is
+// guaranteed to pass, instead of showing that confirmation and then finding
+// out the reschedule was rejected
+// url: /api/courses/:course_id/lessons/:lesson_id/reschedule-check
+router.post(
+  "/:course_id/lessons/:lesson_id/reschedule-check",
+  requireLogin,
+  requireAdmin,
+  validateLessonExists,
+  validateLessonNotAlreadyPassed,
+  validateLessonCourseExists,
+  validateUpdateLessonDetails,
+  validateUpdatedLessonNoConflict,
+  validateUpdatedLessonInstructorConflict,
+  validateUpdatedLessonDateOrder,
+  validateRescheduledLessonAvoidsApprovedConstraint,
+  (req, res) => {
+    res.json({ success: true });
+  },
+);
+
 // PUT update a single lesson of a course
 // url: /api/courses/:course_id/lessons/:lesson_id
 router.put(
@@ -416,16 +443,15 @@ router.put(
       formatTimeOnly(req.lesson.end_time) !==
         formatTimeOnly(req.updatedLesson.end_time);
 
-    // TODO: this is the reschedule path used to resolve an approved
-    // instructor constraint (see /admin/staff) — once the messaging system
-    // exists, notify the lesson's registered students that it moved here.
     adminQ.updateLesson(lesson_id, fields, (err) => {
       if (err) {
         return res.status(500).json({ success: false, message: err.message });
       }
 
-      function respondWithCourse() {
-        // hand back the whole course so the accordion can refresh in one go
+      // hand back the whole course so the accordion can refresh in one go;
+      // emailNotification / instructorEmailNotification (present only when
+      // the schedule actually changed) tell the admin who got emailed
+      function respondWithCourse(emailNotification, instructorEmailNotification) {
         courseQ.getCourseWithDetails(course_id, (err2, course) => {
           if (err2) {
             return res
@@ -437,6 +463,10 @@ router.put(
             success: true,
             message: "Lesson updated successfully",
             course,
+            ...(emailNotification ? { emailNotification } : {}),
+            ...(instructorEmailNotification
+              ? { instructorEmailNotification }
+              : {}),
           });
         });
       }
@@ -445,22 +475,81 @@ router.put(
 
       const details = `Rescheduled from ${formatDateOnly(req.lesson.lesson_date)} ${formatTimeOnly(req.lesson.start_time)}–${formatTimeOnly(req.lesson.end_time)} to ${formatDateOnly(req.updatedLesson.lesson_date)} ${formatTimeOnly(req.updatedLesson.start_time)}–${formatTimeOnly(req.updatedLesson.end_time)}`;
 
-      adminQ.addLessonHistory(
-        {
-          lesson_id,
-          constraints_id: constraints_id || null,
-          change_type: "rescheduled",
-          details,
-          changed_by: req.session.user.user_id,
-        },
-        (err3) => {
-          if (err3) {
-            return res
-              .status(500)
-              .json({ success: false, message: err3.message });
+      function finishReschedule(emailNotification, instructorEmailNotification) {
+        adminQ.addLessonHistory(
+          {
+            lesson_id,
+            constraints_id: constraints_id || null,
+            change_type: "rescheduled",
+            details,
+            changed_by: req.session.user.user_id,
+          },
+          (err3) => {
+            if (err3) {
+              return res
+                .status(500)
+                .json({ success: false, message: err3.message });
+            }
+
+            respondWithCourse(emailNotification, instructorEmailNotification);
+          },
+        );
+      }
+
+      const lessonEmailInfo = {
+        courseLevel: req.course.level,
+        lessonNumber: req.lesson.lesson_number,
+        oldDate: req.lesson.lesson_date,
+        oldStart: req.lesson.start_time,
+        oldEnd: req.lesson.end_time,
+        newDate: req.updatedLesson.lesson_date,
+        newStart: req.updatedLesson.start_time,
+        newEnd: req.updatedLesson.end_time,
+      };
+
+      // notify the course's registered students, and separately the
+      // instructor actually teaching this lesson (the substitute if one
+      // covers it, otherwise the course's regular instructor), that it
+      // moved. the response waits on both so the admin gets an accurate
+      // "who got emailed" result.
+      const studentsNotified = new Promise((resolve) => {
+        courseQ.getCourseRegistrations(course_id, (errStudents, students) => {
+          if (errStudents) {
+            console.error(
+              "Failed to load students for reschedule email:",
+              errStudents.message,
+            );
+            return resolve(null);
           }
 
-          respondWithCourse();
+          sendLessonRescheduleEmail(students, lessonEmailInfo).then(resolve);
+        });
+      });
+
+      const instructorNotified = new Promise((resolve) => {
+        const instructorId =
+          req.lesson.substitute_instructor_id || req.course.user_id;
+
+        userQ.findUserById(instructorId, (errInstructor, rows) => {
+          if (errInstructor || !rows || rows.length === 0) {
+            if (errInstructor) {
+              console.error(
+                "Failed to load instructor for reschedule email:",
+                errInstructor.message,
+              );
+            }
+            return resolve(null);
+          }
+
+          sendInstructorRescheduleEmail(rows[0], lessonEmailInfo).then(
+            (result) => resolve({ sent: result.ok }),
+          );
+        });
+      });
+
+      Promise.all([studentsNotified, instructorNotified]).then(
+        ([emailNotification, instructorEmailNotification]) => {
+          finishReschedule(emailNotification, instructorEmailNotification);
         },
       );
     });

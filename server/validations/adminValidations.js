@@ -6,6 +6,8 @@ const {
   validateLessonDate,
   validateLessonTime,
   hasLessonConflict,
+  hasSameCourseDateConflict,
+  hasDuplicateLessonDates,
   areValidLessonUpdateFields,
   buildUpdatedLesson,
   validateLessonNumber,
@@ -241,6 +243,15 @@ function validateLessonsDetails(req, res, next) {
     });
   }
 
+  // a course meets at most once per day — two of its own lessons can never
+  // share a calendar date
+  if (hasDuplicateLessonDates(lessons)) {
+    return res.status(400).json({
+      success: false,
+      message: "A course cannot have two lessons on the same date",
+    });
+  }
+
   next();
 }
 
@@ -406,6 +417,15 @@ function validateAddLessonsToExistingCourse(req, res, next) {
     }
   }
 
+  // a course meets at most once per day — two of its own lessons can never
+  // share a calendar date
+  if (hasDuplicateLessonDates(lessons)) {
+    return res.status(400).json({
+      success: false,
+      message: "A course cannot have two lessons on the same date",
+    });
+  }
+
   adminQ.getMaxLessonNumber(course.course_id, (err, rows) => {
     if (err) {
       return res.status(500).json({
@@ -478,8 +498,8 @@ function validateInstructorLessonConflictForExistingCourse(req, res, next) {
   );
 }
 
-// a middleware that checks if there is no lesson in the course
-// with same date and time
+// a middleware that checks if there is no lesson in the course on the same
+// date already — a course meets at most once per day
 function validateLessonConflictInSameCourse(req, res, next) {
   const courseId = req.params.course_id;
   const { lessons } = req.body;
@@ -492,10 +512,10 @@ function validateLessonConflictInSameCourse(req, res, next) {
       });
     }
 
-    if (hasLessonConflict(existingLessons, lessons)) {
+    if (hasSameCourseDateConflict(existingLessons, lessons)) {
       return res.status(409).json({
         success: false,
-        message: "This course already has a lesson at this date and time",
+        message: "This course already has a lesson on this date",
       });
     }
 
@@ -657,8 +677,9 @@ function validateUpdateLessonDetails(req, res, next) {
   next();
 }
 
-// a middleware that validates that there is no conflict when
-// updating the lesson details
+// a middleware that validates that moving this lesson doesn't land it on a
+// date another lesson of the same course is already using — a course meets
+// at most once per day
 function validateUpdatedLessonNoConflict(req, res, next) {
   const lessonId = req.params.lesson_id;
   const courseId = req.lesson.course_id;
@@ -675,10 +696,10 @@ function validateUpdatedLessonNoConflict(req, res, next) {
       (lesson) => Number(lesson.lesson_id) !== Number(lessonId),
     );
 
-    if (hasLessonConflict(otherLessons, [req.updatedLesson])) {
+    if (hasSameCourseDateConflict(otherLessons, [req.updatedLesson])) {
       return res.status(409).json({
         success: false,
-        message: "Another lesson already exists at this date and time",
+        message: "Another lesson in this course is already scheduled on this date",
       });
     }
 
@@ -693,9 +714,12 @@ function validateUpdatedLessonInstructorConflict(req, res, next) {
   const courseId = req.lesson.course_id;
   const course = req.course;
   const updatedLesson = req.updatedLesson;
+  // a lesson covered by a substitute is that substitute's schedule to check,
+  // not the course's regular instructor
+  const instructorId = req.lesson.substitute_instructor_id || course.user_id;
 
   adminQ.getInstructorLessonsInRangeExcludingCourse(
-    course.user_id,
+    instructorId,
     updatedLesson.lesson_date,
     updatedLesson.lesson_date,
     courseId,
@@ -770,13 +794,18 @@ function validateUpdatedLessonDateOrder(req, res, next) {
 }
 
 // a middleware that stops a lesson from being rescheduled onto a date the
-// course's instructor was approved as unavailable for (instructor_constraints
-// with status = 'approved') — approving a constraint means the admin is
-// handling that gap themselves, so a plain reschedule can't quietly put the
-// lesson right back on top of it
+// instructor actually teaching it was approved as unavailable for
+// (instructor_constraints with status = 'approved') — approving a constraint
+// means the admin is handling that gap themselves, so a plain reschedule
+// can't quietly put the lesson right back on top of it. a lesson already
+// covered by a substitute is checked against the substitute, not the
+// course's regular instructor.
 function validateRescheduledLessonAvoidsApprovedConstraint(req, res, next) {
+  const isSubstitute = Boolean(req.lesson.substitute_instructor_id);
+  const instructorId = req.lesson.substitute_instructor_id || req.course.user_id;
+
   adminQ.findApprovedConstraintOnDate(
-    req.course.user_id,
+    instructorId,
     req.updatedLesson.lesson_date,
     (err, rows) => {
       if (err) {
@@ -784,9 +813,14 @@ function validateRescheduledLessonAvoidsApprovedConstraint(req, res, next) {
       }
 
       if (rows.length > 0) {
+        const who = isSubstitute ? "substitute instructor" : "instructor";
+        const suggestion = isSubstitute
+          ? "Choose a different date or assign a different substitute instead."
+          : "Choose a different date or assign a substitute instead.";
+
         return res.status(409).json({
           success: false,
-          message: `The instructor was approved as unavailable on ${req.updatedLesson.lesson_date} ("${rows[0].notes}"). Choose a different date or assign a substitute instead.`,
+          message: `The ${who} was approved as unavailable on ${req.updatedLesson.lesson_date} ("${rows[0].notes}"). ${suggestion}`,
         });
       }
 

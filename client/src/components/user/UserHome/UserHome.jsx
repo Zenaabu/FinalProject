@@ -6,6 +6,7 @@
 import useSession from "../../auth/useSession";
 import WeatherWidget from "../Dashboard/WeatherWidget/WeatherWidget";
 import MyCourses from "./MyCourses";
+import EmailReminderBanner from "./EmailReminderBanner";
 import styles from "./UserHome.module.css";
 
 function UserHome() {
@@ -18,6 +19,7 @@ function UserHome() {
         <h1 className={styles.title}>Welcome back, {firstName}!</h1>
         <p className={styles.subtitle}>Welcome to Blue Mars Surf Club</p>
       </div>
+      <EmailReminderBanner />
       <WeatherWidget />
       <MyCourses />
     </div>

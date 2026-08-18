@@ -1,5 +1,6 @@
 import { useState } from "react";
 import AuthField from "./AuthField";
+import HealthScreeningModal from "./HealthScreeningModal";
 import {
   Calendar as CalendarIcon,
   Eye as EyeIcon,
@@ -34,6 +35,8 @@ export default function SignupForm({ styles }) {
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [healthConfirmed, setHealthConfirmed] = useState(false);
+  const [showHealthModal, setShowHealthModal] = useState(false);
 
   const signUpBirthDateError = getBirthDateError(signUpForm.birth_date);
   const isSignUpDisabled = isLoading || Boolean(signUpBirthDateError);
@@ -90,25 +93,13 @@ export default function SignupForm({ styles }) {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSignUpSubmit = async (event) => {
-    event.preventDefault();
-    const result = validateSignUpForm();
-    console.log(result);
-
-    if (!validateSignUpForm()) {
-      toast.error("Please fix the errors in the form before submitting");
-      return;
-    }
-
+  // ── The actual signup request — only fires once the health screening
+  // modal has confirmed every question came back "no"
+  const submitSignup = async () => {
     setIsLoading(true);
 
     try {
       const { confirm_password, ...signUpPayload } = signUpForm;
-      console.log({
-        ...signUpPayload,
-        user_id: signUpPayload.user_id.replace(/\D/g, ""),
-        phone: signUpPayload.phone.replace(/\D/g, ""),
-      });
       const response = await fetch("/api/users/signup", {
         method: "POST",
         headers: {
@@ -124,12 +115,12 @@ export default function SignupForm({ styles }) {
       const data = await response.json();
 
       if (response.ok) {
-        console.log("Sign up successful:", data);
         toast.success(
           data.message || "Account created successfully! You can now log in.",
         );
         setSignUpForm(INITIAL_SIGN_UP_FORM);
         setErrors({});
+        setHealthConfirmed(false);
       } else {
         toast.error(data.message || "Sign up failed. Please try again.");
       }
@@ -138,7 +129,31 @@ export default function SignupForm({ styles }) {
       console.error("Sign up error:", error);
     } finally {
       setIsLoading(false);
+      setShowHealthModal(false);
     }
+  };
+
+  // ── Sign Up button: validate the form, require the health-screening
+  // consent checkbox, then open the screening modal instead of submitting
+  // right away — submitSignup only runs once that modal clears the user
+  const handleSignUpClick = (event) => {
+    event.preventDefault();
+
+    if (!validateSignUpForm()) {
+      toast.error("Please fix the errors in the form before submitting");
+      return;
+    }
+
+    if (!healthConfirmed) {
+      setErrors((currentErrors) => ({
+        ...currentErrors,
+        health: "Please confirm the health screening checkbox to continue",
+      }));
+      return;
+    }
+
+    setErrors((currentErrors) => ({ ...currentErrors, health: "" }));
+    setShowHealthModal(true);
   };
 
   return (
@@ -390,15 +405,48 @@ export default function SignupForm({ styles }) {
           />
         </AuthField>
 
+        <div className={`${styles.formGroup} ${styles.fullWidthField}`}>
+          <label className={styles.healthCheckboxLabel}>
+            <input
+              type="checkbox"
+              className={styles.healthCheckbox}
+              checked={healthConfirmed}
+              onChange={(event) => {
+                setHealthConfirmed(event.target.checked);
+                setErrors((currentErrors) => ({
+                  ...currentErrors,
+                  health: "",
+                }));
+              }}
+              disabled={isLoading}
+            />
+            <span>
+              I confirm I'll complete a short health screening before my
+              account is created
+            </span>
+          </label>
+          {errors.health && (
+            <span className={styles.errorMessage}>{errors.health}</span>
+          )}
+        </div>
+
         <button
           type="submit"
           className={`${styles.loginButton} ${styles.fullWidthButton}`}
           disabled={isSignUpDisabled}
-          onClick={handleSignUpSubmit}
+          onClick={handleSignUpClick}
         >
           {isLoading ? "Creating account..." : "Sign Up"}
         </button>
       </form>
+
+      {showHealthModal && (
+        <HealthScreeningModal
+          onClose={() => setShowHealthModal(false)}
+          onCleared={submitSignup}
+          submitting={isLoading}
+        />
+      )}
     </>
   );
 }

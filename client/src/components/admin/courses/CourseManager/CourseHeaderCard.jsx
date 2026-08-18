@@ -250,6 +250,7 @@ function CourseHeaderCard({
         <LessonAccordionList
           lessons={course.lessons}
           courseId={course.course_id}
+          courseInstructor={course.instructor}
           onLessonsChanged={onLessonsChanged}
           nested
         />

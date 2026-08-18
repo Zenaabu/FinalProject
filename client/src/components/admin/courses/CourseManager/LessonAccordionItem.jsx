@@ -7,6 +7,7 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import AttendanceTable from "./AttendanceTable";
+import LessonRescheduleConfirmModal from "./LessonRescheduleConfirmModal";
 import styles from "./LessonAccordionItem.module.css";
 
 /* ── Inline SVG icons ────────────────────────────────────────────────────── */
@@ -61,11 +62,21 @@ function attendanceSummary(students) {
   return `${present} / ${roster.length} attended`;
 }
 
-function LessonAccordionItem({ lesson, courseId, onLessonsChanged }) {
+function LessonAccordionItem({
+  lesson,
+  courseId,
+  courseInstructor,
+  onLessonsChanged,
+}) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [checking, setChecking] = useState(false);
   const [error, setError] = useState(null);
+  // holds the PUT body while the reschedule-notify confirmation is open;
+  // null means the modal is closed. only set once the reschedule-check
+  // call below has confirmed the save will actually succeed.
+  const [pendingBody, setPendingBody] = useState(null);
 
   const [form, setForm] = useState({
     lesson_date: lesson.date ?? "",
@@ -80,24 +91,8 @@ function LessonAccordionItem({ lesson, courseId, onLessonsChanged }) {
     setError(null);
   };
 
-  // ── Save: PUT only the fields that actually changed ─────────────────────
-  const handleSave = async () => {
-    const body = {};
-    if (form.lesson_date !== lesson.date) body.lesson_date = form.lesson_date;
-    if (form.start_time !== lesson.start_time)
-      body.start_time = form.start_time;
-    if (form.end_time !== lesson.end_time) body.end_time = form.end_time;
-
-    if (Object.keys(body).length === 0) {
-      setError("Nothing changed.");
-      return;
-    }
-
-    if (form.start_time >= form.end_time) {
-      setError("Start time must be before end time.");
-      return;
-    }
-
+  // ── Send the PUT with only the fields that actually changed ─────────────
+  const submitLesson = async (body) => {
     setSaving(true);
     setError(null);
 
@@ -117,13 +112,81 @@ function LessonAccordionItem({ lesson, courseId, onLessonsChanged }) {
         throw new Error(data.message || "Failed to update lesson.");
       }
 
-      toast.success("Lesson updated successfully");
+      const notice = data.emailNotification;
+      const instructorNotice = data.instructorEmailNotification;
+
+      if (notice) {
+        const studentPart = notice.failed?.length
+          ? `emailed ${notice.sent} of ${notice.total} students (${notice.failed.length} failed)`
+          : `${notice.sent} ${notice.sent === 1 ? "student" : "students"} notified by email`;
+        const instructorPart = instructorNotice?.sent
+          ? " and the instructor"
+          : "";
+
+        toast.success(`Lesson updated — ${studentPart}${instructorPart}`);
+      } else {
+        toast.success("Lesson updated successfully");
+      }
+
       setIsEditOpen(false);
+      setPendingBody(null);
       onLessonsChanged?.();
     } catch (err) {
       setError(err.message);
+      setPendingBody(null);
     } finally {
       setSaving(false);
+    }
+  };
+
+  // ── Save button: validate locally, then ask the server to check the
+  // reschedule (same validation the real save runs) before showing the
+  // notify-students confirmation. A validation problem shows as an error
+  // right here — the modal only ever appears once the save is guaranteed
+  // to succeed.
+  const handleSave = async () => {
+    const body = {};
+    if (form.lesson_date !== lesson.date) body.lesson_date = form.lesson_date;
+    if (form.start_time !== lesson.start_time)
+      body.start_time = form.start_time;
+    if (form.end_time !== lesson.end_time) body.end_time = form.end_time;
+
+    if (Object.keys(body).length === 0) {
+      setError("Nothing changed.");
+      return;
+    }
+
+    if (form.start_time >= form.end_time) {
+      setError("Start time must be before end time.");
+      return;
+    }
+
+    setError(null);
+    setChecking(true);
+
+    try {
+      const res = await fetch(
+        `/api/courses/${courseId}/lessons/${lesson.lesson_id}/reschedule-check`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        },
+      );
+
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || "Failed to validate lesson changes.");
+      }
+
+      // every editable field here is part of the lesson's schedule, so any
+      // change is a reschedule — confirm who will be emailed before sending
+      setPendingBody(body);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setChecking(false);
     }
   };
 
@@ -235,15 +298,15 @@ function LessonAccordionItem({ lesson, courseId, onLessonsChanged }) {
               className={styles.btnSave}
               type="button"
               onClick={handleSave}
-              disabled={saving}
+              disabled={saving || checking}
             >
-              {saving ? "Saving…" : "Save"}
+              {checking ? "Checking…" : saving ? "Saving…" : "Save"}
             </button>
             <button
               className={styles.btnCancel}
               type="button"
               onClick={handleCancel}
-              disabled={saving}
+              disabled={saving || checking}
             >
               Cancel
             </button>
@@ -256,6 +319,17 @@ function LessonAccordionItem({ lesson, courseId, onLessonsChanged }) {
         <div className={styles.panel}>
           <AttendanceTable students={lesson.students ?? []} />
         </div>
+      )}
+
+      {/* ── Confirm-and-notify pop-up before saving a schedule change ── */}
+      {pendingBody && (
+        <LessonRescheduleConfirmModal
+          students={lesson.students ?? []}
+          instructorName={lesson.substitute_name || courseInstructor}
+          saving={saving}
+          onClose={() => setPendingBody(null)}
+          onConfirm={() => submitLesson(pendingBody)}
+        />
       )}
     </div>
   );

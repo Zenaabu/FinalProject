@@ -7,6 +7,7 @@ const {
   validatePhone,
   validateGender,
   validateBirthDate,
+  validatePassword,
   areValidUserUpdateFields,
   buildUpdatedUser,
 } = require("./utils");
@@ -49,6 +50,14 @@ function validateUpdateMyDetails(req, res, next) {
     return res.status(400).json({
       success: false,
       message: "Invalid user fields",
+    });
+  }
+
+  if (req.body.password !== undefined && !validatePassword(req.body.password)) {
+    return res.status(400).json({
+      success: false,
+      message:
+        "Password must be at least 8 characters with an uppercase letter, a number, and a special character",
     });
   }
 

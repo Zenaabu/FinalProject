@@ -181,7 +181,7 @@ const PencilIcon = () => (
 );
 
 // ── Password change field (two inputs + live requirements) ────────────────────
-function PasswordField({ onSave, saving, serverError, startOpen = false }) {
+function PasswordField({ onSave, saving, startOpen = false }) {
   const [editing, setEditing] = useState(startOpen);
   const [newPw, setNewPw] = useState("");
   const [confirmPw, setConfirmPw] = useState("");
@@ -298,11 +298,6 @@ function PasswordField({ onSave, saving, serverError, startOpen = false }) {
               <span className={styles.pwMismatch}>Passwords do not match</span>
             )}
 
-            {/* Server-side error */}
-            {serverError && (
-              <span className={styles.fieldError}>{serverError}</span>
-            )}
-
             {/* Action buttons */}
             <div className={styles.pwActions}>
               <button
@@ -352,7 +347,6 @@ function ProfileField({
   options,
   onSave,
   saving,
-  error,
 }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(value ?? "");
@@ -455,8 +449,6 @@ function ProfileField({
         ) : (
           <span className={styles.fieldValue}>{displayValue}</span>
         )}
-
-        {error && <span className={styles.fieldError}>{error}</span>}
       </div>
 
       {!locked && !editing && (
@@ -480,7 +472,6 @@ function UserProfilePage() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [fieldSaving, setFieldSaving] = useState({});
-  const [fieldErrors, setFieldErrors] = useState({});
 
   const userId = localStorage.getItem("user_id");
   const openPassword = Boolean(location.state?.openPassword);
@@ -496,7 +487,6 @@ function UserProfilePage() {
 
   function saveField(fieldKey, value, onDone) {
     setFieldSaving((prev) => ({ ...prev, [fieldKey]: true }));
-    setFieldErrors((prev) => ({ ...prev, [fieldKey]: null }));
 
     const body = { [fieldKey]: value };
 
@@ -512,11 +502,11 @@ function UserProfilePage() {
           toast.success("Updated successfully!");
           onDone();
         } else {
-          setFieldErrors((prev) => ({ ...prev, [fieldKey]: data.message }));
+          toast.error(data.message || "Failed to save");
         }
       })
       .catch(() => {
-        setFieldErrors((prev) => ({ ...prev, [fieldKey]: "Failed to save" }));
+        toast.error("Failed to save");
       })
       .finally(() => {
         setFieldSaving((prev) => ({ ...prev, [fieldKey]: false }));
@@ -573,7 +563,6 @@ function UserProfilePage() {
             iconType="person"
             onSave={(v, done) => saveField("first_name", v, done)}
             saving={fieldSaving.first_name}
-            error={fieldErrors.first_name}
           />
           <ProfileField
             label="LAST NAME"
@@ -581,7 +570,6 @@ function UserProfilePage() {
             iconType="person"
             onSave={(v, done) => saveField("last_name", v, done)}
             saving={fieldSaving.last_name}
-            error={fieldErrors.last_name}
           />
           <ProfileField
             label="EMAIL ADDRESS"
@@ -590,7 +578,6 @@ function UserProfilePage() {
             type="email"
             onSave={(v, done) => saveField("email", v, done)}
             saving={fieldSaving.email}
-            error={fieldErrors.email}
           />
           <ProfileField
             label="PHONE NUMBER"
@@ -598,7 +585,6 @@ function UserProfilePage() {
             iconType="phone"
             onSave={(v, done) => saveField("phone", v, done)}
             saving={fieldSaving.phone}
-            error={fieldErrors.phone}
           />
           <ProfileField
             label="GENDER"
@@ -607,7 +593,6 @@ function UserProfilePage() {
             options={["male", "female", "other"]}
             onSave={(v, done) => saveField("gender", v, done)}
             saving={fieldSaving.gender}
-            error={fieldErrors.gender}
           />
           <ProfileField
             label="DATE OF BIRTH"
@@ -624,13 +609,11 @@ function UserProfilePage() {
             type="date"
             onSave={(v, done) => saveField("birth_date", v, done)}
             saving={fieldSaving.birth_date}
-            error={fieldErrors.birth_date}
           />
           <ProfileField label="ROLE" value={roleLabel} iconType="role" locked />
           <PasswordField
             onSave={(v, done) => saveField("password", v, done)}
             saving={fieldSaving.password}
-            serverError={fieldErrors.password}
             startOpen={openPassword}
           />
           <ProfileField

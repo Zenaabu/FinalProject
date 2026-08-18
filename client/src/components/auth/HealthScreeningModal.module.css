@@ -1,0 +1,217 @@
+/* ============================================================
+   HealthScreeningModal.module.css
+   Reuses the surf palette declared in Auth.module.css's global
+   :root (--surf-blue, --wave-navy, --line-blue, --surf-white) —
+   both modules are always mounted together on the auth page.
+   ============================================================ */
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(3, 105, 161, 0.35);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1200;
+  padding: 20px;
+  animation: fadeIn 0.15s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.modal {
+  width: 100%;
+  max-width: 460px;
+  max-height: 90vh;
+  overflow-y: auto;
+  background: var(--surf-white, #ffffff);
+  border-radius: 24px;
+  border: 1px solid rgba(14, 165, 233, 0.1);
+  box-shadow: 0 20px 50px rgba(3, 105, 161, 0.22);
+  padding: 28px 26px 24px;
+  text-align: center;
+  animation: slideUp 0.18s ease;
+  font-family:
+    Inter,
+    "Segoe UI",
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    sans-serif;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(16px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.iconWrap {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 14px;
+  background: rgba(14, 165, 233, 0.12);
+  color: var(--surf-blue, #0ea5e9);
+}
+
+.iconWrapWarning {
+  background: rgba(248, 113, 113, 0.14);
+  color: #dc2626;
+}
+
+.iconWrapSuccess {
+  background: rgba(34, 197, 94, 0.14);
+  color: #16a34a;
+}
+
+.title {
+  margin: 0 0 8px;
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: var(--wave-navy, #0369a1);
+  letter-spacing: -0.02em;
+}
+
+.subtitle {
+  margin: 0 0 20px;
+  font-size: 0.85rem;
+  color: rgba(3, 105, 161, 0.72);
+  line-height: 1.55;
+}
+
+.resultMessage {
+  margin: 0 0 22px;
+  font-size: 0.92rem;
+  color: var(--wave-navy, #0369a1);
+  line-height: 1.6;
+}
+
+.questionList {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-bottom: 22px;
+  text-align: left;
+}
+
+.questionItem {
+  padding: 12px 14px;
+  border: 1px solid var(--line-blue, #cfe2f2);
+  border-radius: 16px;
+  background: rgba(240, 249, 255, 0.6);
+}
+
+.questionText {
+  margin: 0 0 10px;
+  font-size: 0.85rem;
+  color: var(--wave-navy, #0369a1);
+  line-height: 1.5;
+}
+
+.questionNumber {
+  font-weight: 800;
+  color: var(--surf-blue, #0ea5e9);
+}
+
+.answerPills {
+  display: flex;
+  gap: 8px;
+}
+
+.answerPill {
+  flex: 1;
+  padding: 7px 0;
+  border: 1px solid var(--line-blue, #cfe2f2);
+  border-radius: 999px;
+  background: #ffffff;
+  color: var(--wave-navy, #0369a1);
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.answerPill:hover {
+  border-color: rgba(14, 165, 233, 0.5);
+}
+
+.answerPillActiveNo {
+  background: #16a34a;
+  border-color: #16a34a;
+  color: #ffffff;
+}
+
+.answerPillActiveYes {
+  background: #dc2626;
+  border-color: #dc2626;
+  color: #ffffff;
+}
+
+.footer {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+.btnCancel {
+  flex: 1;
+  padding: 11px 16px;
+  border: 1px solid var(--line-blue, #cfe2f2);
+  border-radius: 16px;
+  background: #ffffff;
+  color: var(--wave-navy, #0369a1);
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.btnCancel:hover {
+  background: #f0f9ff;
+}
+
+.btnContinue {
+  flex: 1;
+  padding: 11px 16px;
+  border: none;
+  border-radius: 16px;
+  background: var(--surf-blue, #0ea5e9);
+  color: #ffffff;
+  font-size: 0.88rem;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 10px 20px rgba(14, 165, 233, 0.18);
+  transition:
+    background 0.15s ease,
+    transform 0.15s ease;
+}
+
+.btnContinue:hover:not(:disabled) {
+  background: var(--wave-navy, #0369a1);
+  transform: translateY(-1px);
+}
+
+.btnContinue:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}

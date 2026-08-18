@@ -1,0 +1,33 @@
+/* ============================================================
+   EmailReminderBanner.module.css
+   ============================================================ */
+
+.banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 90%;
+  max-width: 1000px;
+  background: #f0f9ff;
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  border-radius: 12px;
+  padding: 12px 18px;
+  box-sizing: border-box;
+}
+
+.icon {
+  flex-shrink: 0;
+  color: var(--color-ocean-text);
+}
+
+.text {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #0f172a;
+  line-height: 1.5;
+}
+
+.textStrong {
+  font-weight: 600;
+  color: var(--color-ocean-text);
+}

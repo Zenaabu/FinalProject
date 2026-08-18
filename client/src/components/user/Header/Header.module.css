@@ -29,10 +29,19 @@
 }
 
 .logo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   font-size: 1.6rem;
   font-weight: 700;
   color: var(--color-ocean-text);
   letter-spacing: 0.5px;
+}
+
+.logoIcon {
+  width: 56px;
+  height: 56px;
+  object-fit: contain;
 }
 
 .topRight {

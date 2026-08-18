@@ -2,7 +2,10 @@ const express = require("express");
 const router = express.Router();
 const bcrypt = require("bcrypt");
 
-const { checkUserExists } = require("../validations/usersValidations");
+const {
+  checkUserExists,
+  validateUpdateMyDetails,
+} = require("../validations/usersValidations");
 const {
   requireLogin,
   validateSignup,
@@ -107,87 +110,71 @@ router.get(
 
 // PUT user by ID
 // url: /api/users/:user_id
-router.put("/:user_id", requireLogin, requireSelf, async (req, res) => {
-  const { user_id } = req.params;
-  const { first_name, last_name, email, phone, gender, birth_date, password } =
-    req.body;
+router.put(
+  "/:user_id",
+  requireLogin,
+  requireSelf,
+  validateUpdateMyDetails,
+  async (req, res) => {
+    const { user_id } = req.params;
+    const { password } = req.body;
+    // validateUpdateMyDetails already fetched the current user and merged
+    // in whichever of first_name/last_name/email/phone/gender/birth_date
+    // were sent, validating each one along the way
+    const fields = req.updatedUser;
 
-  // If email is changing, enforce uniqueness
-  if (email && email !== req.session.user.email) {
-    const emailCheck = await new Promise((resolve) => {
-      userQ.findUserByEmail(email, (err, rows) => {
-        if (err) return resolve({ err });
-        resolve({ rows });
-      });
-    });
-
-    if (emailCheck.err) {
-      return res
-        .status(500)
-        .json({ success: false, message: emailCheck.err.message });
-    }
-
-    if (emailCheck.rows && emailCheck.rows.length > 0) {
-      return res
-        .status(409)
-        .json({ success: false, message: "Email is already in use" });
-    }
-  }
-
-  // Fetch current values so we can keep unchanged fields
-  const currentResult = await new Promise((resolve) => {
-    userQ.findUserById(user_id, (err, rows) => {
-      if (err) return resolve({ err });
-      resolve({ rows });
-    });
-  });
-
-  if (currentResult.err) {
-    return res
-      .status(500)
-      .json({ success: false, message: currentResult.err.message });
-  }
-
-  if (!currentResult.rows || currentResult.rows.length === 0) {
-    return res.status(404).json({ success: false, message: "User not found" });
-  }
-
-  const current = currentResult.rows[0];
-
-  const fields = {
-    first_name: first_name ?? current.first_name,
-    last_name: last_name ?? current.last_name,
-    email: email ?? current.email,
-    phone: phone ?? current.phone,
-    gender: gender ?? current.gender,
-    birth_date: birth_date ?? current.birth_date,
-  };
-
-  // Handle password change separately
-  if (password) {
-    try {
-      const hashed = await bcrypt.hash(password, 10);
-      await new Promise((resolve, reject) => {
-        userQ.updateUserPassword(fields.email, hashed, (err) => {
-          if (err) return reject(err);
-          resolve();
+    // If email is changing, enforce uniqueness
+    if (fields.email !== req.session.user.email) {
+      const emailCheck = await new Promise((resolve) => {
+        userQ.findUserByEmail(fields.email, (err, rows) => {
+          if (err) return resolve({ err });
+          resolve({ rows });
         });
       });
-    } catch (err) {
-      return res.status(500).json({ success: false, message: err.message });
+
+      if (emailCheck.err) {
+        return res
+          .status(500)
+          .json({ success: false, message: emailCheck.err.message });
+      }
+
+      if (emailCheck.rows && emailCheck.rows.length > 0) {
+        return res
+          .status(409)
+          .json({ success: false, message: "Email is already in use" });
+      }
     }
-  }
 
-  userQ.updateMyDetails(user_id, fields, (err) => {
-    if (err) {
-      return res.status(500).json({ success: false, message: err.message });
+    // Handle password change separately — already validated for strength
+    // by validateUpdateMyDetails
+    if (password) {
+      try {
+        const hashed = await bcrypt.hash(password, 10);
+        await new Promise((resolve, reject) => {
+          userQ.updateUserPassword(fields.email, hashed, (err) => {
+            if (err) return reject(err);
+            resolve();
+          });
+        });
+      } catch (err) {
+        return res.status(500).json({ success: false, message: err.message });
+      }
     }
 
-    // update session email if it changed
-    if (email) req.session.user.email = email;
+    userQ.updateMyDetails(user_id, fields, (err) => {
+      if (err) {
+        return res.status(500).json({ success: false, message: err.message });
+      }
 
-    return res.json({ success: true, message: "Profile updated successfully" });
-  });
-});
+      // update session email if it changed
+      req.session.user.email = fields.email;
+
+      return res.json({
+        success: true,
+        message: "Profile updated successfully",
+      });
+    });
+  },
+);
 
 module.exports = router;
