@@ -249,6 +249,30 @@
   color: var(--soft-error);
 }
 
+.healthCheckboxLabel {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid var(--line-blue);
+  border-radius: 16px;
+  background: var(--mist-blue);
+  color: var(--wave-navy);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.5;
+  cursor: pointer;
+}
+
+.healthCheckbox {
+  flex: 0 0 18px;
+  width: 18px;
+  height: 18px;
+  margin-top: 1px;
+  accent-color: var(--surf-blue);
+  cursor: pointer;
+}
+
 .passwordToggle {
   display: inline-flex;
   align-items: center;

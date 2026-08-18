@@ -187,12 +187,6 @@
   text-overflow: ellipsis;
 }
 
-.fieldError {
-  font-size: 0.72rem;
-  color: #dc2626;
-  margin-top: 0.1rem;
-}
-
 /* Edit row */
 .editRow {
   display: flex;

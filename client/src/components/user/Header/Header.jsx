@@ -5,6 +5,7 @@
 import { NavLink, Link, useNavigate } from "react-router-dom";
 import styles from "./Header.module.css";
 import surfboardIcon from "../../../assets/surfboard.png";
+import bluemarsLogo from "../../../assets/bluemarsLogo.png";
 
 const NAV_LINKS = [
   { to: "/user", label: "Dashboard", end: true },
@@ -26,7 +27,15 @@ function Header() {
   return (
     <header className={styles.header}>
       <div className={styles.top}>
-        <span className={styles.logo}>Blue Mars</span>
+        <span className={styles.logo}>
+          <img
+            src={bluemarsLogo}
+            alt=""
+            className={styles.logoIcon}
+            aria-hidden="true"
+          />
+          Blue Mars
+        </span>
 
         <div className={styles.topRight}>
           <Link to="/volume-calculator" className={styles.volumeLink}>

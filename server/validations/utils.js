@@ -68,6 +68,215 @@ async function sendResetCode(email, code) {
   console.log("RESET CODE:", code);
 }
 
+// a function that gets a string and escapes the characters that are unsafe
+// to drop straight into HTML (the email template below uses this for every
+// value that came from user input, e.g. a student's name)
+function escapeHtml(value) {
+  return String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+// a function that gets the reschedule details for one recipient and returns
+// the HTML body of the notification email. table-based layout with inline
+// styles only, since email clients don't support external/linked CSS.
+// audience: "student" (default) or "instructor" — only changes the wording,
+// not the branding/layout, so both emails read as the same family.
+function buildRescheduleEmailHtml({
+  firstName,
+  courseLevel,
+  lessonNumber,
+  oldWhen,
+  newWhen,
+  audience = "student",
+}) {
+  const name = escapeHtml(firstName);
+  const level = escapeHtml(courseLevel);
+
+  const introText =
+    audience === "instructor"
+      ? `Lesson <strong style="color:#0284c7;">${lessonNumber}</strong> of the
+         <strong style="color:#0284c7;">${level}</strong> surf course you're teaching has a new schedule.`
+      : `Lesson <strong style="color:#0284c7;">${lessonNumber}</strong> of your
+         <strong style="color:#0284c7;">${level}</strong> surf course has a new schedule.`;
+
+  const closingText =
+    audience === "instructor"
+      ? "Please update your calendar accordingly. If this new time creates a conflict on your end, reach out to the admin team as soon as possible."
+      : "This is usually due to weather conditions or instructor availability. We're sorry for the inconvenience and can't wait to see you back on the water! 🏄";
+
+  return `
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f0f9ff;padding:32px 16px;font-family:Arial,Helvetica,sans-serif;">
+  <tr>
+    <td align="center">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:480px;background-color:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 4px 16px rgba(2,132,199,0.12);">
+        <tr>
+          <td style="background-color:#0284c7;background-image:linear-gradient(135deg,#0284c7,#38bdf8);padding:28px 24px;text-align:center;">
+            <div style="font-size:30px;line-height:1;margin-bottom:6px;">🌊</div>
+            <div style="font-size:20px;font-weight:700;color:#ffffff;letter-spacing:0.3px;">BlueMars Surf Club</div>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:28px 28px 8px;">
+            <p style="margin:0 0 16px;font-size:16px;color:#0f172a;">Hi ${name},</p>
+            <p style="margin:0 0 20px;font-size:15px;line-height:1.6;color:#334155;">
+              ${introText}
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:0 28px 8px;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+              <tr>
+                <td style="padding:14px 16px;background-color:#fef2f2;border-radius:8px 8px 0 0;border:1px solid #fecaca;border-bottom:none;">
+                  <div style="font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:#b91c1c;margin-bottom:4px;">Previous Time</div>
+                  <div style="font-size:15px;color:#7f1d1d;text-decoration:line-through;">${oldWhen}</div>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding:14px 16px;background-color:#f0fdf4;border-radius:0 0 8px 8px;border:1px solid #bbf7d0;">
+                  <div style="font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:#15803d;margin-bottom:4px;">New Time</div>
+                  <div style="font-size:16px;font-weight:700;color:#166534;">${newWhen}</div>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:20px 28px 28px;">
+            <p style="margin:0;font-size:13.5px;line-height:1.6;color:#64748b;">
+              ${closingText}
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:18px 28px;background-color:#f8fafc;border-top:1px solid #e2e8f0;text-align:center;">
+            <p style="margin:0;font-size:12px;color:#94a3b8;">BlueMars Surf Club</p>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>`;
+}
+
+// a function that gets an array of registered students ({ email, first_name })
+// and the before/after schedule of a lesson, and emails every student that
+// the lesson moved (e.g. bad weather or an instructor becoming unavailable).
+// best-effort: one student's send failing must not stop the others or the
+// reschedule that already happened in the DB.
+async function sendLessonRescheduleEmail(students, lessonInfo) {
+  const {
+    courseLevel,
+    lessonNumber,
+    oldDate,
+    oldStart,
+    oldEnd,
+    newDate,
+    newStart,
+    newEnd,
+  } = lessonInfo;
+
+  const subject = `BlueMars Surf Club - Lesson ${lessonNumber} Rescheduled`;
+  const oldWhen = `${formatDateOnly(oldDate)} ${formatTimeOnly(oldStart)}-${formatTimeOnly(oldEnd)}`;
+  const newWhen = `${formatDateOnly(newDate)} ${formatTimeOnly(newStart)}-${formatTimeOnly(newEnd)}`;
+
+  const results = await Promise.all(
+    students.map((student) =>
+      transporter
+        .sendMail({
+          from: `"BlueMars Surf Club" <${process.env.EMAIL_USER}>`,
+          to: student.email,
+          subject,
+          text:
+            `Hi ${student.first_name},\n\n` +
+            `Lesson ${lessonNumber} of your ${courseLevel} surf course has been rescheduled.\n\n` +
+            `Previous time: ${oldWhen}\n` +
+            `New time: ${newWhen}\n\n` +
+            `This is usually due to weather conditions or instructor availability. We're sorry for the inconvenience and look forward to seeing you on the water.\n\n` +
+            `- BlueMars Surf Club`,
+          html: buildRescheduleEmailHtml({
+            firstName: student.first_name,
+            courseLevel,
+            lessonNumber,
+            oldWhen,
+            newWhen,
+          }),
+        })
+        .then(() => ({ email: student.email, ok: true }))
+        .catch((err) => {
+          console.error(
+            `Failed to send reschedule email to ${student.email}:`,
+            err.message,
+          );
+          return { email: student.email, ok: false };
+        }),
+    ),
+  );
+
+  return {
+    total: students.length,
+    sent: results.filter((r) => r.ok).length,
+    failed: results.filter((r) => !r.ok).map((r) => r.email),
+  };
+}
+
+// a function that gets the instructor actually teaching a lesson
+// ({ email, first_name } — the substitute if one is covering it, otherwise
+// the course's regular instructor) and the before/after schedule, and
+// emails them that the lesson moved. same branding as the student email,
+// worded for someone teaching it rather than attending it.
+async function sendInstructorRescheduleEmail(instructor, lessonInfo) {
+  const {
+    courseLevel,
+    lessonNumber,
+    oldDate,
+    oldStart,
+    oldEnd,
+    newDate,
+    newStart,
+    newEnd,
+  } = lessonInfo;
+
+  const subject = `BlueMars Surf Club - Lesson ${lessonNumber} Rescheduled`;
+  const oldWhen = `${formatDateOnly(oldDate)} ${formatTimeOnly(oldStart)}-${formatTimeOnly(oldEnd)}`;
+  const newWhen = `${formatDateOnly(newDate)} ${formatTimeOnly(newStart)}-${formatTimeOnly(newEnd)}`;
+
+  try {
+    await transporter.sendMail({
+      from: `"BlueMars Surf Club" <${process.env.EMAIL_USER}>`,
+      to: instructor.email,
+      subject,
+      text:
+        `Hi ${instructor.first_name},\n\n` +
+        `Lesson ${lessonNumber} of the ${courseLevel} surf course you're teaching has been rescheduled.\n\n` +
+        `Previous time: ${oldWhen}\n` +
+        `New time: ${newWhen}\n\n` +
+        `Please update your calendar accordingly. If this new time creates a conflict on your end, reach out to the admin team as soon as possible.\n\n` +
+        `- BlueMars Surf Club`,
+      html: buildRescheduleEmailHtml({
+        firstName: instructor.first_name,
+        courseLevel,
+        lessonNumber,
+        oldWhen,
+        newWhen,
+        audience: "instructor",
+      }),
+    });
+
+    return { email: instructor.email, ok: true };
+  } catch (err) {
+    console.error(
+      `Failed to send reschedule email to instructor ${instructor.email}:`,
+      err.message,
+    );
+    return { email: instructor.email, ok: false };
+  }
+}
+
 // a function that gets a phone number and returns true if it's valid and false if not
 // a valid phone number have 10 digits only, starting with 05
 function validatePhone(phone) {
@@ -253,6 +462,32 @@ function hasLessonConflict(existingLessons, newLessons) {
   return false;
 }
 
+// a function that gets an array of a course's existing lessons and an array
+// of new/incoming lessons for that same course. it returns true if any
+// incoming lesson falls on a calendar date another lesson of the course is
+// already using — a course meets at most once per day, so two of its own
+// lessons can never share a date, regardless of what time each is at.
+function hasSameCourseDateConflict(existingLessons, newLessons) {
+  for (const existing of existingLessons) {
+    for (const lesson of newLessons) {
+      if (formatDateOnly(existing.lesson_date) === formatDateOnly(lesson.lesson_date)) {
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
+
+// a function that gets an array of lessons (e.g. the ones submitted together
+// when creating a course or adding to one) and returns true if two of them
+// share a calendar date
+function hasDuplicateLessonDates(lessons) {
+  const dates = lessons.map((lesson) => formatDateOnly(lesson.lesson_date));
+
+  return new Set(dates).size !== dates.length;
+}
+
 // a function that gets a field of a lesson and returns true if they are
 // allowed fields and false if not
 function areValidLessonUpdateFields(fields) {
@@ -411,6 +646,7 @@ function areValidUserUpdateFields(fields) {
     "phone",
     "gender",
     "birth_date",
+    "password",
   ];
 
   return fields.every((field) => allowedFields.includes(field));
@@ -434,6 +670,8 @@ module.exports = {
   validatePassword,
   validateEmail,
   sendResetCode,
+  sendLessonRescheduleEmail,
+  sendInstructorRescheduleEmail,
   validatePhone,
   validateGender,
   validateBirthDate,
@@ -445,6 +683,8 @@ module.exports = {
   validateLessonDate,
   validateLessonTime,
   hasLessonConflict,
+  hasSameCourseDateConflict,
+  hasDuplicateLessonDates,
   areValidLessonUpdateFields,
   buildUpdatedLesson,
   validateLessonNumber,

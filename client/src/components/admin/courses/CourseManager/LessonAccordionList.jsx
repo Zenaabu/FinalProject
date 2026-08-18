@@ -8,6 +8,7 @@ import styles from "./LessonAccordionList.module.css";
 function LessonAccordionList({
   lessons,
   courseId,
+  courseInstructor,
   onLessonsChanged,
   nested = false,
 }) {
@@ -25,6 +26,7 @@ function LessonAccordionList({
               key={lesson.lesson_id}
               lesson={lesson}
               courseId={courseId}
+              courseInstructor={courseInstructor}
               onLessonsChanged={onLessonsChanged}
             />
           ))
