@@ -277,6 +277,114 @@ async function sendInstructorRescheduleEmail(instructor, lessonInfo) {
   }
 }
 
+// a function that gets a string and returns it with the first letter
+// capitalized (e.g. "beginner" -> "Beginner") — course level is stored
+// lowercase in the DB but reads better title-cased in an email
+function capitalize(value) {
+  const str = String(value);
+  return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
+// a function that gets the new user's first name and, if one exists, the
+// nearest upcoming course ({ level, start_date, end_date, instructor } from
+// courseQueries.getAvailableCourses — already ordered soonest-first) and
+// returns the HTML body of the signup welcome email. same table-based,
+// inline-styled layout as the reschedule emails so every club email reads
+// as one family.
+function buildWelcomeEmailHtml({ firstName, nearestCourse }) {
+  const name = escapeHtml(firstName);
+
+  const courseBlock = nearestCourse
+    ? `
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:4px 0 4px;">
+              <tr>
+                <td style="padding:16px 18px;background-color:#f0f9ff;border-radius:12px;border:1px solid #bae6fd;">
+                  <div style="font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:#0284c7;margin-bottom:6px;">Your Next Adventure Awaits</div>
+                  <div style="font-size:17px;font-weight:700;color:#0f172a;margin-bottom:4px;">${escapeHtml(capitalize(nearestCourse.level))} Surf Course</div>
+                  <div style="font-size:14px;color:#334155;margin-bottom:2px;">📅 Starts ${formatDateOnly(nearestCourse.start_date)}</div>
+                  <div style="font-size:14px;color:#334155;">🏄 Instructor: ${escapeHtml(nearestCourse.instructor)}</div>
+                </td>
+              </tr>
+            </table>
+            <p style="margin:16px 0 0;font-size:14px;line-height:1.6;color:#334155;">
+              Log in to your dashboard to check it out and grab your spot before it fills up!
+            </p>`
+    : `
+            <p style="margin:0;font-size:14px;line-height:1.6;color:#334155;">
+              We don't have any upcoming courses open just yet — keep an eye on your inbox, we'll let you know the moment new dates go live.
+            </p>`;
+
+  return `
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f0f9ff;padding:32px 16px;font-family:Arial,Helvetica,sans-serif;">
+  <tr>
+    <td align="center">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:480px;background-color:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 4px 16px rgba(2,132,199,0.12);">
+        <tr>
+          <td style="background-color:#0284c7;background-image:linear-gradient(135deg,#0284c7,#38bdf8);padding:32px 24px;text-align:center;">
+            <div style="font-size:34px;line-height:1;margin-bottom:8px;">🌊🏄</div>
+            <div style="font-size:22px;font-weight:800;color:#ffffff;letter-spacing:0.3px;">Welcome to BlueMars Surf Club!</div>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:28px 28px 8px;">
+            <p style="margin:0 0 16px;font-size:16px;color:#0f172a;">Hi ${name},</p>
+            <p style="margin:0 0 4px;font-size:15px;line-height:1.6;color:#334155;">
+              Your account has been created successfully — welcome aboard! We're stoked to have you join the club.
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:12px 28px 28px;">
+            ${courseBlock}
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:18px 28px;background-color:#f8fafc;border-top:1px solid #e2e8f0;text-align:center;">
+            <p style="margin:0;font-size:12px;color:#94a3b8;">BlueMars Surf Club</p>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>`;
+}
+
+// a function that gets a new user ({ email, first_name, user_id }) and
+// emails them a welcome message once signup succeeds, including the
+// nearest upcoming course if one exists (courseQ.getAvailableCourses is
+// already ordered soonest-first — pass its first row here, or null/undefined
+// if there isn't one). best-effort: a failed send must not affect signup,
+// so the caller should not await this on the response path.
+async function sendWelcomeEmail(user, nearestCourse) {
+  const subject = "Welcome to BlueMars Surf Club!";
+
+  const courseText = nearestCourse
+    ? `Your next adventure awaits: our ${capitalize(nearestCourse.level)} surf course starts ${formatDateOnly(nearestCourse.start_date)} with instructor ${nearestCourse.instructor}. Log in to your dashboard to check it out and grab your spot before it fills up!\n\n`
+    : "We don't have any upcoming courses open just yet — keep an eye on your inbox, we'll let you know the moment new dates go live.\n\n";
+
+  try {
+    await transporter.sendMail({
+      from: `"BlueMars Surf Club" <${process.env.EMAIL_USER}>`,
+      to: user.email,
+      subject,
+      text:
+        `Hi ${user.first_name},\n\n` +
+        `Your account has been created successfully — welcome aboard! We're stoked to have you join the club.\n\n` +
+        courseText +
+        `- BlueMars Surf Club`,
+      html: buildWelcomeEmailHtml({
+        firstName: user.first_name,
+        nearestCourse,
+      }),
+    });
+
+    return { ok: true };
+  } catch (err) {
+    console.error(`Failed to send welcome email to ${user.email}:`, err.message);
+    return { ok: false };
+  }
+}
+
 // a function that gets a phone number and returns true if it's valid and false if not
 // a valid phone number have 10 digits only, starting with 05
 function validatePhone(phone) {
@@ -672,6 +780,7 @@ module.exports = {
   sendResetCode,
   sendLessonRescheduleEmail,
   sendInstructorRescheduleEmail,
+  sendWelcomeEmail,
   validatePhone,
   validateGender,
   validateBirthDate,

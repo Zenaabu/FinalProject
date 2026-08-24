@@ -10,8 +10,10 @@ const {
   requireLogin,
   validateSignup,
 } = require("../validations/authValidation");
+const { sendWelcomeEmail } = require("../validations/utils");
 
 const userQ = require("../queries/usersQueries");
+const courseQ = require("../queries/courseQueries");
 
 // ensure the logged-in user can only access their own data
 function requireSelf(req, res, next) {
@@ -73,9 +75,27 @@ router.post("/signup", validateSignup, (req, res) => {
           });
         }
 
-        return res.status(201).json({
+        res.status(201).json({
           success: true,
           message: "Signup success",
+        });
+
+        // welcome email — best-effort, fired after responding so a slow or
+        // failed send never delays/affects the signup itself. reuses the
+        // same "available courses" query the catalog uses, already ordered
+        // soonest-first, so the first row is the nearest upcoming course.
+        courseQ.getAvailableCourses(user_id, (err3, courses) => {
+          if (err3) {
+            console.error(
+              "Failed to load nearest course for welcome email:",
+              err3.message,
+            );
+          }
+
+          sendWelcomeEmail(
+            { email, first_name },
+            !err3 && courses && courses.length > 0 ? courses[0] : null,
+          );
         });
       });
     } catch (error) {
