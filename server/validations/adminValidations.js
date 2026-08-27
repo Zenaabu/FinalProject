@@ -6,6 +6,8 @@ const {
   validateLessonDate,
   validateLessonTime,
   hasLessonConflict,
+  findLessonInsideApprovedConstraint,
+  formatDateOnly,
   hasSameCourseDateConflict,
   hasDuplicateLessonDates,
   areValidLessonUpdateFields,
@@ -482,6 +484,63 @@ function checkInstructorLessonConflict(
   );
 }
 
+// not for export
+// a middleware helper that gets an instructor's user_id, a date range, and
+// an array of lessons, and refuses if any lesson falls on a date the
+// instructor was approved as unavailable for (instructor_constraints with
+// status = 'approved'). Mirrors checkInstructorLessonConflict above, but
+// checks against approved time off instead of the instructor's other lessons
+// — this is the check that was missing when assigning an instructor to a
+// brand-new course, which let an admin schedule someone during their own
+// approved vacation.
+function checkInstructorAvoidsApprovedConstraints(
+  user_id,
+  start_date,
+  end_date,
+  lessons,
+  res,
+  next,
+) {
+  adminQ.getApprovedConstraintsInRange(
+    user_id,
+    start_date,
+    end_date,
+    (err, constraints) => {
+      if (err) {
+        return res.status(500).json({
+          success: false,
+          message: err.message,
+        });
+      }
+
+      const hit = findLessonInsideApprovedConstraint(constraints, lessons);
+      if (hit) {
+        return res.status(409).json({
+          success: false,
+          message: `The instructor was approved as unavailable on ${formatDateOnly(hit.lesson.lesson_date)} ("${hit.constraint.notes}"). Choose a different instructor or adjust the lesson dates.`,
+        });
+      }
+
+      next();
+    },
+  );
+}
+
+// a middleware that stops a new course from being created with lessons that
+// fall on a date the assigned instructor was approved as unavailable for
+function validateInstructorAvoidsApprovedConstraints(req, res, next) {
+  const { user_id, start_date, end_date, lessons } = req.body;
+
+  checkInstructorAvoidsApprovedConstraints(
+    user_id,
+    start_date,
+    end_date,
+    lessons,
+    res,
+    next,
+  );
+}
+
 // a middleware that validates that there is no conflict in the instructor lessons
 // when adding the lessons to an existing course
 function validateInstructorLessonConflictForExistingCourse(req, res, next) {
@@ -489,6 +548,26 @@ function validateInstructorLessonConflictForExistingCourse(req, res, next) {
   const course = req.course;
 
   checkInstructorLessonConflict(
+    course.user_id,
+    course.start_date,
+    course.end_date,
+    lessons,
+    res,
+    next,
+  );
+}
+
+// a middleware that stops new lessons from being added to an existing
+// course on a date the instructor was approved as unavailable for
+function validateInstructorAvoidsApprovedConstraintsForExistingCourse(
+  req,
+  res,
+  next,
+) {
+  const { lessons } = req.body;
+  const course = req.course;
+
+  checkInstructorAvoidsApprovedConstraints(
     course.user_id,
     course.start_date,
     course.end_date,
@@ -1090,6 +1169,45 @@ function validateUpdatedCourseInstructorConflict(req, res, next) {
   });
 }
 
+// a middleware that stops a course update (assigning a different instructor
+// and/or changing its dates) from landing the course's existing lessons on
+// a date the instructor was approved as unavailable for
+function validateUpdatedCourseInstructorAvoidsApprovedConstraints(
+  req,
+  res,
+  next,
+) {
+  const changedInstructor = req.body.user_id !== undefined;
+  const changedDates =
+    req.body.start_date !== undefined || req.body.end_date !== undefined;
+
+  if (!changedInstructor && !changedDates) return next();
+
+  const courseId = req.params.course_id;
+  const updatedCourse = req.updatedCourse;
+
+  adminQ.getLessonsByCourseId(courseId, (err, courseLessons) => {
+    if (err) {
+      return res.status(500).json({
+        success: false,
+        message: err.message,
+      });
+    }
+
+    // no lessons yet, so nothing can collide
+    if (courseLessons.length === 0) return next();
+
+    checkInstructorAvoidsApprovedConstraints(
+      updatedCourse.user_id,
+      updatedCourse.start_date,
+      updatedCourse.end_date,
+      courseLessons,
+      res,
+      next,
+    );
+  });
+}
+
 // a middleware that checks the instructor constraint in the params exists,
 // and attaches it to the request
 function validateConstraintExists(req, res, next) {
@@ -1208,10 +1326,12 @@ module.exports = {
   validateLessonsDetails,
   validateDuplicateCourse,
   validateInstructorLessonConflict,
+  validateInstructorAvoidsApprovedConstraints,
   isInstructor,
   validateCourseExistsAndCanAddLessons,
   validateAddLessonsToExistingCourse,
   validateInstructorLessonConflictForExistingCourse,
+  validateInstructorAvoidsApprovedConstraintsForExistingCourse,
   validateLessonConflictInSameCourse,
   validateVatUpdate,
   validateCourseExists,
@@ -1227,6 +1347,7 @@ module.exports = {
   validateUpdatedCourseCapacity,
   validateUpdatedCourseTotalLessons,
   validateUpdatedCourseInstructorConflict,
+  validateUpdatedCourseInstructorAvoidsApprovedConstraints,
   validateConstraintExists,
   validateConstraintStatusValue,
   validateSubstituteInstructor,

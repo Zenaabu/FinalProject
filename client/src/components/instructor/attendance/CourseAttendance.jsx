@@ -80,9 +80,23 @@ function CourseAttendance() {
     }
   }, []);
 
+  // a lesson with a substitute assigned is no longer this instructor's to
+  // mark — the substitute is responsible for it now, so don't even ask the
+  // server for its roster (it would just refuse with a 403)
+  const selectedLesson = course?.lessons.find(
+    (l) => l.lesson_id === selectedLessonId,
+  );
+  const coveredBySubstitute = Boolean(selectedLesson?.substitute_instructor_id);
+
   useEffect(() => {
-    if (selectedLessonId) loadRoster(selectedLessonId);
-  }, [selectedLessonId, loadRoster]);
+    if (!selectedLessonId || coveredBySubstitute) {
+      setLessonInfo(null);
+      setRoster([]);
+      setRosterError(null);
+      return;
+    }
+    loadRoster(selectedLessonId);
+  }, [selectedLessonId, coveredBySubstitute, loadRoster]);
 
   // ── Mark one student ─────────────────────────────────────────────────────
   const setAttendance = (user_id, attended) => {

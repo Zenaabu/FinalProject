@@ -96,7 +96,6 @@ router.post("/forget-password", validateEmailFormat, (req, res) => {
     const user = rows[0];
 
     const code = Math.floor(100000 + Math.random() * 900000).toString();
-    console.log(`[DEV] OTP for ${user.email}: ${code}`);
     const hashedCode = await bcrypt.hash(code, 10);
 
     const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
@@ -111,7 +110,15 @@ router.post("/forget-password", validateEmailFormat, (req, res) => {
           return res.status(500).json({ success: false, message: err.message });
         }
 
-        await sendResetCode(user.email, code);
+        const { ok } = await sendResetCode(user.email, code, user.first_name);
+
+        if (!ok) {
+          return res.status(500).json({
+            success: false,
+            message:
+              "Failed to send the reset code email. Please try again shortly.",
+          });
+        }
 
         res.json({
           success: true,

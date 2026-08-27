@@ -4,6 +4,7 @@ const router = express.Router();
 const adminQ = require("../queries/adminQueries");
 const courseQ = require("../queries/courseQueries");
 const financialsQ = require("../queries/financialsQueries");
+const reportsQ = require("../queries/reportsQueries");
 const settingsQ = require("../queries/settingsQueries");
 
 const { requireLogin, requireAdmin } = require("../validations/authValidation");
@@ -303,15 +304,31 @@ router.post(
   },
 );
 
-// GET all instructors (users with role = 'instructor')
+// GET all instructors (users with role = 'instructor') — optionally scoped
+// to a set of specific dates with ?lesson_dates=YYYY-MM-DD,YYYY-MM-DD,...
+// (typically the lesson dates entered so far for a new course), in which
+// case instructors with an approved time-off constraint covering any one of
+// those exact dates are left out
 // url: /api/admin/instructors
 router.get("/instructors", requireLogin, requireAdmin, (req, res) => {
-  adminQ.getInstructors((err, rows) => {
+  const { lesson_dates } = req.query;
+
+  const handleResult = (err, rows) => {
     if (err) {
       return res.status(500).json({ success: false, message: err.message });
     }
     res.json({ success: true, instructors: rows });
-  });
+  };
+
+  if (lesson_dates) {
+    const dates = lesson_dates
+      .split(",")
+      .map((d) => d.trim())
+      .filter(Boolean);
+    adminQ.getInstructorsAvailableForDates(dates, handleResult);
+  } else {
+    adminQ.getInstructors(handleResult);
+  }
 });
 
 // GET instructors free to substitute a specific lesson slot — excludes the
@@ -648,6 +665,218 @@ router.put(
       }
 
       res.json({ success: true, vat_percent: req.vat_percent });
+    });
+  },
+);
+
+// ── Reports & Analytics ───────────────────────────────────────────────────
+// All /reports/* endpoints below reuse the same [startDate, endDate]
+// resolution as /financials/* (resolveDateRange, defined above — default:
+// the current month).
+
+// GET the headline KPIs for the admin Reports page, scoped to
+// [startDate, endDate]: total registrations, distinct active customers,
+// attendance rate among marked lessons, and repeat-instructor bookings.
+// url: /api/admin/reports/summary?startDate=2026-08-01&endDate=2026-08-11
+router.get("/reports/summary", requireLogin, requireAdmin, (req, res) => {
+  const { startDate, endDate } = resolveDateRange(req);
+
+  reportsQ.getReportsSummary(startDate, endDate, (err, rows) => {
+    if (err) {
+      return res.status(500).json({ success: false, message: err.message });
+    }
+
+    const row = rows[0];
+    const presentCount = Number(row.present_count);
+    const markedCount = Number(row.marked_count);
+
+    res.json({
+      success: true,
+      start_date: startDate,
+      end_date: endDate,
+      summary: {
+        total_registrations: Number(row.total_registrations),
+        active_customers: Number(row.active_customers),
+        attendance_rate_pct:
+          markedCount > 0 ? (presentCount / markedCount) * 100 : null,
+        repeat_instructor_bookings: Number(row.repeat_instructor_bookings),
+      },
+    });
+  });
+});
+
+// GET how many distinct customers who registered in [startDate, endDate]
+// are male vs. female — always both genders, even one with zero, so the
+// chart never silently drops a bar.
+// url: /api/admin/reports/gender-distribution?startDate=2026-08-01&endDate=2026-08-11
+router.get(
+  "/reports/gender-distribution",
+  requireLogin,
+  requireAdmin,
+  (req, res) => {
+    const { startDate, endDate } = resolveDateRange(req);
+
+    reportsQ.getGenderDistribution(startDate, endDate, (err, rows) => {
+      if (err) {
+        return res.status(500).json({ success: false, message: err.message });
+      }
+
+      const countByGender = {};
+      for (const row of rows) countByGender[row.gender] = Number(row.user_count);
+
+      res.json({
+        success: true,
+        start_date: startDate,
+        end_date: endDate,
+        genders: [
+          { gender: "female", user_count: countByGender.female || 0 },
+          { gender: "male", user_count: countByGender.male || 0 },
+        ],
+      });
+    });
+  },
+);
+
+// GET registrations in [startDate, endDate] grouped by calendar month
+// (Jan-Dec, summed across every year the range spans), gap-filled so
+// every month appears even with zero registrations — this is what
+// reveals the seasonal high/low, not just which single month had more.
+// url: /api/admin/reports/registrations-by-month?startDate=2026-01-01&endDate=2026-12-31
+router.get(
+  "/reports/registrations-by-month",
+  requireLogin,
+  requireAdmin,
+  (req, res) => {
+    const { startDate, endDate } = resolveDateRange(req);
+
+    reportsQ.getRegistrationsByMonth(startDate, endDate, (err, rows) => {
+      if (err) {
+        return res.status(500).json({ success: false, message: err.message });
+      }
+
+      const MONTH_LABELS = [
+        "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+        "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+      ];
+      const countByMonth = {};
+      for (const row of rows) countByMonth[row.month_num] = Number(row.registrations);
+
+      const months = MONTH_LABELS.map((label, i) => ({
+        month_num: i + 1,
+        month_label: label,
+        registrations: countByMonth[i + 1] || 0,
+      }));
+
+      const peakCount = Math.max(...months.map((m) => m.registrations));
+      const peakMonths =
+        peakCount > 0
+          ? months.filter((m) => m.registrations === peakCount).map((m) => m.month_num)
+          : [];
+
+      res.json({
+        success: true,
+        start_date: startDate,
+        end_date: endDate,
+        months,
+        peak_months: peakMonths,
+      });
+    });
+  },
+);
+
+// GET present vs. absent counts for every attendance record marked on a
+// lesson within [startDate, endDate], plus the resulting attendance rate.
+// url: /api/admin/reports/attendance-summary?startDate=2026-08-01&endDate=2026-08-11
+router.get(
+  "/reports/attendance-summary",
+  requireLogin,
+  requireAdmin,
+  (req, res) => {
+    const { startDate, endDate } = resolveDateRange(req);
+
+    reportsQ.getAttendanceSummary(startDate, endDate, (err, rows) => {
+      if (err) {
+        return res.status(500).json({ success: false, message: err.message });
+      }
+
+      const countByStatus = {};
+      for (const row of rows) countByStatus[row.attended] = Number(row.cnt);
+
+      const present = countByStatus.present || 0;
+      const absent = countByStatus.absent || 0;
+      const total = present + absent;
+
+      res.json({
+        success: true,
+        start_date: startDate,
+        end_date: endDate,
+        present,
+        absent,
+        total,
+        attendance_rate_pct: total > 0 ? (present / total) * 100 : null,
+      });
+    });
+  },
+);
+
+// GET registrations in [startDate, endDate] grouped by course level —
+// always all three levels, in beginner -> intermediate -> advanced order.
+// url: /api/admin/reports/registrations-by-level?startDate=2026-08-01&endDate=2026-08-11
+router.get(
+  "/reports/registrations-by-level",
+  requireLogin,
+  requireAdmin,
+  (req, res) => {
+    const { startDate, endDate } = resolveDateRange(req);
+
+    reportsQ.getRegistrationsByLevel(startDate, endDate, (err, rows) => {
+      if (err) {
+        return res.status(500).json({ success: false, message: err.message });
+      }
+
+      const LEVEL_ORDER = ["beginner", "intermediate", "advanced"];
+      const countByLevel = {};
+      for (const row of rows) countByLevel[row.level] = Number(row.registrations);
+
+      const levels = LEVEL_ORDER.map((level) => ({
+        level,
+        registrations: countByLevel[level] || 0,
+      }));
+
+      res.json({ success: true, start_date: startDate, end_date: endDate, levels });
+    });
+  },
+);
+
+// GET every instructor ranked by "loyalty": how many times a student's
+// 2nd (or later) registration with the same instructor happened in
+// [startDate, endDate] — a student's first-ever booking with an
+// instructor never counts. Every instructor appears, even at 0.
+// url: /api/admin/reports/instructor-loyalty?startDate=2026-08-01&endDate=2026-08-11
+router.get(
+  "/reports/instructor-loyalty",
+  requireLogin,
+  requireAdmin,
+  (req, res) => {
+    const { startDate, endDate } = resolveDateRange(req);
+
+    reportsQ.getInstructorLoyalty(startDate, endDate, (err, rows) => {
+      if (err) {
+        return res.status(500).json({ success: false, message: err.message });
+      }
+
+      const instructors = rows.map((row) => ({
+        instructor_id: row.instructor_id,
+        instructor_name: row.instructor_name,
+        repeat_count: Number(row.repeat_count),
+      }));
+
+      res.json({
+        success: true,
+        start_date: startDate,
+        end_date: endDate,
+        instructors,
+      });
     });
   },
 );

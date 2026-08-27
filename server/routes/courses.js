@@ -11,16 +11,19 @@ const {
   validateLessonsDetails,
   validateDuplicateCourse,
   validateInstructorLessonConflict,
+  validateInstructorAvoidsApprovedConstraints,
   validateCourseExists,
   validateCourseExistsAndCanAddLessons,
   validateAddLessonsToExistingCourse,
   validateInstructorLessonConflictForExistingCourse,
+  validateInstructorAvoidsApprovedConstraintsForExistingCourse,
   validateLessonConflictInSameCourse,
   validateUpdateCourseDetails,
   validateUpdatedCourseCapacity,
   validateUpdatedCourseTotalLessons,
   validateUpdatedCourseDatesIncludeLessons,
   validateUpdatedCourseInstructorConflict,
+  validateUpdatedCourseInstructorAvoidsApprovedConstraints,
   validateLessonExists,
   validateLessonNotAlreadyPassed,
   validateLessonCourseExists,
@@ -214,6 +217,7 @@ router.post(
   validateLessonsDetails,
   validateDuplicateCourse,
   validateInstructorLessonConflict,
+  validateInstructorAvoidsApprovedConstraints,
   (req, res) => {
     const lessons = req.body.lessons;
 
@@ -294,6 +298,7 @@ router.put(
   validateUpdatedCourseTotalLessons,
   validateUpdatedCourseDatesIncludeLessons,
   validateUpdatedCourseInstructorConflict,
+  validateUpdatedCourseInstructorAvoidsApprovedConstraints,
   (req, res) => {
     const { course_id } = req.params;
 
@@ -351,6 +356,7 @@ router.post(
   validateAddLessonsToExistingCourse,
   validateLessonConflictInSameCourse,
   validateInstructorLessonConflictForExistingCourse,
+  validateInstructorAvoidsApprovedConstraintsForExistingCourse,
   (req, res) => {
     const courseId = req.params.course_id;
     const { lessons } = req.body;

@@ -22,7 +22,7 @@
 //   lessons       ← lessons state array  (required: at least 1)
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Waves,
   FileText,
@@ -95,6 +95,62 @@ function CourseCreateForm({ instructors = [], onCancel, onCreated }) {
 
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
+
+  // ── Instructors available for the lesson dates entered so far ────────────
+  // null until at least one lesson row has a date — the unfiltered
+  // `instructors` prop is shown until then, since there's nothing to filter
+  // against yet. Deliberately keyed off the actual lesson dates rather than
+  // start_date/end_date: an instructor's approved vacation should only rule
+  // them out if a lesson is actually scheduled inside it, not just because
+  // the vacation happens to fall somewhere inside the course's overall span.
+  const [availableInstructors, setAvailableInstructors] = useState(null);
+  const [filteringInstructors, setFilteringInstructors] = useState(false);
+
+  const lessonDatesKey = [...new Set(lessons.map((l) => l.lesson_date))]
+    .filter(Boolean)
+    .sort()
+    .join(",");
+
+  useEffect(() => {
+    if (!lessonDatesKey) {
+      setAvailableInstructors(null);
+      return;
+    }
+
+    setFilteringInstructors(true);
+    fetch(`/api/admin/instructors?lesson_dates=${lessonDatesKey}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) setAvailableInstructors(data.instructors);
+      })
+      .catch(() => {
+        // non-blocking: fall back to the unfiltered instructor list
+      })
+      .finally(() => setFilteringInstructors(false));
+  }, [lessonDatesKey]);
+
+  // if the instructor picked earlier drops out once the dates narrow the
+  // list (e.g. a lesson date was added that lands on their approved
+  // vacation), clear the now-invalid selection instead of silently
+  // submitting it, and say why so it doesn't look like the field just
+  // emptied itself
+  useEffect(() => {
+    if (!availableInstructors || !form.user_id) return;
+    const stillAvailable = availableInstructors.some(
+      (i) => i.user_id === form.user_id,
+    );
+    if (!stillAvailable) {
+      setForm((prev) => ({ ...prev, user_id: "" }));
+      setErrors((prev) => ({
+        ...prev,
+        user_id:
+          "The previously selected instructor is unavailable for one of these lesson dates. Please choose another.",
+      }));
+    }
+  }, [availableInstructors, form.user_id]);
+
+  const displayedInstructors = availableInstructors ?? instructors;
+  const hasLessonDates = Boolean(lessonDatesKey);
 
   // ── Course field change handler ───────────────────────────────────────────
   const handleChange = (e) => {
@@ -394,7 +450,11 @@ function CourseCreateForm({ instructors = [], onCancel, onCreated }) {
           {/* ── Assigned Instructor (spans both columns) ─────────────────── */}
           <Field
             icon={GraduationCap}
-            label="Assigned Instructor"
+            label={
+              hasLessonDates
+                ? "Assigned Instructor (available for the lessons below)"
+                : "Assigned Instructor"
+            }
             error={errors.user_id}
             span2
           >
@@ -404,13 +464,18 @@ function CourseCreateForm({ instructors = [], onCancel, onCreated }) {
               name="user_id"
               value={form.user_id}
               onChange={handleChange}
+              disabled={filteringInstructors}
             >
               <option value="">
-                {instructors.length === 0
-                  ? "Loading instructors…"
-                  : "— Select an instructor —"}
+                {filteringInstructors
+                  ? "Checking availability…"
+                  : displayedInstructors.length === 0
+                    ? hasLessonDates
+                      ? "No instructors available for these lesson dates"
+                      : "Loading instructors…"
+                    : "— Select an instructor —"}
               </option>
-              {instructors.map((inst) => (
+              {displayedInstructors.map((inst) => (
                 <option key={inst.user_id} value={inst.user_id}>
                   {inst.first_name} {inst.last_name}
                 </option>

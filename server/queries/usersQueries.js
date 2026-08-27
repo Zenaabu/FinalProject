@@ -19,7 +19,7 @@ function findUserByEmail(email, cb) {
   const conn = db.getConnection();
 
   conn.query(
-    `SELECT user_id, email
+    `SELECT user_id, email, first_name
      FROM users
      WHERE email = ?`,
     [email],

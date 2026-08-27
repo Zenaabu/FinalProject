@@ -138,7 +138,7 @@ export default function LoginForm({ styles, viewState, setViewState }) {
     return Object.keys(newErrors).length === 0;
   };
 
-  // Placeholder: check if email exists in the database and send the OTP code
+  // checks if the email exists in the database and emails the OTP code
   const handleSendOTP = async (email) => {
     if (!validateForgotEmail()) return;
     setIsLoading(true);
@@ -152,7 +152,7 @@ export default function LoginForm({ styles, viewState, setViewState }) {
       if (data.success) {
         setViewState(VIEW_STATE.VERIFY_OTP);
         setErrors({});
-        toast.success("OTP sent! Check the server console.");
+        toast.success("Code sent! Check your email.");
       } else {
         toast.error(data.message || "Failed to send OTP. Please try again.");
       }

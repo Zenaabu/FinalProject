@@ -1,0 +1,92 @@
+/* ============================================================
+   InstructorLoyaltyChart.module.css
+   ============================================================ */
+
+.card {
+  background: #fff;
+  border-radius: 14px;
+  padding: 1.25rem 1.5rem 1.35rem;
+  box-shadow:
+    0 1px 10px rgba(2, 132, 199, 0.08),
+    0 1px 2px rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(56, 189, 248, 0.12);
+  height: 100%;
+}
+
+.cardHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-ocean-text);
+  margin: 0;
+}
+
+.period {
+  font-size: 0.78rem;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.topBadge {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.3rem 0.7rem;
+  border-radius: 999px;
+  background: rgba(2, 132, 199, 0.1);
+  color: #0284c7;
+  font-size: 0.78rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.chartWrap {
+  width: 100%;
+}
+
+.loading {
+  height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #94a3b8;
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+/* ── Bar labels (SVG text) ──────────────────────────────────────────────── */
+.labelCount {
+  font-size: 13px;
+  font-weight: 700;
+  fill: #0f172a;
+}
+
+/* ── Tooltip ─────────────────────────────────────────────────────────────── */
+.tooltip {
+  background: #fff;
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  border-radius: 8px;
+  padding: 0.5rem 0.75rem;
+  box-shadow: 0 4px 16px rgba(2, 132, 199, 0.15);
+}
+
+.tooltipLabel {
+  font-size: 0.78rem;
+  color: #0f172a;
+  font-weight: 600;
+  margin-bottom: 0.2rem;
+}
+
+.tooltipValue {
+  font-size: 0.92rem;
+  color: #0284c7;
+  font-weight: 700;
+}

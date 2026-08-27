@@ -54,18 +54,33 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-// TODO: to change: add the email sender here.
-// a function that gets the email and a code
-// it sends the reset code to the email we've got
-async function sendResetCode(email, code) {
-  // await transporter.sendMail({
-  //   from: process.env.EMAIL_USER,
-  //   to: email,
-  //   subject: "Password Reset Code",
-  //   text: `Your reset code is: ${code}. It is valid for 5 minutes.`,
-  // });
+// a function that gets the recipient's email, the OTP code, and (optionally)
+// their first name for the greeting — it emails the reset code, the same way
+// sendWelcomeEmail/sendInstructorRescheduleEmail send theirs. Returns
+// { ok: true } on success or { ok: false } on failure so the caller (the
+// forget-password route) can tell the user honestly whether the email went
+// out, rather than always claiming success.
+async function sendResetCode(email, code, firstName) {
+  const subject = "BlueMars Surf Club - Password Reset Code";
 
-  console.log("RESET CODE:", code);
+  try {
+    await transporter.sendMail({
+      from: `"BlueMars Surf Club" <${process.env.EMAIL_USER}>`,
+      to: email,
+      subject,
+      text:
+        `Hi ${firstName || "there"},\n\n` +
+        `Your BlueMars Surf Club password reset code is: ${code}\n\n` +
+        `This code expires in 5 minutes. If you didn't request a password reset, you can safely ignore this email.\n\n` +
+        `- BlueMars Surf Club`,
+      html: buildResetCodeEmailHtml({ firstName, code }),
+    });
+
+    return { ok: true };
+  } catch (err) {
+    console.error(`Failed to send reset code email to ${email}:`, err.message);
+    return { ok: false };
+  }
 }
 
 // a function that gets a string and escapes the characters that are unsafe
@@ -283,6 +298,63 @@ async function sendInstructorRescheduleEmail(instructor, lessonInfo) {
 function capitalize(value) {
   const str = String(value);
   return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
+// a function that gets a first name (optional) and an OTP code and returns
+// the HTML body of the password-reset email. same table-based, inline-styled
+// layout as the welcome/reschedule emails; the code itself is the one thing
+// that needs to stand out, so it gets a large, letter-spaced, monospace box
+// rather than sitting in a paragraph.
+function buildResetCodeEmailHtml({ firstName, code }) {
+  const name = escapeHtml(firstName || "there");
+  const digits = String(code).split("").join(" ");
+
+  return `
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f0f9ff;padding:32px 16px;font-family:Arial,Helvetica,sans-serif;">
+  <tr>
+    <td align="center">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:480px;background-color:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 4px 16px rgba(2,132,199,0.12);">
+        <tr>
+          <td style="background-color:#0284c7;background-image:linear-gradient(135deg,#0284c7,#38bdf8);padding:32px 24px;text-align:center;">
+            <div style="font-size:34px;line-height:1;margin-bottom:8px;">🔐🌊</div>
+            <div style="font-size:22px;font-weight:800;color:#ffffff;letter-spacing:0.3px;">Password Reset Code</div>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:28px 28px 8px;">
+            <p style="margin:0 0 16px;font-size:16px;color:#0f172a;">Hi ${name},</p>
+            <p style="margin:0 0 4px;font-size:15px;line-height:1.6;color:#334155;">
+              Use the code below to reset your BlueMars Surf Club password. It expires in 5 minutes.
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:12px 28px 4px;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+              <tr>
+                <td align="center" style="padding:18px 12px;background-color:#f0f9ff;border-radius:12px;border:1px solid #bae6fd;">
+                  <div style="font-family:'Courier New',Courier,monospace;font-size:32px;font-weight:800;letter-spacing:8px;color:#0284c7;">${escapeHtml(digits)}</div>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:16px 28px 28px;">
+            <p style="margin:0;font-size:13px;line-height:1.6;color:#94a3b8;">
+              Didn't request this? You can safely ignore this email — your password won't change unless this code is entered.
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:18px 28px;background-color:#f8fafc;border-top:1px solid #e2e8f0;text-align:center;">
+            <p style="margin:0;font-size:12px;color:#94a3b8;">BlueMars Surf Club</p>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>`;
 }
 
 // a function that gets the new user's first name and, if one exists, the
@@ -570,6 +642,26 @@ function hasLessonConflict(existingLessons, newLessons) {
   return false;
 }
 
+// a function that gets an array of APPROVED instructor_constraints rows and
+// an array of lessons (lesson_date/start_time/end_time). it returns the
+// first lesson that falls on a date covered by one of those constraints
+// (i.e. a date the instructor was approved as unavailable for), paired with
+// the constraint it hit — or null if none of the lessons conflict
+function findLessonInsideApprovedConstraint(constraints, lessons) {
+  for (const lesson of lessons) {
+    const lessonDate = formatDateOnly(lesson.lesson_date);
+    const constraint = constraints.find(
+      (c) =>
+        lessonDate >= formatDateOnly(c.start_time) &&
+        lessonDate <= formatDateOnly(c.end_time),
+    );
+
+    if (constraint) return { lesson, constraint };
+  }
+
+  return null;
+}
+
 // a function that gets an array of a course's existing lessons and an array
 // of new/incoming lessons for that same course. it returns true if any
 // incoming lesson falls on a calendar date another lesson of the course is
@@ -792,6 +884,7 @@ module.exports = {
   validateLessonDate,
   validateLessonTime,
   hasLessonConflict,
+  findLessonInsideApprovedConstraint,
   hasSameCourseDateConflict,
   hasDuplicateLessonDates,
   areValidLessonUpdateFields,

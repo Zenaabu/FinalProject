@@ -58,6 +58,41 @@ function getInstructors(cb) {
   );
 }
 
+// a function that gets an array of specific dates (the lesson dates entered
+// so far for a new course) and returns every instructor who does NOT have
+// an APPROVED constraint covering any one of those exact dates — used to
+// populate the instructor dropdown when creating a course. Deliberately
+// checks each lesson date rather than the course's whole start/end range: an
+// instructor's approved vacation only makes them unavailable for a course if
+// a lesson is actually scheduled inside it, not just because the vacation
+// happens to fall somewhere between the course's first and last day.
+function getInstructorsAvailableForDates(dates, cb) {
+  if (!dates || dates.length === 0) {
+    return getInstructors(cb);
+  }
+
+  const conn = db.getConnection();
+
+  const dateConditions = dates
+    .map(() => "? BETWEEN DATE(ic.start_time) AND DATE(ic.end_time)")
+    .join(" OR ");
+
+  conn.query(
+    `SELECT u.user_id, u.first_name, u.last_name
+     FROM users u
+     WHERE u.role = 'instructor'
+       AND NOT EXISTS (
+         SELECT 1 FROM instructor_constraints ic
+         WHERE ic.user_id = u.user_id
+           AND ic.status = 'approved'
+           AND (${dateConditions})
+       )
+     ORDER BY u.first_name, u.last_name`,
+    dates,
+    cb,
+  );
+}
+
 // a function that returns the KPI numbers shown on the admin dashboard home
 // page: active courses, distinct students who ever registered, instructor
 // constraints still awaiting an approve/reject decision, courses starting
@@ -204,6 +239,27 @@ function findApprovedConstraintOnDate(user_id, date, cb) {
        AND status = 'approved'
        AND ? BETWEEN DATE(start_time) AND DATE(end_time)`,
     [user_id, date],
+    cb,
+  );
+}
+
+// a function that gets an instructor's user_id and a date range (typically a
+// course's start_date/end_date) and returns every APPROVED constraint of
+// theirs that overlaps that range at all — a candidate set meant to then be
+// checked against individual lesson dates in JS
+// (findLessonInsideApprovedConstraint), the same way getInstructorLessonsInRange
+// is used as a candidate set for the lesson-vs-lesson conflict check
+function getApprovedConstraintsInRange(user_id, start_date, end_date, cb) {
+  const conn = db.getConnection();
+
+  conn.query(
+    `SELECT *
+     FROM instructor_constraints
+     WHERE user_id = ?
+       AND status = 'approved'
+       AND DATE(start_time) <= ?
+       AND DATE(end_time) >= ?`,
+    [user_id, end_date, start_date],
     cb,
   );
 }
@@ -545,11 +601,13 @@ module.exports = {
   updateUserRole,
   updateUserBlockedStatus,
   getInstructors,
+  getInstructorsAvailableForDates,
   getDashboardStats,
   getRecentCourses,
   getAllInstructorConstraints,
   findConstraintById,
   findApprovedConstraintOnDate,
+  getApprovedConstraintsInRange,
   updateConstraintStatus,
   getAffectedLessonsForConstraint,
   addLessonHistory,

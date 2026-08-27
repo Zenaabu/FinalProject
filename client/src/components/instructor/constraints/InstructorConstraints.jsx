@@ -53,6 +53,17 @@ function tomorrowDate() {
   return d.toISOString().slice(0, 10);
 }
 
+// the first and last day of the current calendar month, as YYYY-MM-DD —
+// used to default the "Your requests" history filter to this month
+function currentMonthRange() {
+  const now = new Date();
+  const toISO = (d) => d.toISOString().slice(0, 10);
+  return {
+    from: toISO(new Date(now.getFullYear(), now.getMonth(), 1)),
+    to: toISO(new Date(now.getFullYear(), now.getMonth() + 1, 0)),
+  };
+}
+
 function InstructorConstraints() {
   const minDate = tomorrowDate();
   const { user } = useSession();
@@ -69,6 +80,25 @@ function InstructorConstraints() {
   const [constraints, setConstraints] = useState([]);
   const [loading, setLoading] = useState(true);
   const [listError, setListError] = useState(null);
+
+  // ── "Your requests" history filter — defaults to the current month, but
+  // he can widen the range or hit "Show all" to reach older requests too ──
+  const [historyFrom, setHistoryFrom] = useState(() => currentMonthRange().from);
+  const [historyTo, setHistoryTo] = useState(() => currentMonthRange().to);
+  const [showAllHistory, setShowAllHistory] = useState(false);
+
+  const visibleConstraints = showAllHistory
+    ? constraints
+    : constraints.filter(
+        (c) => c.start_date <= historyTo && c.end_date >= historyFrom,
+      );
+
+  function resetHistoryToThisMonth() {
+    const { from, to } = currentMonthRange();
+    setHistoryFrom(from);
+    setHistoryTo(to);
+    setShowAllHistory(false);
+  }
 
   function loadConstraints() {
     setLoading(true);
@@ -248,6 +278,53 @@ function InstructorConstraints() {
         <div className={styles.card}>
           <h2 className={styles.cardTitle}>Your requests</h2>
 
+          {/* ── Date filter — defaults to this month, "Show all" reaches everything ── */}
+          {!loading && !listError && constraints.length > 0 && (
+            <div className={styles.historyFilterRow}>
+              <label className={styles.dateField}>
+                <span className={styles.fieldLabel}>
+                  <CalendarDays size={14} /> From
+                </span>
+                <input
+                  type="date"
+                  className={styles.dateInput}
+                  value={historyFrom}
+                  onChange={(e) => {
+                    setShowAllHistory(false);
+                    setHistoryFrom(e.target.value);
+                  }}
+                />
+              </label>
+
+              <label className={styles.dateField}>
+                <span className={styles.fieldLabel}>
+                  <CalendarDays size={14} /> To
+                </span>
+                <input
+                  type="date"
+                  className={styles.dateInput}
+                  value={historyTo}
+                  onChange={(e) => {
+                    setShowAllHistory(false);
+                    setHistoryTo(e.target.value);
+                  }}
+                />
+              </label>
+
+              <button
+                type="button"
+                className={styles.historyFilterToggle}
+                onClick={() =>
+                  showAllHistory
+                    ? resetHistoryToThisMonth()
+                    : setShowAllHistory(true)
+                }
+              >
+                {showAllHistory ? "Back to this month" : "Show all"}
+              </button>
+            </div>
+          )}
+
           {loading && <p className={styles.state}>Loading…</p>}
           {listError && <p className={styles.formError}>{listError}</p>}
 
@@ -257,9 +334,18 @@ function InstructorConstraints() {
             </p>
           )}
 
-          {!loading && constraints.length > 0 && (
+          {!loading && !listError &&
+            constraints.length > 0 &&
+            visibleConstraints.length === 0 && (
+              <p className={styles.state}>
+                No requests in this range — try widening the dates or hit
+                "Show all".
+              </p>
+            )}
+
+          {!loading && visibleConstraints.length > 0 && (
             <ul className={styles.historyList}>
-              {constraints.map((c) => {
+              {visibleConstraints.map((c) => {
                 const isPast = c.end_date < new Date().toISOString().slice(0, 10);
                 const isPastUnanswered = isPast && c.status === "pending";
                 return (

@@ -186,6 +186,39 @@
   color: #dc2626;
 }
 
+/* ── History filter row ──────────────────────────────────────────────────── */
+.historyFilterRow {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.historyFilterRow .dateField {
+  flex: 1 1 110px;
+}
+
+.historyFilterToggle {
+  flex-shrink: 0;
+  padding: 0.5rem 0.85rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--color-ocean-text, #0284c7);
+  background: rgba(56, 189, 248, 0.12);
+  border: 1.5px solid rgba(56, 189, 248, 0.35);
+  border-radius: 8px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
+}
+
+.historyFilterToggle:hover {
+  background: rgba(56, 189, 248, 0.22);
+  border-color: var(--color-ocean-text, #0284c7);
+}
+
 /* ── History list ────────────────────────────────────────────────────────── */
 .state {
   margin: 0;

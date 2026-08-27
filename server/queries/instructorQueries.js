@@ -114,9 +114,11 @@ function findUnregisteredUsers(course_id, user_ids, cb) {
 }
 
 // a function that gets a lesson_id, instructor_id
-// it checks if a lesson belongs to a course of the logged-in instructor, OR
-// that the logged-in instructor is the substitute assigned to cover it —
-// either way they're allowed to view/mark it
+// it checks whether this instructor is the one currently responsible for the
+// lesson: the course's own instructor, UNLESS a substitute has been assigned
+// to cover it, in which case only that substitute qualifies — once a
+// substitute takes over, the original instructor is on leave for that lesson
+// and should no longer be able to view/mark its attendance
 function findInstructorLesson(lesson_id, instructor_id, cb) {
   const conn = db.getConnection();
 
@@ -133,7 +135,10 @@ function findInstructorLesson(lesson_id, instructor_id, cb) {
        ON l.course_id = c.course_id
      LEFT JOIN users su ON su.user_id = l.substitute_instructor_id
      WHERE l.lesson_id = ?
-       AND (c.user_id = ? OR l.substitute_instructor_id = ?)`,
+       AND (
+         (l.substitute_instructor_id IS NULL AND c.user_id = ?)
+         OR l.substitute_instructor_id = ?
+       )`,
     [lesson_id, instructor_id, instructor_id],
     cb,
   );

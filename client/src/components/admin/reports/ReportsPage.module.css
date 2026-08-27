@@ -1,0 +1,54 @@
+/* ============================================================
+   ReportsPage.module.css
+   ============================================================ */
+
+.page {
+  padding: 2rem;
+}
+
+/* ── Header ──────────────────────────────────────────────────────────────── */
+.header {
+  margin-bottom: 1.5rem;
+}
+
+.title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 0.25rem;
+}
+
+.subtitle {
+  font-size: 0.85rem;
+  color: #64748b;
+  margin: 0;
+}
+
+/* ── Crowd row: gender split + attendance rate ──────────────────────────── */
+.crowdRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  align-items: stretch;
+  margin-bottom: 1.5rem;
+}
+
+@media (max-width: 800px) {
+  .crowdRow {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Breakdown row: instructor loyalty (wide) + level (narrow) ─────────── */
+.breakdownRow {
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: 1.5rem;
+  align-items: stretch;
+}
+
+@media (max-width: 1000px) {
+  .breakdownRow {
+    grid-template-columns: 1fr;
+  }
+}

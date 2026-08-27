@@ -12,6 +12,7 @@ import CoursesMain from "./courses/CoursesMain/CoursesMain";
 import UserProfilePage from "./profile/UserProfilePage";
 import StaffPage from "./staff/StaffPage";
 import FinancialsPage from "./financials/FinancialsPage";
+import ReportsPage from "./reports/ReportsPage";
 
 export const adminRoutes = (
   <Route
@@ -28,8 +29,6 @@ export const adminRoutes = (
     <Route path="profile" element={<UserProfilePage />} />
     <Route path="staff" element={<StaffPage />} />
     <Route path="financials" element={<FinancialsPage />} />
-    {/* Future pages — uncomment as you build them:
     <Route path="reports" element={<ReportsPage />} />
-    */}
   </Route>
 );
