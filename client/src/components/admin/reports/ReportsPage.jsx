@@ -8,7 +8,7 @@ import { useState } from "react";
 import ReportsKpiRow from "./kpis/ReportsKpiRow";
 import ReportsDateRangeForm from "./dateRange/ReportsDateRangeForm";
 import GenderSplitChart from "./charts/GenderSplitChart";
-import AttendanceMeterChart from "./charts/AttendanceMeterChart";
+import AttendanceChart from "./charts/AttendanceChart";
 import SeasonalityChart from "./charts/SeasonalityChart";
 import InstructorLoyaltyChart from "./charts/InstructorLoyaltyChart";
 import RegistrationsByLevelChart from "./charts/RegistrationsByLevelChart";
@@ -59,7 +59,7 @@ function ReportsPage() {
       {/* ── Crowd row: gender split + attendance rate ────────────────── */}
       <div className={styles.crowdRow}>
         <GenderSplitChart startDate={range.startDate} endDate={range.endDate} />
-        <AttendanceMeterChart startDate={range.startDate} endDate={range.endDate} />
+        <AttendanceChart startDate={range.startDate} endDate={range.endDate} />
       </div>
 
       {/* ── Seasonality ───────────────────────────────────────────────── */}
