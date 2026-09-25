@@ -9,7 +9,7 @@
 
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, GraduationCap, History } from "lucide-react";
 import { statusOf } from "../courseStatus";
 import styles from "./MyRegistrations.module.css";
 
@@ -163,11 +163,12 @@ function MyRegistrations() {
       </div>
 
       <section className={styles.section}>
-        <h2 className={styles.sectionTitle}>Current &amp; Upcoming</h2>
+        <div className={styles.sectionHeader}>
+          <GraduationCap size={18} className={styles.sectionIcon} />
+          <h2 className={styles.sectionTitle}>Current &amp; Upcoming</h2>
+        </div>
         {current.length === 0 ? (
-          <p className={styles.sectionEmpty}>
-            No current or upcoming courses.
-          </p>
+          <p className={styles.sectionEmpty}>No current or upcoming courses.</p>
         ) : (
           <div className={styles.grid}>
             {current.map((c) => (
@@ -178,7 +179,10 @@ function MyRegistrations() {
       </section>
 
       <section className={styles.section}>
-        <h2 className={styles.sectionTitle}>Previous</h2>
+        <div className={styles.sectionHeader}>
+          <History size={18} className={styles.sectionIcon} />
+          <h2 className={styles.sectionTitle}>Previous</h2>
+        </div>
         {previous.length === 0 ? (
           <p className={styles.sectionEmpty}>No previous courses yet.</p>
         ) : (

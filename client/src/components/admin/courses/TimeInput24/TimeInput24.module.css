@@ -1,0 +1,16 @@
+.wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.wrap select {
+  flex: 1;
+  min-width: 0;
+}
+
+.colon {
+  font-weight: 600;
+  opacity: 0.6;
+}

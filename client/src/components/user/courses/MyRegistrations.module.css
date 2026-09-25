@@ -8,7 +8,8 @@
 }
 
 .pageHeader {
-  margin-bottom: 1.75rem;
+  margin-bottom: 1.5rem;
+  text-align: center;
 }
 
 .title {
@@ -55,21 +56,43 @@
 }
 
 /* ── Sections ────────────────────────────────────────────────────────────── */
+/* Each section is its own bordered panel, same look as the dashboard's My Courses panels */
 .section {
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
+  padding: 1.25rem 1.4rem 1.4rem;
+  border: 1px solid rgba(56, 189, 248, 0.18);
+  border-radius: 16px;
+  background: #f8fbff;
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin-bottom: 1rem;
+}
+
+.sectionIcon {
+  color: var(--color-ocean-text);
+  flex-shrink: 0;
 }
 
 .sectionTitle {
-  margin: 0 0 0.9rem;
-  font-size: 1.05rem;
+  margin: 0;
+  font-size: 1rem;
   font-weight: 700;
   color: var(--color-ocean-text);
 }
 
 .sectionEmpty {
   margin: 0;
-  font-size: 0.88rem;
-  color: #94a3b8;
+  padding: 1rem 1.25rem;
+  border: 1px dashed rgba(56, 189, 248, 0.4);
+  border-radius: 12px;
+  background: #fff;
+  color: #64748b;
+  font-size: 0.9rem;
+  text-align: center;
 }
 
 /* ── Card grid ───────────────────────────────────────────────────────────── */

@@ -6,6 +6,7 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
+import TimeInput24 from "../TimeInput24/TimeInput24";
 import AttendanceTable from "./AttendanceTable";
 import LessonRescheduleConfirmModal from "./LessonRescheduleConfirmModal";
 import styles from "./LessonAccordionItem.module.css";
@@ -276,20 +277,18 @@ function LessonAccordionItem({
             </div>
             <div className={styles.editField}>
               <label className={styles.editLabel}>Start Time</label>
-              <input
-                type="time"
+              <TimeInput24
                 className={styles.editInput}
                 value={form.start_time}
-                onChange={(e) => handleChange("start_time", e.target.value)}
+                onChange={(val) => handleChange("start_time", val)}
               />
             </div>
             <div className={styles.editField}>
               <label className={styles.editLabel}>End Time</label>
-              <input
-                type="time"
+              <TimeInput24
                 className={styles.editInput}
                 value={form.end_time}
-                onChange={(e) => handleChange("end_time", e.target.value)}
+                onChange={(val) => handleChange("end_time", val)}
               />
             </div>
           </div>

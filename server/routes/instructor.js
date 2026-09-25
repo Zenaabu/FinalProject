@@ -81,11 +81,12 @@ router.get(
             row.start_time,
             row.end_date,
           ),
-          // true until attendance is actually recorded for this lesson —
-          // the sidebar badge / dashboard banner alert stays up based on
-          // this, not on the date, so it only clears once the substitute
-          // lesson has genuinely been covered
-          needs_attention: !row.has_attendance,
+          // the sidebar badge / dashboard banner alert: up until attendance
+          // is recorded, and it also goes away once the lesson's day has
+          // passed — a heads-up about a lesson that's long over is noise
+          needs_attention:
+            !row.has_attendance &&
+            formatDateOnly(row.lesson_date) >= formatDateOnly(new Date()),
         }));
 
         res.json({

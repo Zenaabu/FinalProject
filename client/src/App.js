@@ -8,19 +8,23 @@ import { volumeCalculatorRoutes } from "./components/landing/volumeCalculator/vo
 import { adminRoutes } from "./components/admin/adminRoutes";
 import { instructorRoutes } from "./components/instructor/instructorRoutes";
 import { userRoutes } from "./components/user/userRoutes";
+import AccessibilityWidget from "./components/accessibility/AccessibilityWidget";
 
 function App() {
   return (
-    <Routes>
-      {landingRoutes}
-      {authRoutes}
-      {aboutRoutes}
-      {surfBasicsRoutes}
-      {volumeCalculatorRoutes}
-      {adminRoutes}
-      {instructorRoutes}
-      {userRoutes}
-    </Routes>
+    <>
+      <AccessibilityWidget />
+      <Routes>
+        {landingRoutes}
+        {authRoutes}
+        {aboutRoutes}
+        {surfBasicsRoutes}
+        {volumeCalculatorRoutes}
+        {adminRoutes}
+        {instructorRoutes}
+        {userRoutes}
+      </Routes>
+    </>
   );
 }
 

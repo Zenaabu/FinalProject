@@ -40,6 +40,7 @@ import {
   Trash2,
   X,
 } from "lucide-react";
+import TimeInput24 from "../TimeInput24/TimeInput24";
 import styles from "./CourseCreateForm.module.css";
 
 // A course cannot be scheduled with more lessons than this — mirrors the
@@ -542,13 +543,12 @@ function CourseCreateForm({ instructors = [], onCancel, onCreated }) {
                   <Clock size={13} />
                   Start
                 </label>
-                <input
+                <TimeInput24
                   id={`ccf-lesson-start-${index}`}
                   className={styles.input}
-                  type="time"
                   value={lesson.start_time}
-                  onChange={(e) =>
-                    handleLessonChange(index, "start_time", e.target.value)
+                  onChange={(val) =>
+                    handleLessonChange(index, "start_time", val)
                   }
                 />
               </div>
@@ -562,13 +562,12 @@ function CourseCreateForm({ instructors = [], onCancel, onCreated }) {
                   <Clock size={13} />
                   End
                 </label>
-                <input
+                <TimeInput24
                   id={`ccf-lesson-end-${index}`}
                   className={styles.input}
-                  type="time"
                   value={lesson.end_time}
-                  onChange={(e) =>
-                    handleLessonChange(index, "end_time", e.target.value)
+                  onChange={(val) =>
+                    handleLessonChange(index, "end_time", val)
                   }
                 />
               </div>
@@ -584,6 +583,15 @@ function CourseCreateForm({ instructors = [], onCancel, onCreated }) {
                   <Trash2 size={14} />
                 </button>
               )}
+
+              {/* Live check: shown as soon as both times are picked */}
+              {lesson.start_time &&
+                lesson.end_time &&
+                lesson.start_time >= lesson.end_time && (
+                  <div className={styles.lessonTimeError} role="alert">
+                    Each lesson must start before it ends.
+                  </div>
+                )}
             </div>
           ))}
         </div>

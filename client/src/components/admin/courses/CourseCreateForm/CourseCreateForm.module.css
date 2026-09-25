@@ -359,6 +359,17 @@
   border-color: var(--color-light-accent);
 }
 
+/* Inline "start must be before end" message, spans the whole row */
+.lessonTimeError {
+  grid-column: 1 / -1;
+  padding: 0.45rem 0.75rem;
+  background: #fef2f2;
+  border: 1px solid #fca5a5;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  color: #b91c1c;
+}
+
 /* Lesson number badge */
 .lessonBadge {
   display: flex;

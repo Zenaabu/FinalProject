@@ -97,6 +97,8 @@ function MyCourses() {
 
   // ── Enrolled in at least one course ──────────────────────────────────────
   const thisWeek = lessonsThisWeek(courses);
+  // Finished courses live on the full My Courses page, not the dashboard.
+  const activeCourses = courses.filter((c) => statusOf(c) !== "Finished");
 
   return (
     <section className={styles.section}>
@@ -138,8 +140,15 @@ function MyCourses() {
           <h3 className={styles.panelTitle}>My Enrolled Courses</h3>
         </div>
 
+        {activeCourses.length === 0 && (
+          <div className={styles.nextLessonCardEmpty}>
+            You have no active courses right now. Finished courses are in My
+            Courses.
+          </div>
+        )}
+
         <div className={styles.grid}>
-          {courses.map((course) => {
+          {activeCourses.map((course) => {
             const status = statusOf(course);
 
             return (
