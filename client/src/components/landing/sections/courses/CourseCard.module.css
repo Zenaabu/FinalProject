@@ -119,12 +119,6 @@
   line-height: 1;
 }
 
-.priceUnit {
-  font-size: 0.88rem;
-  color: #0ea5e9;
-  font-weight: 500;
-}
-
 /* ── Feature list ── */
 .features {
   list-style: none;

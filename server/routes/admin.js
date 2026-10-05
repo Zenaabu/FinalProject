@@ -696,7 +696,7 @@ router.get("/reports/summary", requireLogin, requireAdmin, (req, res) => {
       end_date: endDate,
       summary: {
         total_registrations: Number(row.total_registrations),
-        active_customers: Number(row.active_customers),
+        repeat_customers: Number(row.repeat_customers),
         attendance_rate_pct:
           markedCount > 0 ? (presentCount / markedCount) * 100 : null,
         repeat_instructor_bookings: Number(row.repeat_instructor_bookings),

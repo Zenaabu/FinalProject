@@ -5,8 +5,10 @@
 // Imported by AdminLayout and InstructorLayout.
 // ──────────────────────────────────────────────────────────────────────────────
 
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import SidebarNav from "./SidebarNav";
+import LogoutConfirmModal from "../../shared/LogoutConfirmModal";
 import styles from "./AdminSidebar.module.css";
 
 function AdminSidebar({
@@ -17,8 +19,11 @@ function AdminSidebar({
   badges = {},
 }) {
   const navigate = useNavigate();
+  const [confirmingLogout, setConfirmingLogout] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
 
   function handleLogout() {
+    setLoggingOut(true);
     fetch("/api/auth/logout", { method: "POST" }).finally(() => {
       localStorage.removeItem("user_id");
       navigate("/login");
@@ -46,7 +51,7 @@ function AdminSidebar({
         <button
           className={styles.logoutBtn}
           type="button"
-          onClick={handleLogout}
+          onClick={() => setConfirmingLogout(true)}
         >
           <svg
             width="16"
@@ -65,6 +70,14 @@ function AdminSidebar({
           Logout
         </button>
       </div>
+
+      {confirmingLogout && (
+        <LogoutConfirmModal
+          onConfirm={handleLogout}
+          onClose={() => setConfirmingLogout(false)}
+          loggingOut={loggingOut}
+        />
+      )}
     </aside>
   );
 }

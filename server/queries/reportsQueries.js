@@ -11,11 +11,12 @@ function nextDay(dateStr) {
 }
 
 // a function that returns the headline KPIs for the admin Reports page,
-// scoped to [startDate, endDate]: total registrations, distinct
-// (active) customers, the attendance rate among marked lessons, and how
-// many registrations in the period were a *repeat* booking with an
-// instructor the same user had already booked before (see
-// getInstructorLoyalty for how "repeat" is defined).
+// scoped to [startDate, endDate]: total registrations, repeat customers
+// (students with 2+ registrations *within this same period* — enthusiasm
+// within the window, not loyalty across time), the attendance rate among
+// marked lessons, and how many registrations in the period were a *repeat*
+// booking with an instructor the same user had already booked before (see
+// getInstructorLoyalty for that definition).
 function getReportsSummary(startDate, endDate, cb) {
   const conn = db.getConnection();
   const end = nextDay(endDate);
@@ -25,9 +26,14 @@ function getReportsSummary(startDate, endDate, cb) {
         (SELECT COUNT(*)
            FROM register r
           WHERE r.payment_date >= ? AND r.payment_date < ?) AS total_registrations,
-        (SELECT COUNT(DISTINCT r.user_id)
-           FROM register r
-          WHERE r.payment_date >= ? AND r.payment_date < ?) AS active_customers,
+        (SELECT COUNT(*)
+           FROM (
+             SELECT r.user_id
+               FROM register r
+              WHERE r.payment_date >= ? AND r.payment_date < ?
+              GROUP BY r.user_id
+             HAVING COUNT(*) >= 2
+           ) multi) AS repeat_customers,
         (SELECT COUNT(*)
            FROM attend a
            JOIN lessons l ON l.lesson_id = a.lesson_id
@@ -49,7 +55,13 @@ function getReportsSummary(startDate, endDate, cb) {
            ) ranked
           WHERE ranked.rn >= 2
             AND ranked.payment_date >= ? AND ranked.payment_date < ?) AS repeat_instructor_bookings`,
-    [startDate, end, startDate, end, startDate, end, startDate, end, startDate, end],
+    [
+      startDate, end,
+      startDate, end,
+      startDate, end,
+      startDate, end,
+      startDate, end,
+    ],
     cb,
   );
 }

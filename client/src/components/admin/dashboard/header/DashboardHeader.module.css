@@ -26,39 +26,3 @@
   color: #64748b;
   margin: 0;
 }
-
-/* ── "System Online" pill ────────────────────────────────────────────────── */
-.onlineBadge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-  background: #f0fdf4;
-  color: #15803d;
-  font-size: 0.82rem;
-  font-weight: 600;
-  padding: 0.45rem 1rem;
-  border-radius: 999px;
-  border: 1px solid #bbf7d0;
-  white-space: nowrap;
-  margin-top: 0.2rem;
-}
-
-/* ── Animated green dot ──────────────────────────────────────────────────── */
-.dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #22c55e;
-  flex-shrink: 0;
-  animation: pulse 2.2s ease-in-out infinite;
-}
-
-@keyframes pulse {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.35;
-  }
-}

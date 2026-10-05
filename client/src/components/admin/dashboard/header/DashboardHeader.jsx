@@ -1,5 +1,5 @@
 // ─── DashboardHeader.jsx ──────────────────────────────────────────────────────
-// Top bar: page title, formatted today's date, and animated "System Online" badge.
+// Top bar: page title and formatted today's date.
 // ──────────────────────────────────────────────────────────────────────────────
 
 import styles from "./DashboardHeader.module.css";
@@ -20,11 +20,6 @@ function DashboardHeader() {
           {formatted} &middot; All figures exclude VAT (17%) unless noted
         </p>
       </div>
-
-      <span className={styles.onlineBadge}>
-        <span className={styles.dot} />
-        System Online
-      </span>
     </div>
   );
 }

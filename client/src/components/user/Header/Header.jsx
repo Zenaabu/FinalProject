@@ -2,7 +2,9 @@
 // Sticky header for the user portal: logo + nav + logout.
 // ──────────────────────────────────────────────────────────────────────────────
 
+import { useState } from "react";
 import { NavLink, Link, useNavigate } from "react-router-dom";
+import LogoutConfirmModal from "../../shared/LogoutConfirmModal";
 import styles from "./Header.module.css";
 import surfboardIcon from "../../../assets/surfboard.png";
 import bluemarsLogo from "../../../assets/bluemarsLogo.png";
@@ -16,8 +18,11 @@ const NAV_LINKS = [
 
 function Header() {
   const navigate = useNavigate();
+  const [confirmingLogout, setConfirmingLogout] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
 
   function handleLogout() {
+    setLoggingOut(true);
     fetch("/api/auth/logout", { method: "POST" }).finally(() => {
       localStorage.removeItem("user_id");
       navigate("/login");
@@ -54,12 +59,20 @@ function Header() {
           <button
             type="button"
             className={styles.logoutBtn}
-            onClick={handleLogout}
+            onClick={() => setConfirmingLogout(true)}
           >
             Logout
           </button>
         </div>
       </div>
+
+      {confirmingLogout && (
+        <LogoutConfirmModal
+          onConfirm={handleLogout}
+          onClose={() => setConfirmingLogout(false)}
+          loggingOut={loggingOut}
+        />
+      )}
 
       <nav className={styles.nav}>
         <ul className={styles.navList}>

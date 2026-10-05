@@ -1,0 +1,51 @@
+/* ============================================================
+   SeatsBar.module.css
+   ============================================================ */
+
+.wrap {
+  margin: 0 0 0.9rem;
+}
+
+.track {
+  display: flex;
+  gap: 3px;
+  margin-bottom: 0.35rem;
+}
+
+.seat {
+  flex: 1;
+  height: 16px;
+  min-width: 3px;
+  border-radius: 3px;
+  background: #e2e8f0;
+  border: 1px solid #cbd5e1;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.seatTaken {
+  background: linear-gradient(180deg, #38bdf8, #0284c7);
+  border-color: #0284c7;
+}
+
+.seatDanger {
+  background: linear-gradient(180deg, #fca5a5, #ef4444);
+  border-color: #ef4444;
+}
+
+.label {
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: #64748b;
+  text-align: right;
+}
+
+.labelDanger {
+  color: #dc2626;
+}
+
+.labelFull {
+  color: #b91c1c;
+  font-weight: 700;
+}

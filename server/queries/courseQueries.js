@@ -232,6 +232,44 @@ function getMyCourses(user_id, cb) {
   );
 }
 
+// a function that gets a course_id and returns everything the purchase
+// receipt email needs: the course's own fields plus its instructor and its
+// earliest lesson (by date, then start time) — the "don't miss your first
+// lesson" line on the receipt. first_lesson_* comes back null if the course
+// somehow has no lessons yet.
+function getCourseReceiptInfo(course_id, cb) {
+  const conn = db.getConnection();
+
+  conn.query(
+    `SELECT
+       c.course_id,
+       c.description,
+       c.level,
+       c.price,
+       CONCAT(u.first_name, ' ', u.last_name) AS instructor,
+       (SELECT DATE_FORMAT(l.lesson_date, '%Y-%m-%d')
+          FROM lessons l
+         WHERE l.course_id = c.course_id
+         ORDER BY l.lesson_date, l.start_time
+         LIMIT 1)                             AS first_lesson_date,
+       (SELECT TIME_FORMAT(l.start_time, '%H:%i')
+          FROM lessons l
+         WHERE l.course_id = c.course_id
+         ORDER BY l.lesson_date, l.start_time
+         LIMIT 1)                             AS first_lesson_start,
+       (SELECT TIME_FORMAT(l.end_time, '%H:%i')
+          FROM lessons l
+         WHERE l.course_id = c.course_id
+         ORDER BY l.lesson_date, l.start_time
+         LIMIT 1)                             AS first_lesson_end
+     FROM courses c
+     LEFT JOIN users u ON c.user_id = u.user_id
+     WHERE c.course_id = ?`,
+    [course_id],
+    cb,
+  );
+}
+
 // a function that gets an array of course ids and returns every lesson that
 // belongs to them, ordered so the earliest lesson of each course comes first
 function getLessonsForCourses(courseIds, cb) {
@@ -530,6 +568,7 @@ module.exports = {
   countCourseRegistrations,
   getAvailableCourses,
   getMyCourses,
+  getCourseReceiptInfo,
   getLessonsForCourses,
   updateCourse,
   getCoursesWithDetails,

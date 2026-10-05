@@ -1,0 +1,223 @@
+/* ============================================================
+   EnrollConfirmModal.module.css
+   ============================================================ */
+
+/* ── Backdrop overlay ────────────────────────────────────────────────────── */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.15s ease;
+  padding: 1rem;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* ── Modal card ──────────────────────────────────────────────────────────── */
+.modal {
+  background: linear-gradient(165deg, #e0f4ff 0%, #eef9ff 55%, #f4fbff 100%);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  border-radius: 16px;
+  box-shadow:
+    0 20px 60px rgba(2, 132, 199, 0.18),
+    0 4px 12px rgba(0, 0, 0, 0.08);
+  width: 100%;
+  max-width: 440px;
+  margin: 1rem;
+  padding: 2rem 1.8rem 1.6rem;
+  text-align: center;
+  animation: slideUp 0.18s ease;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(16px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* ── Icon ────────────────────────────────────────────────────────────────── */
+.iconWrap {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1.1rem;
+  background: linear-gradient(135deg, #0284c7, #38bdf8);
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(2, 132, 199, 0.35);
+}
+
+/* ── Text ────────────────────────────────────────────────────────────────── */
+.title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 0.55rem;
+}
+
+.message {
+  font-size: 0.88rem;
+  color: #475569;
+  line-height: 1.6;
+  margin: 0 0 1rem;
+}
+
+/* ── Course summary ──────────────────────────────────────────────────────── */
+.summary {
+  text-align: left;
+  margin: 0 0 1rem;
+  padding: 0.75rem 0.9rem;
+  background: rgba(255, 255, 255, 0.75);
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  border-radius: 10px;
+}
+
+.summaryTitle {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 0.2rem;
+}
+
+.summaryMeta {
+  font-size: 0.8rem;
+  color: #64748b;
+  text-transform: capitalize;
+}
+
+/* ── Lesson list ─────────────────────────────────────────────────────────── */
+.lessonList {
+  list-style: none;
+  margin: 0 0 1.1rem;
+  padding: 0;
+  max-height: 220px;
+  overflow-y: auto;
+  background: rgba(255, 255, 255, 0.75);
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  border-radius: 10px;
+  text-align: left;
+}
+
+.lessonItem {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.55rem 0.85rem;
+  border-bottom: 1px solid rgba(56, 189, 248, 0.15);
+  font-size: 0.82rem;
+}
+
+.lessonItem:last-child {
+  border-bottom: none;
+}
+
+.lessonNumber {
+  flex-shrink: 0;
+  width: 1.8rem;
+  font-weight: 700;
+  color: #0284c7;
+}
+
+.lessonDate {
+  flex: 1;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.lessonTime {
+  flex-shrink: 0;
+  color: #64748b;
+}
+
+.emptyNote {
+  font-size: 0.82rem;
+  color: #94a3b8;
+  margin: 0 0 1.1rem;
+  font-style: italic;
+}
+
+/* ── Price row ───────────────────────────────────────────────────────────── */
+.priceRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 0.9rem;
+  margin: 0 0 1.2rem;
+  background: rgba(255, 255, 255, 0.75);
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #334155;
+}
+
+.price {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--color-ocean-text);
+}
+
+/* ── Footer buttons ──────────────────────────────────────────────────────── */
+.footer {
+  display: flex;
+  gap: 0.6rem;
+  justify-content: center;
+}
+
+.btnCancel {
+  flex: 1;
+  padding: 0.6rem 1rem;
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.75);
+  color: #475569;
+  font-size: 0.88rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.btnCancel:hover:not(:disabled) {
+  background: #fff;
+}
+
+.btnConfirm {
+  flex: 1;
+  padding: 0.6rem 1rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  background: var(--color-light-accent);
+  color: #fff;
+}
+
+.btnConfirm:hover:not(:disabled) {
+  background: var(--color-button-hover);
+}
+
+.btnCancel:disabled,
+.btnConfirm:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

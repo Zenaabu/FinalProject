@@ -457,6 +457,178 @@ async function sendWelcomeEmail(user, nearestCourse) {
   }
 }
 
+// a function that gets the purchase details for one course registration and
+// returns the HTML body of the receipt email. Same table-based, inline-styled
+// family as the other emails; the "first lesson" block is styled like the
+// reschedule email's "New Time" callout (light-green, bold) so it's the one
+// thing in the email that's hardest to skim past — the whole point of
+// including it is that the student can't miss when to actually show up.
+function buildReceiptEmailHtml({
+  firstName,
+  receiptNumber,
+  paymentDate,
+  courseDescription,
+  level,
+  instructor,
+  price,
+  firstLessonDate,
+  firstLessonStart,
+  firstLessonEnd,
+}) {
+  const name = escapeHtml(firstName);
+  const amount = `₪${Number(price).toFixed(2)}`;
+
+  const firstLessonBlock = firstLessonDate
+    ? `
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:16px 0 0;">
+              <tr>
+                <td style="padding:16px 18px;background-color:#f0fdf4;border-radius:12px;border:1px solid #bbf7d0;">
+                  <div style="font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:#15803d;margin-bottom:6px;">🏄 Don't Miss Your First Lesson</div>
+                  <div style="font-size:17px;font-weight:700;color:#166534;margin-bottom:2px;">${escapeHtml(formatDateOnly(firstLessonDate))}</div>
+                  <div style="font-size:14px;color:#166534;">${escapeHtml(firstLessonStart)}${firstLessonEnd ? ` – ${escapeHtml(firstLessonEnd)}` : ""}</div>
+                </td>
+              </tr>
+            </table>`
+    : "";
+
+  return `
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f0f9ff;padding:32px 16px;font-family:Arial,Helvetica,sans-serif;">
+  <tr>
+    <td align="center">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:480px;background-color:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 4px 16px rgba(2,132,199,0.12);">
+        <tr>
+          <td style="background-color:#0284c7;background-image:linear-gradient(135deg,#0284c7,#38bdf8);padding:32px 24px;text-align:center;">
+            <div style="font-size:34px;line-height:1;margin-bottom:8px;">🧾🌊</div>
+            <div style="font-size:22px;font-weight:800;color:#ffffff;letter-spacing:0.3px;">Payment Confirmed</div>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:28px 28px 8px;">
+            <p style="margin:0 0 16px;font-size:16px;color:#0f172a;">Hi ${name},</p>
+            <p style="margin:0 0 4px;font-size:15px;line-height:1.6;color:#334155;">
+              Thanks for signing up! Your payment went through and your spot is booked. Here's your receipt.
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:12px 28px 0;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;">
+              <tr>
+                <td style="padding:16px 18px;background-color:#f8fafc;">
+                  <div style="font-size:17px;font-weight:700;color:#0f172a;margin-bottom:2px;">${escapeHtml(capitalize(level))} Surf Course</div>
+                  <div style="font-size:13px;color:#64748b;">${escapeHtml(courseDescription)}</div>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding:14px 18px;border-top:1px solid #e2e8f0;">
+                  <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td style="padding:4px 0;font-size:13.5px;color:#64748b;">Instructor</td>
+                      <td style="padding:4px 0;font-size:13.5px;color:#0f172a;text-align:right;font-weight:600;">${escapeHtml(instructor)}</td>
+                    </tr>
+                    <tr>
+                      <td style="padding:4px 0;font-size:13.5px;color:#64748b;">Receipt No.</td>
+                      <td style="padding:4px 0;font-size:13.5px;color:#0f172a;text-align:right;font-weight:600;">#${escapeHtml(receiptNumber)}</td>
+                    </tr>
+                    <tr>
+                      <td style="padding:4px 0;font-size:13.5px;color:#64748b;">Payment Date</td>
+                      <td style="padding:4px 0;font-size:13.5px;color:#0f172a;text-align:right;font-weight:600;">${escapeHtml(formatDateOnly(paymentDate))}</td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding:14px 18px;border-top:1px solid #e2e8f0;background-color:#f8fafc;">
+                  <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td style="font-size:14px;font-weight:700;color:#0f172a;">Amount Paid</td>
+                      <td style="font-size:19px;font-weight:800;color:#0284c7;text-align:right;">${amount}</td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:0 28px 28px;">
+            ${firstLessonBlock}
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:18px 28px;background-color:#f8fafc;border-top:1px solid #e2e8f0;text-align:center;">
+            <p style="margin:0;font-size:12px;color:#94a3b8;">BlueMars Surf Club</p>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>`;
+}
+
+// a function that gets a user ({ email, first_name }) and the receipt details
+// of a just-completed course purchase ({ receiptNumber, paymentDate,
+// courseDescription, level, instructor, price, firstLessonDate,
+// firstLessonStart, firstLessonEnd } — the last three may be null if the
+// course has no lessons yet) and emails them a receipt. best-effort: the
+// caller should not await this on the response path, same as
+// sendWelcomeEmail — a failed/slow send must never affect the purchase
+// that already succeeded.
+async function sendCourseReceiptEmail(user, details) {
+  const subject = "BlueMars Surf Club - Payment Receipt";
+  const {
+    receiptNumber,
+    paymentDate,
+    courseDescription,
+    level,
+    instructor,
+    price,
+    firstLessonDate,
+    firstLessonStart,
+    firstLessonEnd,
+  } = details;
+
+  const amount = `₪${Number(price).toFixed(2)}`;
+  const firstLessonText = firstLessonDate
+    ? `Your first lesson is on ${formatDateOnly(firstLessonDate)} at ${firstLessonStart}${firstLessonEnd ? `-${firstLessonEnd}` : ""} — don't miss it!\n\n`
+    : "";
+
+  try {
+    await transporter.sendMail({
+      from: `"BlueMars Surf Club" <${process.env.EMAIL_USER}>`,
+      to: user.email,
+      subject,
+      text:
+        `Hi ${user.first_name},\n\n` +
+        `Thanks for signing up! Your payment went through and your spot is booked.\n\n` +
+        `Course: ${capitalize(level)} Surf Course (${courseDescription})\n` +
+        `Instructor: ${instructor}\n` +
+        `Receipt No.: #${receiptNumber}\n` +
+        `Payment Date: ${formatDateOnly(paymentDate)}\n` +
+        `Amount Paid: ${amount}\n\n` +
+        firstLessonText +
+        `- BlueMars Surf Club`,
+      html: buildReceiptEmailHtml({
+        firstName: user.first_name,
+        receiptNumber,
+        paymentDate,
+        courseDescription,
+        level,
+        instructor,
+        price,
+        firstLessonDate,
+        firstLessonStart,
+        firstLessonEnd,
+      }),
+    });
+
+    return { ok: true };
+  } catch (err) {
+    console.error(`Failed to send receipt email to ${user.email}:`, err.message);
+    return { ok: false };
+  }
+}
+
 // a function that gets a phone number and returns true if it's valid and false if not
 // a valid phone number have 10 digits only, starting with 05
 function validatePhone(phone) {
@@ -873,6 +1045,7 @@ module.exports = {
   sendLessonRescheduleEmail,
   sendInstructorRescheduleEmail,
   sendWelcomeEmail,
+  sendCourseReceiptEmail,
   validatePhone,
   validateGender,
   validateBirthDate,

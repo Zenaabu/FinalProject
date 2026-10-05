@@ -5,7 +5,7 @@
 // ──────────────────────────────────────────────────────────────────────────────
 
 import { useState, useEffect } from "react";
-import { Users, UserCheck, CheckCircle2, Repeat } from "lucide-react";
+import { Users, Repeat2, CheckCircle2, Repeat } from "lucide-react";
 import StatCard from "../../dashboard/stats/StatCard";
 import styles from "./ReportsKpiRow.module.css";
 
@@ -27,14 +27,14 @@ function buildCards(summary) {
       icon: <Users size={20} />,
     },
     {
-      id: "active-customers",
-      label: "Active Customers",
-      value: summary ? summary.active_customers.toLocaleString("en-US") : "—",
-      sub: "Distinct students who registered",
+      id: "repeat-customers",
+      label: "Repeat Customers",
+      value: summary ? summary.repeat_customers.toLocaleString("en-US") : "—",
+      sub: "2+ registrations in this period",
       subColor: "#64748b",
       iconBg: "rgba(124, 58, 237, 0.12)",
       iconColor: "#7c3aed",
-      icon: <UserCheck size={20} />,
+      icon: <Repeat2 size={20} />,
     },
     {
       id: "attendance-rate",

@@ -29,8 +29,7 @@ function CourseCard({ course, linkTo = "/signup" }) {
 
         {/* Price */}
         <div className={styles.priceRow}>
-          <span className={styles.price}>${price}</span>
-          <span className={styles.priceUnit}> per month</span>
+          <span className={styles.price}>₪{price}</span>
         </div>
 
         {/* Feature list */}

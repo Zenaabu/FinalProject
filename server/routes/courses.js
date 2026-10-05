@@ -45,6 +45,7 @@ const {
   formatTimeOnly,
   sendLessonRescheduleEmail,
   sendInstructorRescheduleEmail,
+  sendCourseReceiptEmail,
 } = require("../validations/utils");
 
 // ─── Admin course endpoints ────────────────────────────────────────────────
@@ -85,7 +86,11 @@ router.get("/details", requireLogin, requireAdmin, (req, res) => {
   });
 });
 
-// GET the courses the logged in user can still register to
+// GET the courses the logged in user can still register to. Each course
+// carries its full lesson list (same nesting as /my-courses, via
+// getLessonsForCourses batched by course_id IN (?)) so the catalog can show
+// a student every lesson date/time before they pay — see the "Confirm
+// enrollment" modal in CourseCatalog.jsx.
 // url: /api/courses/available
 router.get("/available", requireLogin, (req, res) => {
   const user_id = req.session.user.user_id;
@@ -101,26 +106,54 @@ router.get("/available", requireLogin, (req, res) => {
         return res.status(500).json({ success: false, message: err2.message });
       }
 
-      const courses = rows.map((c) => {
-        const taken = Number(c.registered_count) + Number(c.pending_count);
+      if (rows.length === 0) {
+        return res.json({ success: true, courses: [] });
+      }
 
-        return {
-          course_id: c.course_id,
-          description: c.description,
-          level: c.level,
-          start_date: c.start_date,
-          end_date: c.end_date,
-          capacity: c.capacity,
-          price: Number(c.price),
-          vat_percent: c.vat_percent,
-          total_lessons: c.total_lessons,
-          instructor: c.instructor ?? "—",
-          seats_left: Math.max(0, Number(c.capacity) - taken),
-          is_registered: Number(c.is_registered) > 0,
-        };
+      const courseIds = rows.map((c) => c.course_id);
+
+      courseQ.getLessonsForCourses(courseIds, (err3, lessons) => {
+        if (err3) {
+          return res.status(500).json({ success: false, message: err3.message });
+        }
+
+        const lessonsByCourse = {};
+        for (const lesson of lessons) {
+          if (!lessonsByCourse[lesson.course_id]) {
+            lessonsByCourse[lesson.course_id] = [];
+          }
+          lessonsByCourse[lesson.course_id].push(lesson);
+        }
+
+        const courses = rows.map((c) => {
+          const taken = Number(c.registered_count) + Number(c.pending_count);
+
+          return {
+            course_id: c.course_id,
+            description: c.description,
+            level: c.level,
+            start_date: c.start_date,
+            end_date: c.end_date,
+            capacity: c.capacity,
+            price: Number(c.price),
+            vat_percent: c.vat_percent,
+            total_lessons: c.total_lessons,
+            instructor: c.instructor ?? "—",
+            seats_left: Math.max(0, Number(c.capacity) - taken),
+            is_registered: Number(c.is_registered) > 0,
+            // already sorted date/time ascending by the query
+            lessons: (lessonsByCourse[c.course_id] || []).map((l) => ({
+              lesson_id: l.lesson_id,
+              lesson_number: l.lesson_number,
+              date: l.date,
+              start_time: l.start_time,
+              end_time: l.end_time,
+            })),
+          };
+        });
+
+        res.json({ success: true, courses });
       });
-
-      res.json({ success: true, courses });
     });
   });
 });
@@ -798,6 +831,37 @@ router.post(
                       "Payment completed and user registered successfully",
                     receipt_number,
                     paypal_capture_id,
+                  });
+
+                  // Receipt email — best-effort, fired after responding so a
+                  // slow or failed send never delays/affects the purchase
+                  // that already succeeded (same pattern as the signup
+                  // welcome email in routes/users.js). payment_date was just
+                  // written as NOW() in completeCourseRegistration above.
+                  courseQ.getCourseReceiptInfo(course_id, (err3, rows) => {
+                    if (err3 || !rows || rows.length === 0) {
+                      if (err3) {
+                        console.error(
+                          "Failed to load course info for receipt email:",
+                          err3.message,
+                        );
+                      }
+                      return;
+                    }
+
+                    const course = rows[0];
+
+                    sendCourseReceiptEmail(req.session.user, {
+                      receiptNumber: receipt_number,
+                      paymentDate: new Date(),
+                      courseDescription: course.description,
+                      level: course.level,
+                      instructor: course.instructor,
+                      price: course.price,
+                      firstLessonDate: course.first_lesson_date,
+                      firstLessonStart: course.first_lesson_start,
+                      firstLessonEnd: course.first_lesson_end,
+                    });
                   });
                 },
               );

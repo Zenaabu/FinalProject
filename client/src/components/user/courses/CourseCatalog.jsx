@@ -6,7 +6,10 @@
 // the dashboard's "no enrollment yet" promo cards link here with it set, so
 // picking a plan lands the user on just that level instead of the full list.
 //
-// Enrolling kicks off the real PayPal flow:
+// "Enroll now" first opens a confirmation modal (EnrollConfirmModal) showing
+// every lesson date/time for the course, so the student can check it fits
+// their schedule before paying anything. Only once they confirm there does
+// the real PayPal flow kick off:
 //   1. POST /api/courses/:id/paypal/create-order — creates a PayPal order and
 //      a 10-minute "pending" reservation that holds the seat.
 //   2. Redirect the whole page to PayPal's approve_link.
@@ -17,6 +20,8 @@
 import { useState, useEffect } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import { toast } from "sonner";
+import EnrollConfirmModal from "./EnrollConfirmModal";
+import SeatsBar from "./SeatsBar";
 import styles from "./CourseCatalog.module.css";
 
 function CourseCatalog() {
@@ -27,6 +32,9 @@ function CourseCatalog() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [enrollingId, setEnrollingId] = useState(null);
+  // the course currently shown in the "confirm before you pay" modal, or
+  // null when it's closed
+  const [confirmingCourse, setConfirmingCourse] = useState(null);
 
   useEffect(() => {
     fetch("/api/courses/available")
@@ -66,6 +74,21 @@ function CourseCatalog() {
       toast.error(err.message);
       setEnrollingId(null);
     }
+  };
+
+  // "Enroll now" opens the confirmation modal instead of paying straight
+  // away — handleEnroll (the actual PayPal redirect) only runs once the
+  // student reviews the lesson dates and clicks "Continue to PayPal".
+  const handleEnrollClick = (course) => {
+    setConfirmingCourse(course);
+  };
+
+  const handleConfirmEnroll = async () => {
+    const course = confirmingCourse;
+    await handleEnroll(course);
+    // on success the page is about to navigate away to PayPal; on failure
+    // handleEnroll already toasted the error, so just close the modal
+    setConfirmingCourse(null);
   };
 
   if (loading) return <div className={styles.state}>Loading courses…</div>;
@@ -133,11 +156,9 @@ function CourseCatalog() {
                     <dt>Lessons</dt>
                     <dd>{course.total_lessons}</dd>
                   </div>
-                  <div className={styles.metaRow}>
-                    <dt>Seats left</dt>
-                    <dd>{course.seats_left} / {course.capacity}</dd>
-                  </div>
                 </dl>
+
+                <SeatsBar capacity={course.capacity} seatsLeft={course.seats_left} />
 
                 <div className={styles.priceRow}>
                   {/* course.price is already VAT-inclusive — it's exactly
@@ -149,7 +170,7 @@ function CourseCatalog() {
                   type="button"
                   className={`btn-primary ${styles.btnEnroll}`}
                   disabled={course.is_registered || full || isEnrolling}
-                  onClick={() => handleEnroll(course)}
+                  onClick={() => handleEnrollClick(course)}
                 >
                   {course.is_registered
                     ? "Already registered"
@@ -163,6 +184,15 @@ function CourseCatalog() {
             );
           })}
         </div>
+      )}
+
+      {confirmingCourse && (
+        <EnrollConfirmModal
+          course={confirmingCourse}
+          submitting={enrollingId === confirmingCourse.course_id}
+          onConfirm={handleConfirmEnroll}
+          onClose={() => setConfirmingCourse(null)}
+        />
       )}
     </div>
   );
