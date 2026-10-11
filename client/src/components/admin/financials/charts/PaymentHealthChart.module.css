@@ -1,5 +1,5 @@
 /* ============================================================
-   PaymentFunnelChart.module.css
+   PaymentHealthChart.module.css
    ============================================================ */
 
 .card {
@@ -33,21 +33,21 @@
   font-weight: 500;
 }
 
-/* ── Conversion headline ─────────────────────────────────────────────────── */
-.conversion {
+/* ── Approval-rate headline ──────────────────────────────────────────────── */
+.approval {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
   line-height: 1.1;
 }
 
-.conversionValue {
+.approvalValue {
   font-size: 1.4rem;
   font-weight: 700;
   color: #15803d;
 }
 
-.conversionLabel {
+.approvalLabel {
   font-size: 0.72rem;
   color: #94a3b8;
   font-weight: 500;
@@ -66,17 +66,11 @@
   font-size: 0.85rem;
 }
 
-/* ── Funnel bar labels (SVG text) ─────────────────────────────────────────── */
+/* ── Bar count labels (SVG text) ──────────────────────────────────────────── */
 .labelCount {
   font-size: 13px;
   font-weight: 700;
   fill: #0f172a;
-}
-
-.labelDrop {
-  font-size: 10.5px;
-  font-weight: 600;
-  fill: #dc2626;
 }
 
 /* ── Tooltip ─────────────────────────────────────────────────────────────── */

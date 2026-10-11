@@ -48,6 +48,18 @@ const {
   sendCourseReceiptEmail,
 } = require("../validations/utils");
 
+// a function that gets a course's base price and its discount_percent
+// (null/undefined when no discount is active) and returns what actually
+// gets charged — the one place this math happens, so the catalog listing,
+// the PayPal order amount, and the receipt email can never disagree with
+// each other. Rounded to the nearest whole shekel, same as every other
+// price shown in this app.
+function applyDiscount(price, discountPercent) {
+  const base = Number(price);
+  if (!discountPercent) return base;
+  return Math.round(base * (1 - Number(discountPercent) / 100));
+}
+
 // ─── Admin course endpoints ────────────────────────────────────────────────
 
 // GET all courses
@@ -127,6 +139,10 @@ router.get("/available", requireLogin, (req, res) => {
 
         const courses = rows.map((c) => {
           const taken = Number(c.registered_count) + Number(c.pending_count);
+          const discountPercent =
+            c.discount_percent === null || c.discount_percent === undefined
+              ? null
+              : Number(c.discount_percent);
 
           return {
             course_id: c.course_id,
@@ -136,6 +152,11 @@ router.get("/available", requireLogin, (req, res) => {
             end_date: c.end_date,
             capacity: c.capacity,
             price: Number(c.price),
+            // null when there's no active discount; final_price === price
+            // in that case. This is what PayPal will actually charge — see
+            // applyDiscount(), used identically in the create-order route.
+            discount_percent: discountPercent,
+            final_price: applyDiscount(c.price, discountPercent),
             vat_percent: c.vat_percent,
             total_lessons: c.total_lessons,
             instructor: c.instructor ?? "—",
@@ -685,7 +706,10 @@ router.post(
       const { course_id } = req.params;
       const user_id = req.session.user.user_id;
       const course = req.course;
-      const order = await paypalService.createOrder(course.price, course_id);
+      // if the admin has an active last-minute discount on this course,
+      // that's the amount actually charged — see applyDiscount() above
+      const chargePrice = applyDiscount(course.price, course.discount_percent);
+      const order = await paypalService.createOrder(chargePrice, course_id);
       const approveLink = order.links.find(
         (link) => link.rel === "approve",
       )?.href;
@@ -857,7 +881,13 @@ router.post(
                       courseDescription: course.description,
                       level: course.level,
                       instructor: course.instructor,
-                      price: course.price,
+                      // the amount actually charged (see applyDiscount()),
+                      // plus the original price/percent so the email can
+                      // show the discount rather than silently charge less
+                      // than the course's listed price with no explanation
+                      price: applyDiscount(course.price, course.discount_percent),
+                      originalPrice: Number(course.price),
+                      discountPercent: course.discount_percent,
                       firstLessonDate: course.first_lesson_date,
                       firstLessonStart: course.first_lesson_start,
                       firstLessonEnd: course.first_lesson_end,

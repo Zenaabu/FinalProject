@@ -60,10 +60,24 @@ function EnrollConfirmModal({ course, onConfirm, onClose, submitting }) {
 
         <div className={styles.priceRow}>
           <span>Total</span>
-          {/* course.price is already VAT-inclusive — it's exactly what
-              PayPal charges, so show it as one final price */}
-          <span className={styles.price}>₪{course.price}</span>
+          {/* course.price is already VAT-inclusive. When a last-minute
+              discount is active, final_price is what PayPal will actually
+              charge on the next screen — this must always match that. */}
+          {course.discount_percent != null ? (
+            <span className={styles.priceWithDiscount}>
+              <span className={styles.priceOriginal}>₪{course.price}</span>
+              <span className={styles.price}>₪{course.final_price}</span>
+            </span>
+          ) : (
+            <span className={styles.price}>₪{course.price}</span>
+          )}
         </div>
+
+        {course.discount_percent != null && (
+          <div className={styles.discountNote}>
+            🔥 {course.discount_percent}% last-minute discount applied
+          </div>
+        )}
 
         <div className={styles.footer}>
           <button

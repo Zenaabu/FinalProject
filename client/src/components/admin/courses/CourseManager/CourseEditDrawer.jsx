@@ -25,6 +25,11 @@
 import { useState, useEffect } from "react";
 import styles from "./CourseEditDrawer.module.css";
 
+// a course's capacity is a seat count — whole numbers only, and capped so
+// it can't be set to an effectively "unlimited" value (same rule the
+// server enforces in adminValidations.js)
+const MAX_CAPACITY = 20;
+
 /* ── Icon ────────────────────────────────────────────────────────────────── */
 function XIcon() {
   return (
@@ -103,6 +108,10 @@ function CourseEditDrawer({ course, instructors = [], onClose, onSaved }) {
     if (!form.end_date) next.end_date = "End date is required.";
     if (Number(form.capacity) <= 0)
       next.capacity = "Capacity must be greater than 0.";
+    else if (!Number.isInteger(Number(form.capacity)))
+      next.capacity = "Capacity must be a whole number.";
+    else if (Number(form.capacity) > MAX_CAPACITY)
+      next.capacity = `Capacity cannot be more than ${MAX_CAPACITY}.`;
     if (Number(form.price) <= 0) next.price = "Price must be greater than 0.";
     if (form.start_date && form.end_date && form.end_date <= form.start_date) {
       next.end_date = "End date must be after start date.";
@@ -332,13 +341,15 @@ function CourseEditDrawer({ course, instructors = [], onClose, onSaved }) {
               {/* Max Capacity */}
               <div className={styles.field}>
                 <label className={styles.label} htmlFor="edit-capacity">
-                  Max Capacity
+                  Max Capacity (max {MAX_CAPACITY})
                 </label>
                 <input
                   id="edit-capacity"
                   className={`${styles.input} ${errors.capacity ? styles.inputError : ""}`}
                   type="number"
                   min="1"
+                  max={MAX_CAPACITY}
+                  step="1"
                   value={form.capacity}
                   onChange={(e) => handleChange("capacity", e.target.value)}
                 />

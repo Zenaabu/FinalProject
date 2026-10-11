@@ -7,7 +7,7 @@
 // for VAT in Financials) for female. Validated as a categorical pair with the
 // dataviz skill's palette validator: worst-pair CVD ΔE 9.2 (deutan), normal-vision
 // ΔE 19.8 — clears both the 8/15 targets on the app's white card surface.
-// Horizontal bars (same layout as PaymentFunnelChart) read gender counts more
+// Horizontal bars (same layout as PaymentHealthChart) read gender counts more
 // directly than a 2-slice donut would.
 // ──────────────────────────────────────────────────────────────────────────────
 

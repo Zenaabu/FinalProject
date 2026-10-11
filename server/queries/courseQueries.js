@@ -185,6 +185,7 @@ function getAvailableCourses(user_id, cb) {
        DATE_FORMAT(c.end_date,   '%Y-%m-%d') AS end_date,
        c.capacity,
        c.price,
+       c.discount_percent,
        c.vat_percent,
        c.total_lessons,
        CONCAT(u.first_name, ' ', u.last_name) AS instructor,
@@ -246,6 +247,7 @@ function getCourseReceiptInfo(course_id, cb) {
        c.description,
        c.level,
        c.price,
+       c.discount_percent,
        CONCAT(u.first_name, ' ', u.last_name) AS instructor,
        (SELECT DATE_FORMAT(l.lesson_date, '%Y-%m-%d')
           FROM lessons l
@@ -370,6 +372,7 @@ function fetchCoursesWithDetails(course_id, cb) {
        DATE_FORMAT(c.end_date,   '%Y-%m-%d') AS end_date,
        c.capacity,
        c.price,
+       c.discount_percent,
        c.vat_percent,
        c.total_lessons,
        c.is_active,
@@ -549,6 +552,12 @@ function buildCourse(c, lessons) {
     capacity: c.capacity,
     user_id: c.user_id,
     price: c.price,
+    // null = no discount active; never derived/guessed, only ever what the
+    // admin explicitly set via PUT /api/courses/:course_id
+    discount_percent:
+      c.discount_percent === null || c.discount_percent === undefined
+        ? null
+        : Number(c.discount_percent),
     vat_percent: c.vat_percent,
     total_lessons: c.total_lessons,
     lessons,

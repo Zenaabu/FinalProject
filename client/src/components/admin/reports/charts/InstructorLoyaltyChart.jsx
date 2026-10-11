@@ -9,7 +9,7 @@
 // vanishing from the list. Nominal ranking (instructor identity), one series
 // -> a single flat hue per the dataviz skill's "color follows the entity,
 // never its rank" rule, not a gradient by position. Horizontal bars, same
-// layout as PaymentFunnelChart, sized to the row count.
+// layout as PaymentHealthChart, sized to the row count.
 // ──────────────────────────────────────────────────────────────────────────────
 
 import { useState, useEffect } from "react";

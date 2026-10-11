@@ -175,6 +175,31 @@
   color: var(--color-ocean-text);
 }
 
+.priceWithDiscount {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.priceOriginal {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #94a3b8;
+  text-decoration: line-through;
+}
+
+.priceWithDiscount .price {
+  color: #ef4444;
+}
+
+.discountNote {
+  margin: 0.4rem 0 1.2rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #b45309;
+  text-align: center;
+}
+
 /* ── Footer buttons ──────────────────────────────────────────────────────── */
 .footer {
   display: flex;

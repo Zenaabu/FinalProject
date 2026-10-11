@@ -130,6 +130,11 @@ function CourseCatalog() {
                   <span className={`${styles.badge} ${styles.badgeLevel}`}>
                     {course.level}
                   </span>
+                  {course.discount_percent != null && (
+                    <span className={`${styles.badge} ${styles.badgeDiscount}`}>
+                      🔥 {course.discount_percent}% OFF
+                    </span>
+                  )}
                   {course.is_registered && (
                     <span
                       className={`${styles.badge} ${styles.badgeRegistered}`}
@@ -161,9 +166,23 @@ function CourseCatalog() {
                 <SeatsBar capacity={course.capacity} seatsLeft={course.seats_left} />
 
                 <div className={styles.priceRow}>
-                  {/* course.price is already VAT-inclusive — it's exactly
-                      what PayPal charges, so show it as one final price */}
-                  <span className={styles.price}>₪{course.price}</span>
+                  {/* course.price is already VAT-inclusive. When a
+                      last-minute discount is active, final_price is what
+                      PayPal actually charges — see applyDiscount() on the
+                      server, used identically for the catalog, the PayPal
+                      order amount, and the receipt email. */}
+                  {course.discount_percent != null ? (
+                    <>
+                      <span className={styles.priceOriginal}>
+                        ₪{course.price}
+                      </span>
+                      <span className={`${styles.price} ${styles.priceDiscounted}`}>
+                        ₪{course.final_price}
+                      </span>
+                    </>
+                  ) : (
+                    <span className={styles.price}>₪{course.price}</span>
+                  )}
                 </div>
 
                 <button

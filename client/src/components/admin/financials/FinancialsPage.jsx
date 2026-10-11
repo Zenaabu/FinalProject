@@ -8,7 +8,7 @@
 import { useState } from "react";
 import FinancialsKpiRow from "./kpis/FinancialsKpiRow";
 import RevenueTrendChart from "./charts/RevenueTrendChart";
-import PaymentFunnelChart from "./charts/PaymentFunnelChart";
+import PaymentHealthChart from "./charts/PaymentHealthChart";
 import RevenueByLevelChart from "./charts/RevenueByLevelChart";
 import FinancialsDateRangeForm from "./dateRange/FinancialsDateRangeForm";
 import styles from "./FinancialsPage.module.css";
@@ -64,9 +64,9 @@ function FinancialsPage() {
       {/* ── Revenue trend ─────────────────────────────────────────────── */}
       <RevenueTrendChart startDate={range.startDate} endDate={range.endDate} />
 
-      {/* ── Breakdown row: payment funnel (wide) + by level (narrow) ─────── */}
+      {/* ── Breakdown row: payment health (wide) + by level (narrow) ─────── */}
       <div className={styles.breakdownRow}>
-        <PaymentFunnelChart
+        <PaymentHealthChart
           startDate={range.startDate}
           endDate={range.endDate}
         />

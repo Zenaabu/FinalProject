@@ -36,8 +36,6 @@ import {
   CalendarClock,
   CalendarDays,
   Clock,
-  Plus,
-  Trash2,
   X,
 } from "lucide-react";
 import TimeInput24 from "../TimeInput24/TimeInput24";
@@ -46,6 +44,10 @@ import styles from "./CourseCreateForm.module.css";
 // A course cannot be scheduled with more lessons than this — mirrors the
 // server-side cap in server/validations/adminValidations.js.
 const MAX_TOTAL_LESSONS = 12;
+// a course's capacity is a seat count — whole numbers only, and capped so
+// it can't be set to an effectively "unlimited" value (same rule the
+// server enforces in adminValidations.js)
+const MAX_CAPACITY = 20;
 
 // ─── Empty lesson template ────────────────────────────────────────────────────
 const emptyLesson = (number) => ({
@@ -153,6 +155,29 @@ function CourseCreateForm({ instructors = [], onCancel, onCreated }) {
   const displayedInstructors = availableInstructors ?? instructors;
   const hasLessonDates = Boolean(lessonDatesKey);
 
+  // ── Keep lesson rows in sync with Total Lessons ───────────────────────────
+  // The number of lesson rows is no longer picked by hand with an "Add
+  // Lesson" button — it always mirrors the Total Lessons field, growing or
+  // shrinking automatically. That used to be able to drift (e.g. total
+  // lessons = 5 but only 2 rows ever added) and the server only rejected
+  // *too many* lesson rows, not too few, so a half-filled course could slip
+  // through. Ignored while the field is empty/invalid (e.g. mid-edit) so
+  // rows already filled in aren't wiped just because the number is briefly
+  // blank.
+  useEffect(() => {
+    const target = Number(form.total_lessons);
+    if (!Number.isInteger(target) || target <= 0) return;
+
+    setLessons((prev) => {
+      if (target === prev.length) return prev;
+      if (target < prev.length) return prev.slice(0, target);
+      const extra = Array.from({ length: target - prev.length }, (_, i) =>
+        emptyLesson(prev.length + i + 1),
+      );
+      return [...prev, ...extra];
+    });
+  }, [form.total_lessons]);
+
   // ── Course field change handler ───────────────────────────────────────────
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -173,23 +198,6 @@ function CourseCreateForm({ instructors = [], onCancel, onCreated }) {
     }
   };
 
-  // ── Add a new empty lesson row ────────────────────────────────────────────
-  const handleAddLesson = () => {
-    const maxAllowed = Number(form.total_lessons) || 999;
-    if (lessons.length >= maxAllowed) return;
-    setLessons((prev) => [...prev, emptyLesson(prev.length + 1)]);
-  };
-
-  // ── Remove a lesson row (keep at least 1) ────────────────────────────────
-  const handleRemoveLesson = (index) => {
-    if (lessons.length === 1) return;
-    setLessons((prev) =>
-      prev
-        .filter((_, i) => i !== index)
-        .map((l, i) => ({ ...l, lesson_number: i + 1 })),
-    );
-  };
-
   // ── Client-side validation ────────────────────────────────────────────────
   const validate = () => {
     const next = {};
@@ -197,6 +205,10 @@ function CourseCreateForm({ instructors = [], onCancel, onCreated }) {
     if (!form.description.trim())
       next.description = "Course description is required.";
     if (!form.capacity) next.capacity = "Capacity is required.";
+    else if (!Number.isInteger(Number(form.capacity)))
+      next.capacity = "Capacity must be a whole number.";
+    else if (Number(form.capacity) > MAX_CAPACITY)
+      next.capacity = `Capacity cannot be more than ${MAX_CAPACITY}.`;
     if (!form.total_lessons) next.total_lessons = "Total lessons is required.";
     else if (Number(form.total_lessons) > MAX_TOTAL_LESSONS)
       next.total_lessons = `Total lessons cannot be more than ${MAX_TOTAL_LESSONS}.`;
@@ -215,8 +227,19 @@ function CourseCreateForm({ instructors = [], onCancel, onCreated }) {
       next.end_date = "End date must be after start date.";
     }
 
+    // Defense in depth: lesson rows are kept in sync with total_lessons by
+    // the effect above, so this should never actually fire, but a course
+    // must never be submitted with fewer (or more) lesson rows than it
+    // claims to have.
+    if (
+      form.total_lessons &&
+      lessons.length !== Number(form.total_lessons)
+    ) {
+      next.lessons = `This course needs exactly ${form.total_lessons} lesson(s), but ${lessons.length} ${lessons.length === 1 ? "is" : "are"} filled in.`;
+    }
+
     // Validate every lesson row has all fields filled
-    const hasEmptyLesson = lessons.some(
+    const hasEmptyLesson = !next.lessons && lessons.some(
       (l) => !l.lesson_date || !l.start_time || !l.end_time,
     );
     if (hasEmptyLesson) {
@@ -375,7 +398,7 @@ function CourseCreateForm({ instructors = [], onCancel, onCreated }) {
           {/* ── Capacity ────────────────────────────────────────────────── */}
           <Field
             icon={Users}
-            label="Capacity (students)"
+            label={`Capacity (students, max ${MAX_CAPACITY})`}
             error={errors.capacity}
           >
             <input
@@ -384,6 +407,8 @@ function CourseCreateForm({ instructors = [], onCancel, onCreated }) {
               type="number"
               name="capacity"
               min="1"
+              max={MAX_CAPACITY}
+              step="1"
               placeholder="e.g. 12"
               value={form.capacity}
               onChange={handleChange}
@@ -488,15 +513,18 @@ function CourseCreateForm({ instructors = [], onCancel, onCreated }) {
 
         {/* ══════════════════════════════════════════════════════════════════
             SECTION 2 — Lessons
-            The server requires at least one lesson in the lessons[] array.
-            Each lesson must have: lesson_date, start_time, end_time.
-            lesson_number is assigned automatically (1-based index).
+            One row per lesson, generated automatically from Total Lessons
+            above (no manual "Add Lesson" step) — see the effect that keeps
+            `lessons` in sync with form.total_lessons. Each row still needs
+            its own date, start time, and end time filled in, and every date
+            must fall within the course dates. lesson_number is assigned
+            automatically (1-based index).
         ══════════════════════════════════════════════════════════════════ */}
         <div className={styles.sectionTitle}>
           <CalendarClock size={14} />
           Lessons
           <span className={styles.sectionHint}>
-            (at least 1 required — must fall within the course dates)
+            (one row per lesson set above — fill in each date and time)
           </span>
         </div>
 
@@ -572,18 +600,6 @@ function CourseCreateForm({ instructors = [], onCancel, onCreated }) {
                 />
               </div>
 
-              {/* Remove button (hidden when only 1 lesson) */}
-              {lessons.length > 1 && (
-                <button
-                  type="button"
-                  className={styles.btnRemoveLesson}
-                  onClick={() => handleRemoveLesson(index)}
-                  aria-label={`Remove lesson ${lesson.lesson_number}`}
-                >
-                  <Trash2 size={14} />
-                </button>
-              )}
-
               {/* Live check: shown as soon as both times are picked */}
               {lesson.start_time &&
                 lesson.end_time &&
@@ -595,20 +611,6 @@ function CourseCreateForm({ instructors = [], onCancel, onCreated }) {
             </div>
           ))}
         </div>
-
-        {/* Add lesson button (disabled when lessons === total_lessons) */}
-        <button
-          type="button"
-          className={styles.btnAddLesson}
-          onClick={handleAddLesson}
-          disabled={
-            form.total_lessons !== "" &&
-            lessons.length >= Number(form.total_lessons)
-          }
-        >
-          <Plus size={15} />
-          Add Lesson
-        </button>
 
         {/* ── Action buttons ────────────────────────────────────────────── */}
         <div className={styles.actions}>

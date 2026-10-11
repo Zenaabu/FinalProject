@@ -74,7 +74,7 @@ function getRevenueTrend(startDate, endDate, cb) {
 // status update, per the reservation lifecycle described in
 // courseQueries.expireOldReservations) vs still genuinely in progress
 // (pending and not yet expired)
-function getPaymentFunnel(startDate, endDate, cb) {
+function getPaymentHealth(startDate, endDate, cb) {
   const conn = db.getConnection();
   const end = nextDay(endDate);
 
@@ -126,6 +126,6 @@ function getRevenueByLevel(startDate, endDate, cb) {
 module.exports = {
   getFinancialsSummary,
   getRevenueTrend,
-  getPaymentFunnel,
+  getPaymentHealth,
   getRevenueByLevel,
 };

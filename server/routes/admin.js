@@ -564,18 +564,21 @@ router.get(
   },
 );
 
-// GET how PayPal checkout attempts resolved in [startDate, endDate]: started
-// -> reached a payment decision (approved or failed) -> approved, plus the
-// abandoned/still-in-progress counts behind the drop-off between those stages
-// url: /api/admin/financials/payment-funnel?startDate=2026-08-01&endDate=2026-08-11
+// GET a simple health check on PayPal checkout attempts in [startDate,
+// endDate]: just two numbers, Approved vs. Not Approved (everything that
+// didn't end in "approved" — failed, abandoned, or still in progress), so
+// an admin can tell at a glance whether payments are working. The breakdown
+// behind "Not Approved" is still returned separately so a spike can be told
+// apart as an actual problem (failed) vs. not (abandoned/in_progress).
+// url: /api/admin/financials/payment-health?startDate=2026-08-01&endDate=2026-08-11
 router.get(
-  "/financials/payment-funnel",
+  "/financials/payment-health",
   requireLogin,
   requireAdmin,
   (req, res) => {
     const { startDate, endDate } = resolveDateRange(req);
 
-    financialsQ.getPaymentFunnel(startDate, endDate, (err, rows) => {
+    financialsQ.getPaymentHealth(startDate, endDate, (err, rows) => {
       if (err) {
         return res.status(500).json({ success: false, message: err.message });
       }
@@ -586,21 +589,16 @@ router.get(
       const failed = Number(row.failed);
       const abandoned = Number(row.abandoned);
       const inProgress = Number(row.in_progress);
-      const reachedDecision = approved + failed;
+      const notApproved = started - approved;
 
       res.json({
         success: true,
         start_date: startDate,
         end_date: endDate,
-        conversion_rate: started > 0 ? (approved / started) * 100 : null,
-        funnel: [
-          { stage: "started", label: "Checkout Started", count: started },
-          {
-            stage: "decision",
-            label: "Reached Payment",
-            count: reachedDecision,
-          },
-          { stage: "approved", label: "Approved", count: approved },
+        approval_rate: started > 0 ? (approved / started) * 100 : null,
+        health: [
+          { status: "approved", label: "Approved", count: approved },
+          { status: "not_approved", label: "Not Approved", count: notApproved },
         ],
         breakdown: { failed, abandoned, in_progress: inProgress },
       });

@@ -105,6 +105,11 @@
   color: #15803d;
 }
 
+.badgeDiscount {
+  background: linear-gradient(135deg, #f97316, #ef4444);
+  color: #fff;
+}
+
 /* ── Meta list ───────────────────────────────────────────────────────────── */
 .meta {
   margin: 0 0 0.9rem;
@@ -133,6 +138,9 @@
 
 /* ── Price ───────────────────────────────────────────────────────────────── */
 .priceRow {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
   margin-bottom: 1rem;
 }
 
@@ -140,6 +148,17 @@
   font-size: 1.3rem;
   font-weight: 800;
   color: var(--color-ocean-text);
+}
+
+.priceOriginal {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #94a3b8;
+  text-decoration: line-through;
+}
+
+.priceDiscounted {
+  color: #ef4444;
 }
 
 /* ── Enroll button ───────────────────────────────────────────────────────── */

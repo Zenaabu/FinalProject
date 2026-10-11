@@ -28,6 +28,16 @@ const courseQ = require("../queries/courseQueries");
 // length sane and avoids pathological numbers of lesson rows/roster queries
 const MAX_TOTAL_LESSONS = 12;
 
+// a course's capacity is a seat count, so it has to be a whole number, and
+// capped so a typo (or a deliberately huge value) can't create a course
+// that's effectively "unlimited" seats
+const MAX_CAPACITY = 20;
+
+// a last-minute discount is a whole-number percentage off the course price
+// (see discount_percent on the courses table) — capped well under 100 so a
+// typo can't accidentally give a course away for next to nothing
+const MAX_DISCOUNT_PERCENT = 50;
+
 // a middleware that validates the role (when updating it)
 function validateRoleUpdate(req, res, next) {
   const { user_id } = req.params;
@@ -162,6 +172,20 @@ function validateAddCourse(req, res, next) {
     });
   }
 
+  if (!Number.isInteger(Number(capacity))) {
+    return res.status(400).json({
+      success: false,
+      message: "Capacity must be a whole number",
+    });
+  }
+
+  if (Number(capacity) > MAX_CAPACITY) {
+    return res.status(400).json({
+      success: false,
+      message: `Capacity cannot be more than ${MAX_CAPACITY}`,
+    });
+  }
+
   if (Number(total_lessons) > MAX_TOTAL_LESSONS) {
     return res.status(400).json({
       success: false,
@@ -190,10 +214,10 @@ function validateLessonsDetails(req, res, next) {
     });
   }
 
-  if (lessons.length > Number(total_lessons)) {
+  if (lessons.length !== Number(total_lessons)) {
     return res.status(400).json({
       success: false,
-      message: "Number of lessons cannot be greater than total lessons",
+      message: "Number of lessons must match total lessons",
     });
   }
 
@@ -965,6 +989,38 @@ function validateUpdateCourseDetails(req, res, next) {
     });
   }
 
+  // discount_percent is nullable (null = no discount, explicitly clearing
+  // one), so it's checked on its own rather than folded into the "Numbers
+  // must be valid" block below, which would wrongly reject null
+  if (req.body.discount_percent !== undefined) {
+    // once a course has started there's nothing left to discount into, and
+    // nothing left to "undo" either — the discount is history at that
+    // point, so touching it at all (setting OR clearing it) is refused,
+    // not just setting a new one
+    const today = formatDateOnly(new Date());
+    if (updatedCourse.start_date <= today) {
+      return res.status(400).json({
+        success: false,
+        message: "Cannot change a discount on a course that has already started",
+      });
+    }
+
+    if (req.body.discount_percent !== null) {
+      const discountPercent = Number(req.body.discount_percent);
+
+      if (
+        !Number.isInteger(discountPercent) ||
+        discountPercent < 1 ||
+        discountPercent > MAX_DISCOUNT_PERCENT
+      ) {
+        return res.status(400).json({
+          success: false,
+          message: `Discount must be a whole number between 1 and ${MAX_DISCOUNT_PERCENT}`,
+        });
+      }
+    }
+  }
+
   if (
     Number(updatedCourse.price) <= 0 ||
     Number(updatedCourse.capacity) <= 0 ||
@@ -973,6 +1029,20 @@ function validateUpdateCourseDetails(req, res, next) {
     return res.status(400).json({
       success: false,
       message: "Numbers must be valid",
+    });
+  }
+
+  if (!Number.isInteger(Number(updatedCourse.capacity))) {
+    return res.status(400).json({
+      success: false,
+      message: "Capacity must be a whole number",
+    });
+  }
+
+  if (Number(updatedCourse.capacity) > MAX_CAPACITY) {
+    return res.status(400).json({
+      success: false,
+      message: `Capacity cannot be more than ${MAX_CAPACITY}`,
     });
   }
 

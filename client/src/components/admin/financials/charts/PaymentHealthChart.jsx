@@ -1,12 +1,14 @@
-// ─── PaymentFunnelChart.jsx ───────────────────────────────────────────────────
-// How PayPal checkouts resolve, backed by GET /api/admin/financials/payment-funnel.
-// Three ordered stages, each a strict subset of the one before. Horizontal bar
-// chart rather than a true funnel shape — reads more reliably at this size and
-// scales cleanly, while a "-X%" label between bars keeps the step-by-step
-// drop-off story. One hue, monotone lightness (same validated ramp as
-// RevenueByLevelChart: #38bdf8 -> #0284c7 -> #075985). The three drop-off
-// reasons underneath are real states (failed / abandoned / in progress), so
-// those wear the app's status colors instead, each paired with an icon + label.
+// ─── PaymentHealthChart.jsx ───────────────────────────────────────────────────
+// Is checkout actually working? Backed by GET /api/admin/financials/payment-health.
+// Was a 3-stage "funnel" (started -> reached payment -> approved) with a
+// separate drop-off breakdown — admin feedback was that it was hard to read
+// at a glance. Replaced with just two bars: Approved vs. Not Approved, so the
+// first thing you see answers "is something wrong with payments right now".
+// The three reasons behind "Not Approved" (failed / abandoned / in progress)
+// stay as chips underneath — that's what tells the admin whether a spike is
+// an actual problem (failed = something broke, e.g. PayPal/API trouble) or
+// not (abandoned = a customer just didn't finish; in progress = still being
+// completed as of this moment, not stuck).
 // ──────────────────────────────────────────────────────────────────────────────
 
 import { useState, useEffect } from "react";
@@ -21,9 +23,9 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { XCircle, Clock, Timer } from "lucide-react";
-import styles from "./PaymentFunnelChart.module.css";
+import styles from "./PaymentHealthChart.module.css";
 
-const STAGE_COLORS = ["#38bdf8", "#0284c7", "#075985"];
+const STATUS_COLORS = { approved: "#16a34a", not_approved: "#dc2626" };
 
 function CustomTooltip({ active, payload }) {
   if (!active || !payload || !payload.length) return null;
@@ -56,50 +58,28 @@ function renderCountLabel({ x, y, width, height, index, data }) {
   );
 }
 
-// "-X%" drop-off vs. the previous stage, sitting in the gap just above every
-// bar except the first
-function renderDropLabel({ x, y, index, data }) {
-  const row = data[index];
-  if (!row || index === 0) return null;
-
-  const prev = data[index - 1];
-  const drop = prev.count > 0 ? Math.round(((prev.count - row.count) / prev.count) * 100) : 0;
-  if (drop <= 0) return null;
-
-  return (
-    <text
-      x={x}
-      y={y - 8}
-      textAnchor="start"
-      className={styles.labelDrop}
-    >
-      ↓ -{drop}%
-    </text>
-  );
-}
-
-function PaymentFunnelChart({ startDate, endDate }) {
+function PaymentHealthChart({ startDate, endDate }) {
   const [data, setData] = useState(null);
 
   useEffect(() => {
     setData(null);
     fetch(
-      `/api/admin/financials/payment-funnel?startDate=${startDate}&endDate=${endDate}`,
+      `/api/admin/financials/payment-health?startDate=${startDate}&endDate=${endDate}`,
     )
       .then((res) => res.json())
       .then((res) => {
         if (!res.success) return;
 
-        const started = res.funnel[0]?.count || 0;
-        const funnel = res.funnel.map((stage) => ({
-          ...stage,
-          pct: started > 0 ? Math.round((stage.count / started) * 100) : 0,
+        const started = res.health.reduce((sum, row) => sum + row.count, 0);
+        const health = res.health.map((row) => ({
+          ...row,
+          pct: started > 0 ? Math.round((row.count / started) * 100) : 0,
         }));
 
         setData({
-          funnel,
+          health,
           breakdown: res.breakdown,
-          conversionRate: res.conversion_rate,
+          approvalRate: res.approval_rate,
         });
       })
       .catch(() => {
@@ -107,34 +87,36 @@ function PaymentFunnelChart({ startDate, endDate }) {
       });
   }, [startDate, endDate]);
 
+  const started = data ? data.health.reduce((sum, row) => sum + row.count, 0) : 0;
+
   return (
     <div className={styles.card}>
       {/* ── Card header ───────────────────────────────────────────────── */}
       <div className={styles.cardHeader}>
         <div>
-          <h2 className={styles.title}>Payment Funnel</h2>
+          <h2 className={styles.title}>Payment Health</h2>
           <span className={styles.period}>Selected period &middot; PayPal checkouts</span>
         </div>
-        {data?.conversionRate !== null && data?.conversionRate !== undefined && (
-          <div className={styles.conversion}>
-            <span className={styles.conversionValue}>
-              {Math.round(data.conversionRate)}%
+        {data?.approvalRate !== null && data?.approvalRate !== undefined && (
+          <div className={styles.approval}>
+            <span className={styles.approvalValue}>
+              {Math.round(data.approvalRate)}%
             </span>
-            <span className={styles.conversionLabel}>conversion</span>
+            <span className={styles.approvalLabel}>approved</span>
           </div>
         )}
       </div>
 
-      {/* ── Funnel bars ───────────────────────────────────────────────── */}
+      {/* ── Approved vs. Not Approved ────────────────────────────────── */}
       <div className={styles.chartWrap}>
         {data ? (
-          data.funnel[0].count > 0 ? (
+          started > 0 ? (
             <>
-              <ResponsiveContainer width="100%" height={200}>
+              <ResponsiveContainer width="100%" height={130}>
                 <BarChart
-                  data={data.funnel}
+                  data={data.health}
                   layout="vertical"
-                  margin={{ top: 14, right: 44, left: 4, bottom: 0 }}
+                  margin={{ top: 4, right: 44, left: 4, bottom: 0 }}
                   barCategoryGap="38%"
                 >
                   <XAxis type="number" hide domain={[0, (max) => Math.ceil(max * 1.15)]} />
@@ -144,20 +126,19 @@ function PaymentFunnelChart({ startDate, endDate }) {
                     tick={{ fontSize: 12, fill: "#334155" }}
                     axisLine={false}
                     tickLine={false}
-                    width={118}
+                    width={100}
                   />
                   <Tooltip content={<CustomTooltip />} cursor={{ fill: "rgba(56, 189, 248, 0.08)" }} />
-                  <Bar dataKey="count" radius={[0, 4, 4, 0]} maxBarSize={30}>
-                    {data.funnel.map((entry, i) => (
-                      <Cell key={entry.stage} fill={STAGE_COLORS[i]} />
+                  <Bar dataKey="count" radius={[0, 4, 4, 0]} maxBarSize={36}>
+                    {data.health.map((entry) => (
+                      <Cell key={entry.status} fill={STATUS_COLORS[entry.status]} />
                     ))}
-                    <LabelList content={(props) => renderCountLabel({ ...props, data: data.funnel })} />
-                    <LabelList content={(props) => renderDropLabel({ ...props, data: data.funnel })} />
+                    <LabelList content={(props) => renderCountLabel({ ...props, data: data.health })} />
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
 
-              {/* ── Drop-off reasons ──────────────────────────────────── */}
+              {/* ── Why "Not Approved"? ───────────────────────────────── */}
               <div className={styles.breakdown}>
                 <div className={`${styles.chip} ${styles.chipFailed}`}>
                   <XCircle size={14} />
@@ -184,4 +165,4 @@ function PaymentFunnelChart({ startDate, endDate }) {
   );
 }
 
-export default PaymentFunnelChart;
+export default PaymentHealthChart;

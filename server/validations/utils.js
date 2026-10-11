@@ -471,12 +471,18 @@ function buildReceiptEmailHtml({
   level,
   instructor,
   price,
+  originalPrice,
+  discountPercent,
   firstLessonDate,
   firstLessonStart,
   firstLessonEnd,
 }) {
   const name = escapeHtml(firstName);
   const amount = `₪${Number(price).toFixed(2)}`;
+  // only shown when the admin had an active last-minute discount on this
+  // course at the moment payment was captured
+  const hasDiscount = discountPercent && Number(originalPrice) > Number(price);
+  const originalAmount = hasDiscount ? `₪${Number(originalPrice).toFixed(2)}` : null;
 
   const firstLessonBlock = firstLessonDate
     ? `
@@ -539,6 +545,18 @@ function buildReceiptEmailHtml({
               </tr>
               <tr>
                 <td style="padding:14px 18px;border-top:1px solid #e2e8f0;background-color:#f8fafc;">
+                  ${
+                    hasDiscount
+                      ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:8px;">
+                           <tr>
+                             <td style="font-size:12px;color:#94a3b8;text-decoration:line-through;">${originalAmount}</td>
+                             <td style="text-align:right;">
+                               <span style="font-size:11px;font-weight:700;letter-spacing:0.03em;text-transform:uppercase;color:#b45309;background-color:#fef3c7;padding:1px 8px;border-radius:999px;">🏷️ ${escapeHtml(discountPercent)}% Last-Minute Discount</span>
+                             </td>
+                           </tr>
+                         </table>`
+                      : ""
+                  }
                   <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
                     <tr>
                       <td style="font-size:14px;font-weight:700;color:#0f172a;">Amount Paid</td>
@@ -568,12 +586,13 @@ function buildReceiptEmailHtml({
 
 // a function that gets a user ({ email, first_name }) and the receipt details
 // of a just-completed course purchase ({ receiptNumber, paymentDate,
-// courseDescription, level, instructor, price, firstLessonDate,
-// firstLessonStart, firstLessonEnd } — the last three may be null if the
-// course has no lessons yet) and emails them a receipt. best-effort: the
-// caller should not await this on the response path, same as
-// sendWelcomeEmail — a failed/slow send must never affect the purchase
-// that already succeeded.
+// courseDescription, level, instructor, price, originalPrice,
+// discountPercent, firstLessonDate, firstLessonStart, firstLessonEnd } —
+// originalPrice/discountPercent are only passed when a last-minute discount
+// was active, and the first-lesson fields may be null if the course has no
+// lessons yet) and emails them a receipt. best-effort: the caller should not
+// await this on the response path, same as sendWelcomeEmail — a failed/slow
+// send must never affect the purchase that already succeeded.
 async function sendCourseReceiptEmail(user, details) {
   const subject = "BlueMars Surf Club - Payment Receipt";
   const {
@@ -583,12 +602,18 @@ async function sendCourseReceiptEmail(user, details) {
     level,
     instructor,
     price,
+    originalPrice,
+    discountPercent,
     firstLessonDate,
     firstLessonStart,
     firstLessonEnd,
   } = details;
 
   const amount = `₪${Number(price).toFixed(2)}`;
+  const hasDiscount = discountPercent && Number(originalPrice) > Number(price);
+  const discountText = hasDiscount
+    ? `A ${discountPercent}% last-minute discount was applied (was ₪${Number(originalPrice).toFixed(2)}).\n`
+    : "";
   const firstLessonText = firstLessonDate
     ? `Your first lesson is on ${formatDateOnly(firstLessonDate)} at ${firstLessonStart}${firstLessonEnd ? `-${firstLessonEnd}` : ""} — don't miss it!\n\n`
     : "";
@@ -605,6 +630,7 @@ async function sendCourseReceiptEmail(user, details) {
         `Instructor: ${instructor}\n` +
         `Receipt No.: #${receiptNumber}\n` +
         `Payment Date: ${formatDateOnly(paymentDate)}\n` +
+        discountText +
         `Amount Paid: ${amount}\n\n` +
         firstLessonText +
         `- BlueMars Surf Club`,
@@ -616,6 +642,8 @@ async function sendCourseReceiptEmail(user, details) {
         level,
         instructor,
         price,
+        originalPrice,
+        discountPercent,
         firstLessonDate,
         firstLessonStart,
         firstLessonEnd,
@@ -936,6 +964,7 @@ function areValidCourseUpdateFields(fields) {
     "end_date",
     "user_id",
     "status",
+    "discount_percent",
   ];
 
   return fields.every((field) => allowedFields.includes(field));
@@ -964,6 +993,12 @@ function buildUpdatedCourse(oldCourse, newData) {
           ? 1
           : 0
         : oldCourse.is_active,
+    // explicit `!== undefined` (not `??`) because `null` is a real,
+    // meaningful value here — "clear the discount" — not "field omitted"
+    discount_percent:
+      newData.discount_percent !== undefined
+        ? newData.discount_percent
+        : oldCourse.discount_percent,
   };
 }
 

@@ -6,6 +6,7 @@
 import { useState, useEffect, useRef } from "react";
 import LessonAccordionList from "./LessonAccordionList";
 import CourseEditDrawer from "./CourseEditDrawer";
+import DiscountModal from "./DiscountModal";
 import styles from "./CourseHeaderCard.module.css";
 
 /* ── Inline SVG icons ────────────────────────────────────────────────────── */
@@ -29,8 +30,8 @@ function ChevronIcon({ expanded }) {
 function CalendarIcon() {
   return (
     <svg
-      width="14"
-      height="14"
+      width="16"
+      height="16"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
@@ -48,8 +49,8 @@ function CalendarIcon() {
 function ClockIcon() {
   return (
     <svg
-      width="14"
-      height="14"
+      width="16"
+      height="16"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
@@ -65,8 +66,8 @@ function ClockIcon() {
 function UserIcon() {
   return (
     <svg
-      width="14"
-      height="14"
+      width="16"
+      height="16"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
@@ -82,8 +83,8 @@ function UserIcon() {
 function PeopleIcon() {
   return (
     <svg
-      width="14"
-      height="14"
+      width="16"
+      height="16"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
@@ -114,6 +115,40 @@ function WarningIcon() {
       <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
       <line x1="12" y1="9" x2="12" y2="13" />
       <line x1="12" y1="17" x2="12.01" y2="17" />
+    </svg>
+  );
+}
+
+function TagIcon() {
+  return (
+    <svg
+      width="12"
+      height="12"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" />
+      <circle cx="7.5" cy="7.5" r="0.5" fill="currentColor" />
+    </svg>
+  );
+}
+
+function ZapIcon() {
+  return (
+    <svg
+      width="11"
+      height="11"
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      stroke="none"
+      aria-hidden="true"
+    >
+      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
     </svg>
   );
 }
@@ -151,6 +186,7 @@ function CourseHeaderCard({
 }) {
   const [isExpanded, setIsExpanded] = useState(startExpanded);
   const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isDiscountOpen, setIsDiscountOpen] = useState(false);
   const cardRef = useRef(null);
 
   // Arriving here from the dashboard's "click a course" shortcut — scroll
@@ -176,6 +212,23 @@ function CourseHeaderCard({
     statusKey === "upcoming" &&
     Number(course.capacity) > 0 &&
     Number(course.enrolled) < Number(course.capacity) * 0.5;
+
+  // days until the course starts (0 = today, negative = already started) —
+  // whole calendar days, not hours, since start_date has no time component
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const daysUntilStart = Math.round(
+    (new Date(`${course.start_date}T00:00:00`) - today) / 86400000,
+  );
+
+  const hasDiscount = course.discount_percent != null;
+  const isUpcoming = statusKey === "upcoming";
+
+  // the discount offer only surfaces for a course that's genuinely at risk
+  // of running under-filled AND close enough to starting that it's worth
+  // nudging people with a price cut right now
+  const canOfferDiscount =
+    !hasDiscount && isUnderCapacity && daysUntilStart >= 0 && daysUntilStart <= 2;
 
   return (
     <div
@@ -203,11 +256,51 @@ function CourseHeaderCard({
               <span className={`${styles.badge} ${styles.badgeLevel}`}>
                 {course.level}
               </span>
-              {isUnderCapacity && (
-                <span className={`${styles.badge} ${styles.badgeUnderCapacity}`}>
-                  <WarningIcon />
-                  Under 50% Capacity
-                </span>
+              {hasDiscount ? (
+                isUpcoming ? (
+                  <button
+                    type="button"
+                    className={`${styles.badge} ${styles.badgeDiscountActive}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsDiscountOpen(true);
+                    }}
+                  >
+                    <TagIcon />
+                    {course.discount_percent}% OFF Active
+                  </button>
+                ) : (
+                  // course already started — the discount can no longer be
+                  // changed or removed (there's nothing left to sell at a
+                  // different price), so this is informational only: a
+                  // plain, non-clickable record that one was applied
+                  <span className={`${styles.badge} ${styles.badgeDiscountPast}`}>
+                    <TagIcon />
+                    {course.discount_percent}% OFF was applied
+                  </span>
+                )
+              ) : canOfferDiscount ? (
+                <button
+                  type="button"
+                  className={`${styles.badge} ${styles.badgeDiscountOffer}`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsDiscountOpen(true);
+                  }}
+                >
+                  <ZapIcon />
+                  {daysUntilStart === 0
+                    ? "Starts Today"
+                    : `Starts in ${daysUntilStart}d`}{" "}
+                  — Offer Discount
+                </button>
+              ) : (
+                isUnderCapacity && (
+                  <span className={`${styles.badge} ${styles.badgeUnderCapacity}`}>
+                    <WarningIcon />
+                    Under 50% Capacity
+                  </span>
+                )
               )}
             </div>
           </div>
@@ -265,6 +358,18 @@ function CourseHeaderCard({
           onSaved={(updated) => {
             onCourseUpdated?.(updated);
             setIsEditOpen(false);
+          }}
+        />
+      )}
+
+      {/* ── Last-minute discount pop-up ──────────────────────────── */}
+      {isDiscountOpen && (
+        <DiscountModal
+          course={course}
+          onClose={() => setIsDiscountOpen(false)}
+          onSaved={(updated) => {
+            onCourseUpdated?.(updated);
+            setIsDiscountOpen(false);
           }}
         />
       )}

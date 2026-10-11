@@ -99,6 +99,69 @@
   color: #b45309;
 }
 
+/* Discount badges double as buttons — reset the browser's default button
+   chrome so they still look exactly like the other pill badges */
+.badgeDiscountActive,
+.badgeDiscountOffer {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  border: none;
+  font-family: inherit;
+  cursor: pointer;
+  transition:
+    transform 0.12s ease,
+    box-shadow 0.12s ease;
+}
+
+.badgeDiscountActive:hover,
+.badgeDiscountOffer:hover {
+  transform: translateY(-1px);
+}
+
+.badgeDiscountActive {
+  background: #dcfce7;
+  color: #15803d;
+  box-shadow: 0 0 0 1px rgba(21, 128, 61, 0.15);
+}
+
+.badgeDiscountActive:hover {
+  box-shadow: 0 2px 8px rgba(21, 128, 61, 0.25);
+}
+
+/* Read-only record of a past discount, once the course has started —
+   same green as the active pill, minus every clickable affordance */
+.badgeDiscountPast {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  background: #f1f5f9;
+  color: #64748b;
+  cursor: default;
+}
+
+/* Urgent, attention-grabbing — this is the "act now" prompt */
+.badgeDiscountOffer {
+  background: linear-gradient(135deg, #f97316, #ef4444);
+  color: #fff;
+  box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.25);
+  animation: discountPulse 2.2s ease-in-out infinite;
+}
+
+.badgeDiscountOffer:hover {
+  box-shadow: 0 3px 10px rgba(239, 68, 68, 0.4);
+}
+
+@keyframes discountPulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.25);
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.18);
+  }
+}
+
 /* ── Details row ─────────────────────────────────────────────────────────── */
 .detailsRow {
   display: flex;
@@ -113,7 +176,7 @@
   display: flex;
   align-items: center;
   gap: 0.38rem;
-  font-size: 0.82rem;
+  font-size: 0.93rem;
   color: #64748b;
 }
 
