@@ -49,7 +49,8 @@ async function createOrder(amount, course_id) {
       ],
       application_context: {
         return_url: `${CLIENT_URL}/user/courses/${course_id}/paypal/return`,
-        cancel_url: `${CLIENT_URL}/user/courses`,
+        // ?cancelled tells the catalog to release the pending reservation
+        cancel_url: `${CLIENT_URL}/user/courses?cancelled=${course_id}`,
         user_action: "PAY_NOW",
         shipping_preference: "NO_SHIPPING",
       },

@@ -1,6 +1,6 @@
 // ─── CourseManagerDashboard.jsx ───────────────────────────────────────────────
 // Renders the vertical accordion course view, split by status into an
-// All / Active / Inactive tab filter (an "Active"/"Upcoming" course counts as
+// Active / Inactive / All tab filter, defaulting to Active (an "Active"/"Upcoming" course counts as
 // Active — both mean is_active = 1 on the course row; only a course the
 // backend has flipped to is_active = 0, i.e. status "Inactive", counts
 // against the Inactive tab).
@@ -12,15 +12,15 @@
 // course can refresh this list.
 // ──────────────────────────────────────────────────────────────────────────────
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { Search, X } from "lucide-react";
 import CourseHeaderCard from "./CourseHeaderCard";
 import styles from "./CourseManagerDashboard.module.css";
 
 const TABS = [
-  { key: "all", label: "All" },
   { key: "active", label: "Active" },
   { key: "inactive", label: "Inactive" },
+  { key: "all", label: "All" },
 ];
 
 const EMPTY_MESSAGE = {
@@ -46,7 +46,18 @@ function CourseManagerDashboard({
   onLessonsChanged,
   initialExpandedCourseId = null,
 }) {
-  const [filter, setFilter] = useState("all");
+  const [filter, setFilter] = useState("active");
+
+  // a deep-link to an inactive course would be hidden by the default Active
+  // tab, so jump to Inactive once — only on the first load of courses
+  const deepLinkHandled = useRef(false);
+  useEffect(() => {
+    if (deepLinkHandled.current || !initialExpandedCourseId || !courses.length)
+      return;
+    deepLinkHandled.current = true;
+    const target = courses.find((c) => c.course_id === initialExpandedCourseId);
+    if (target?.status === "Inactive") setFilter("inactive");
+  }, [courses, initialExpandedCourseId]);
 
   // draft values follow the inputs as the admin types; appliedRange only
   // updates on Search, so the list doesn't jump around mid-edit

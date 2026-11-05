@@ -15,9 +15,11 @@
 //   2. Redirect the whole page to PayPal's approve_link.
 //   3. PayPal redirects back to /user/courses/:id/paypal/return, where
 //      EnrollReturn captures the order and completes the registration.
+//      If the user cancels instead, PayPal sends them back here with
+//      ?cancelled=<course_id>, and the pending reservation is released.
 // ──────────────────────────────────────────────────────────────────────────────
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import { toast } from "sonner";
 import EnrollConfirmModal from "./EnrollConfirmModal";
@@ -25,7 +27,7 @@ import SeatsBar from "./SeatsBar";
 import styles from "./CourseCatalog.module.css";
 
 function CourseCatalog() {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const levelFilter = searchParams.get("level");
 
   const [courses, setCourses] = useState([]);
@@ -36,8 +38,31 @@ function CourseCatalog() {
   // null when it's closed
   const [confirmingCourse, setConfirmingCourse] = useState(null);
 
+  // the one-time cancel request, kept across StrictMode's double effect so
+  // both runs wait for it instead of firing it twice
+  const releaseRef = useRef(null);
+
   useEffect(() => {
-    fetch("/api/courses/available")
+    // PayPal's cancel_url lands here with ?cancelled=<course_id> — release
+    // the seat that checkout was holding before loading the list, so the
+    // seat counts are correct
+    const cancelledId = searchParams.get("cancelled");
+    if (cancelledId && !releaseRef.current) {
+      releaseRef.current = fetch(
+        `/api/courses/${cancelledId}/paypal/cancel-order`,
+        { method: "POST" },
+      )
+        .then(() => toast.info("Payment cancelled — you were not charged."))
+        .catch(() => {});
+      const next = new URLSearchParams(searchParams);
+      next.delete("cancelled");
+      next.delete("token");
+      next.delete("PayerID");
+      setSearchParams(next, { replace: true });
+    }
+
+    (releaseRef.current || Promise.resolve())
+      .then(() => fetch("/api/courses/available"))
       .then((res) => res.json())
       .then((data) => {
         if (!data.success) {
@@ -47,6 +72,8 @@ function CourseCatalog() {
       })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
+    // mount-only: the ?cancelled param is consumed (and stripped) once
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const visibleCourses = levelFilter

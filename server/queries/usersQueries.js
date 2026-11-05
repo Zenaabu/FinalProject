@@ -250,6 +250,24 @@ function failReservation(reservation_id, cb) {
   );
 }
 
+// a function that gets user_id and course_id
+// it releases every pending reservation this user holds on the course — used
+// when they cancel/leave PayPal, and before they start a new checkout, so an
+// abandoned checkout never keeps holding their seat
+function releaseUserPendingReservations(user_id, course_id, cb) {
+  const conn = db.getConnection();
+
+  conn.query(
+    `UPDATE course_reservations
+     SET status = 'failed'
+     WHERE user_id = ?
+       AND course_id = ?
+       AND status = 'pending'`,
+    [user_id, course_id],
+    cb,
+  );
+}
+
 // a function that registers user to course and approves reservation
 // both actions happen together using transaction.
 // the PayPal capture id is stored in paypal_capture_id — receipt_number is the
@@ -336,5 +354,6 @@ module.exports = {
   findPendingReservation,
   approveReservation,
   failReservation,
+  releaseUserPendingReservations,
   completeCourseRegistration,
 };

@@ -172,7 +172,8 @@ function expireOldReservations(cb) {
 // a function that gets a user_id and returns every course that is open for
 // registration, with how many seats are left and whether this user is already
 // registered to it. pending reservations that have not expired still hold a
-// seat, so they count towards taken_places
+// seat, so they count towards taken_places — except this user's own, since
+// an abandoned checkout of theirs is released when they enroll again
 function getAvailableCourses(user_id, cb) {
   const conn = db.getConnection();
 
@@ -194,7 +195,8 @@ function getAvailableCourses(user_id, cb) {
        (SELECT COUNT(*) FROM course_reservations cr
          WHERE cr.course_id = c.course_id
            AND cr.status    = 'pending'
-           AND cr.expires_at > NOW())                  AS pending_count,
+           AND cr.expires_at > NOW()
+           AND cr.user_id  <> ?)                       AS pending_count,
        (SELECT COUNT(*) FROM register r2
          WHERE r2.course_id = c.course_id
            AND r2.user_id   = ?)                       AS is_registered
@@ -203,7 +205,7 @@ function getAvailableCourses(user_id, cb) {
      WHERE c.is_active = 1
        AND c.start_date > CURDATE()
      ORDER BY c.start_date`,
-    [user_id],
+    [user_id, user_id],
     cb,
   );
 }

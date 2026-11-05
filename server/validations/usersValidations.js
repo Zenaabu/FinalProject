@@ -170,28 +170,39 @@ function validateCanCreatePayPalOrder(req, res, next) {
           });
         }
 
-        userQ.getCourseTakenPlaces(course_id, (err3, placeRows) => {
-          if (err3) {
+        // a previous checkout this user abandoned (e.g. left PayPal with the
+        // back button) must not count against their own new attempt
+        userQ.releaseUserPendingReservations(user_id, course_id, (errRel) => {
+          if (errRel) {
             return res.status(500).json({
               success: false,
-              message: err3.message,
+              message: errRel.message,
             });
           }
 
-          const places = placeRows[0];
+          userQ.getCourseTakenPlaces(course_id, (err3, placeRows) => {
+            if (err3) {
+              return res.status(500).json({
+                success: false,
+                message: err3.message,
+              });
+            }
 
-          const taken =
-            Number(places.registered_count) + Number(places.pending_count);
+            const places = placeRows[0];
 
-          if (taken >= Number(places.capacity)) {
-            return res.status(409).json({
-              success: false,
-              message: "Course is full",
-            });
-          }
+            const taken =
+              Number(places.registered_count) + Number(places.pending_count);
 
-          req.course = course;
-          next();
+            if (taken >= Number(places.capacity)) {
+              return res.status(409).json({
+                success: false,
+                message: "Course is full",
+              });
+            }
+
+            req.course = course;
+            next();
+          });
         });
       });
     });

@@ -743,6 +743,22 @@ router.post(
   },
 );
 
+// POST cancel PayPal order — the user cancelled/left PayPal without paying,
+// so release the seat their pending reservation was holding
+// url: /api/courses/:course_id/paypal/cancel-order
+router.post("/:course_id/paypal/cancel-order", requireLogin, (req, res) => {
+  const { course_id } = req.params;
+  const user_id = req.session.user.user_id;
+
+  userQ.releaseUserPendingReservations(user_id, course_id, (err) => {
+    if (err) {
+      return res.status(500).json({ success: false, message: err.message });
+    }
+
+    res.json({ success: true, message: "Reservation released" });
+  });
+});
+
 // POST capture PayPal order
 // url: /api/courses/:course_id/paypal/capture-order
 router.post(
