@@ -13,6 +13,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useParams, Link } from "react-router-dom";
 import { toast } from "sonner";
 import styles from "./SubstituteLessonAttendance.module.css";
+import { formatDate } from "../../../utils/formatDate";
 
 function SubstituteLessonAttendance() {
   const { lesson_id } = useParams();
@@ -116,7 +117,7 @@ function SubstituteLessonAttendance() {
         <span className={styles.badge}>You're covering this lesson</span>
         <h1 className={styles.title}>{lessonInfo.course_description}</h1>
         <p className={styles.subtitle}>
-          Lesson {lessonInfo.lesson_number} · {lessonInfo.lesson_date} ·{" "}
+          Lesson {lessonInfo.lesson_number} · {formatDate(lessonInfo.lesson_date)} ·{" "}
           {lessonInfo.start_time}–{lessonInfo.end_time} · {presentCount} /{" "}
           {roster.length} present
         </p>

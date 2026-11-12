@@ -10,6 +10,7 @@ const {
   validatePassword,
   areValidUserUpdateFields,
   buildUpdatedUser,
+  findStudentLessonClashes,
 } = require("./utils");
 
 // a middleware that checks if the user exists
@@ -209,8 +210,55 @@ function validateCanCreatePayPalOrder(req, res, next) {
   });
 }
 
+// a middleware that blocks enrolling in a course if any of its lessons
+// overlaps (same date, overlapping time) a lesson the user is already booked
+// into — a registered course or an unfinished checkout. runs before PayPal,
+// so the user is never charged for a course they couldn't fully attend.
+// lessons on the same day at different times are allowed.
+function validateNoStudentScheduleClash(req, res, next) {
+  const { course_id } = req.params;
+  const user_id = req.session.user.user_id;
+
+  userQ.getUserBookedLessons(user_id, course_id, (err, bookedLessons) => {
+    if (err) {
+      return res.status(500).json({ success: false, message: err.message });
+    }
+
+    if (bookedLessons.length === 0) {
+      return next();
+    }
+
+    courseQ.getLessonsForCourses([course_id], (err2, lessons) => {
+      if (err2) {
+        return res.status(500).json({ success: false, message: err2.message });
+      }
+
+      const newLessons = lessons.map((l) => ({ ...l, lesson_date: l.date }));
+      const clashes = findStudentLessonClashes(bookedLessons, newLessons);
+
+      if (clashes.length === 0) {
+        return next();
+      }
+
+      const { lesson, bookedLesson } = clashes[0];
+      const more =
+        clashes.length > 1 ? ` (and ${clashes.length - 1} more)` : "";
+
+      return res.status(409).json({
+        success: false,
+        message:
+          `You can't enroll: lesson ${lesson.lesson_number} ` +
+          `(${lesson.lesson_date}, ${lesson.start_time}-${lesson.end_time}) ` +
+          `overlaps your lesson in "${bookedLesson.course_description}" ` +
+          `(${bookedLesson.start_time}-${bookedLesson.end_time})${more}.`,
+      });
+    });
+  });
+}
+
 module.exports = {
   checkUserExists,
   validateUpdateMyDetails,
   validateCanCreatePayPalOrder,
+  validateNoStudentScheduleClash,
 };

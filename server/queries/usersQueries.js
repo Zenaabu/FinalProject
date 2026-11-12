@@ -268,6 +268,46 @@ function releaseUserPendingReservations(user_id, course_id, cb) {
   );
 }
 
+// a function that gets a user_id and a course_id to leave out (null to keep
+// every course). it returns every upcoming lesson the user is already booked
+// into — courses they're registered to, plus courses they have an unexpired
+// pending checkout on (so two checkouts opened at once can't both slip
+// through). used to stop a student enrolling in a course whose lessons
+// overlap a lesson they already have.
+function getUserBookedLessons(user_id, excludeCourseId, cb) {
+  const conn = db.getConnection();
+
+  conn.query(
+    `SELECT
+        c.course_id,
+        c.description AS course_description,
+        l.lesson_id,
+        l.lesson_number,
+        DATE_FORMAT(l.lesson_date, '%Y-%m-%d') AS lesson_date,
+        TIME_FORMAT(l.start_time,  '%H:%i')    AS start_time,
+        TIME_FORMAT(l.end_time,    '%H:%i')    AS end_time
+     FROM courses c
+     JOIN lessons l
+        ON c.course_id = l.course_id
+     WHERE c.is_active = 1
+       AND l.lesson_date >= CURDATE()
+       AND c.course_id != ?
+       AND (
+         EXISTS (SELECT 1 FROM register r
+                  WHERE r.course_id = c.course_id
+                    AND r.user_id   = ?)
+         OR EXISTS (SELECT 1 FROM course_reservations cr
+                     WHERE cr.course_id  = c.course_id
+                       AND cr.user_id    = ?
+                       AND cr.status     = 'pending'
+                       AND cr.expires_at > NOW())
+       )
+     ORDER BY l.lesson_date, l.start_time`,
+    [excludeCourseId ?? 0, user_id, user_id],
+    cb,
+  );
+}
+
 // a function that registers user to course and approves reservation
 // both actions happen together using transaction.
 // the PayPal capture id is stored in paypal_capture_id — receipt_number is the
@@ -355,5 +395,6 @@ module.exports = {
   approveReservation,
   failReservation,
   releaseUserPendingReservations,
+  getUserBookedLessons,
   completeCourseRegistration,
 };

@@ -25,11 +25,28 @@
 /* ── Brand / logo area ───────────────────────────────────────────────────── */
 .brand {
   display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 1.1rem 1rem 1rem 0.75rem;
+  border-bottom: 1px solid rgba(56, 189, 248, 0.15);
+}
+
+/* The PNG has transparent padding around the badge, so the box is a bit
+   larger than the visible logo and nudged left to line up with the nav. */
+.brandLogo {
+  width: 64px;
+  height: 64px;
+  flex-shrink: 0;
+  object-fit: contain;
+  margin-left: -0.35rem;
+}
+
+.brandText {
+  display: flex;
   flex-direction: column;
   align-items: flex-start;
-  padding: 1.5rem 1.25rem 1.25rem;
-  border-bottom: 1px solid rgba(56, 189, 248, 0.15);
   gap: 0.2rem;
+  min-width: 0;
 }
 
 .brandName {

@@ -23,6 +23,7 @@ import CourseCard from "../../landing/sections/courses/CourseCard";
 import { COURSES } from "../../landing/sections/courses/coursesData";
 import { statusOf } from "../courseStatus";
 import styles from "./MyCourses.module.css";
+import { formatDate } from "../../../utils/formatDate";
 
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -120,7 +121,7 @@ function MyCourses() {
                 <span className={styles.weekLessonTag}>Upcoming Lesson</span>
                 <p className={styles.weekLessonCourse}>{course.description}</p>
                 <p className={styles.weekLessonWhen}>
-                  {course.next_lesson.date} · {course.next_lesson.start_time}–
+                  {formatDate(course.next_lesson.date)} · {course.next_lesson.start_time}–
                   {course.next_lesson.end_time}
                 </p>
               </div>
@@ -167,12 +168,12 @@ function MyCourses() {
                 <h3 className={styles.cardTitle}>{course.description}</h3>
 
                 <p className={styles.cardMeta}>
-                  {course.start_date} – {course.end_date} · {course.instructor}
+                  {formatDate(course.start_date)} – {formatDate(course.end_date)} · {course.instructor}
                 </p>
 
                 <p className={styles.cardNextLesson}>
                   {course.next_lesson
-                    ? `Next lesson: ${course.next_lesson.date} · ${course.next_lesson.start_time}–${course.next_lesson.end_time}`
+                    ? `Next lesson: ${formatDate(course.next_lesson.date)} · ${course.next_lesson.start_time}–${course.next_lesson.end_time}`
                     : "No more lessons scheduled."}
                 </p>
               </div>

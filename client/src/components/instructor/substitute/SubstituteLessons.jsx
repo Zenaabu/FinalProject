@@ -18,6 +18,7 @@ import { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { markSeen } from "./substituteSeen";
 import styles from "./SubstituteLessons.module.css";
+import { formatDate } from "../../../utils/formatDate";
 
 // Lessons are split into "Upcoming" (soonest first — what the instructor
 // needs to act on) and "Past" (newest first). Past is capped so a long
@@ -148,7 +149,7 @@ function SubstituteLessons() {
                     </div>
                     <div className={styles.metaRow}>
                       <dt>Date</dt>
-                      <dd>{lesson.lesson_date}</dd>
+                      <dd>{formatDate(lesson.lesson_date)}</dd>
                     </div>
                     <div className={styles.metaRow}>
                       <dt>Time</dt>

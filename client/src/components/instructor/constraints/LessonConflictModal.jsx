@@ -15,6 +15,7 @@
 
 import { ArrowLeft, Send, Clock } from "lucide-react";
 import styles from "./LessonConflictModal.module.css";
+import { formatDate } from "../../../utils/formatDate";
 
 function LessonConflictModal({
   firstName,
@@ -26,7 +27,7 @@ function LessonConflictModal({
   onSubmitAnyway,
 }) {
   const rangeLabel =
-    startDate === endDate ? startDate : `${startDate} – ${endDate}`;
+    startDate === endDate ? formatDate(startDate) : `${formatDate(startDate)} – ${formatDate(endDate)}`;
 
   return (
     <div className={styles.overlay} role="dialog" aria-modal="true">
@@ -62,7 +63,7 @@ function LessonConflictModal({
                   {lesson.course_description}
                 </span>
                 <span className={styles.lessonMeta}>
-                  Lesson {lesson.lesson_number} · {lesson.lesson_date}
+                  Lesson {lesson.lesson_number} · {formatDate(lesson.lesson_date)}
                   <span className={styles.lessonTime}>
                     <Clock size={14} />
                     {lesson.start_time}–{lesson.end_time}

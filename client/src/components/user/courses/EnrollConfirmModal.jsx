@@ -12,6 +12,7 @@
 
 import { CalendarDays } from "lucide-react";
 import styles from "./EnrollConfirmModal.module.css";
+import { formatDate } from "../../../utils/formatDate";
 
 function EnrollConfirmModal({ course, onConfirm, onClose, submitting }) {
   const lessons = course.lessons ?? [];
@@ -45,7 +46,7 @@ function EnrollConfirmModal({ course, onConfirm, onClose, submitting }) {
             {lessons.map((l) => (
               <li key={l.lesson_id} className={styles.lessonItem}>
                 <span className={styles.lessonNumber}>#{l.lesson_number}</span>
-                <span className={styles.lessonDate}>{l.date}</span>
+                <span className={styles.lessonDate}>{formatDate(l.date)}</span>
                 <span className={styles.lessonTime}>
                   {l.start_time}–{l.end_time}
                 </span>

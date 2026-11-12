@@ -54,6 +54,100 @@
   font-size: 0.9rem;
 }
 
+/* ── Level filter tabs ───────────────────────────────────────────────────── */
+.levelTabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1.75rem;
+}
+
+.levelTab {
+  --tab-color: var(--color-light-accent);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.9rem;
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  border-radius: 999px;
+  background: var(--color-bg-white);
+  color: #475569;
+  font-size: 0.84rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.levelTab:hover {
+  border-color: var(--tab-color);
+  color: var(--tab-color);
+}
+
+.levelTabActive,
+.levelTabActive:hover {
+  border-color: var(--tab-color);
+  background: var(--tab-color);
+  color: #fff;
+}
+
+.levelTabCount {
+  min-width: 1.3rem;
+  padding: 0 0.35rem;
+  border-radius: 999px;
+  background: rgba(100, 116, 139, 0.12);
+  font-size: 0.72rem;
+  text-align: center;
+}
+
+.levelTabActive .levelTabCount {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.tab_beginner { --tab-color: #2563eb; }
+.tab_intermediate { --tab-color: #d97706; }
+.tab_advanced { --tab-color: #dc2626; }
+
+/* ── Level sections ──────────────────────────────────────────────────────── */
+/* each section sets --level-color, used by its title */
+.levelSection {
+  --level-color: var(--color-light-accent);
+  margin-bottom: 2.25rem;
+}
+
+.level_beginner { --level-color: #2563eb; }
+.level_intermediate { --level-color: #d97706; }
+.level_advanced { --level-color: #dc2626; }
+
+.levelHeader {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.6rem;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.25);
+}
+
+.levelTitle {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--level-color);
+}
+
+.levelBlurb {
+  margin: 0.15rem 0 0;
+  font-size: 0.82rem;
+  color: #64748b;
+}
+
+.levelCount {
+  flex-shrink: 0;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #94a3b8;
+}
+
 /* ── Card grid ───────────────────────────────────────────────────────────── */
 .grid {
   display: grid;
@@ -100,6 +194,21 @@
   color: #a16207;
 }
 
+.badge_beginner {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.badge_intermediate {
+  background: #fef3c7;
+  color: #a16207;
+}
+
+.badge_advanced {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
 .badgeRegistered {
   background: #dcfce7;
   color: #15803d;
@@ -108,6 +217,33 @@
 .badgeDiscount {
   background: linear-gradient(135deg, #f97316, #ef4444);
   color: #fff;
+}
+
+.badgeClash {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+/* ── Schedule clash note ─────────────────────────────────────────────────── */
+.clashNote {
+  margin: 0 0 0.9rem;
+  padding: 0.6rem 0.75rem;
+  border-radius: 10px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+
+.clashNote p {
+  margin: 0 0 0.3rem;
+  font-weight: 700;
+}
+
+.clashNote ul {
+  margin: 0;
+  padding-left: 1.1rem;
 }
 
 /* ── Meta list ───────────────────────────────────────────────────────────── */

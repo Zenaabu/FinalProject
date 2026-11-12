@@ -9,6 +9,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import SidebarNav from "./SidebarNav";
 import LogoutConfirmModal from "../../shared/LogoutConfirmModal";
+import bluemarsLogo from "../../../assets/bluemarsLogo.png";
 import styles from "./AdminSidebar.module.css";
 
 function AdminSidebar({
@@ -34,8 +35,16 @@ function AdminSidebar({
     <aside className={styles.sidebar}>
       {/* ── Brand area ──────────────────────────────────────────────────── */}
       <div className={styles.brand}>
-        <span className={styles.brandName}>Blue Mars</span>
-        <span className={styles.brandSub}>{subtitle}</span>
+        <img
+          src={bluemarsLogo}
+          alt=""
+          className={styles.brandLogo}
+          aria-hidden="true"
+        />
+        <div className={styles.brandText}>
+          <span className={styles.brandName}>Blue Mars</span>
+          <span className={styles.brandSub}>{subtitle}</span>
+        </div>
       </div>
 
       {/* ── Navigation ──────────────────────────────────────────────────── */}

@@ -12,6 +12,7 @@ import { Link } from "react-router-dom";
 import { ChevronDown, GraduationCap, History } from "lucide-react";
 import { statusOf } from "../courseStatus";
 import styles from "./MyRegistrations.module.css";
+import { formatDate } from "../../../utils/formatDate";
 
 // a lesson is "Completed" once its end time has passed, otherwise "Upcoming"
 function lessonStatus(lesson) {
@@ -41,7 +42,7 @@ function CourseCard({ course }) {
         <div className={styles.metaRow}>
           <dt>Dates</dt>
           <dd>
-            {course.start_date} – {course.end_date}
+            {formatDate(course.start_date)} – {formatDate(course.end_date)}
           </dd>
         </div>
         <div className={styles.metaRow}>
@@ -56,7 +57,7 @@ function CourseCard({ course }) {
 
       <p className={styles.cardNextLesson}>
         {course.next_lesson
-          ? `Next lesson: ${course.next_lesson.date} · ${course.next_lesson.start_time}–${course.next_lesson.end_time}`
+          ? `Next lesson: ${formatDate(course.next_lesson.date)} · ${course.next_lesson.start_time}–${course.next_lesson.end_time}`
           : status === "Finished"
             ? "This course has ended."
             : "No more lessons scheduled."}
@@ -88,7 +89,7 @@ function CourseCard({ course }) {
                     <span className={styles.lessonNumber}>
                       #{lesson.lesson_number}
                     </span>
-                    <span className={styles.lessonDate}>{lesson.date}</span>
+                    <span className={styles.lessonDate}>{formatDate(lesson.date)}</span>
                     <span className={styles.lessonTime}>
                       {lesson.start_time}–{lesson.end_time}
                     </span>

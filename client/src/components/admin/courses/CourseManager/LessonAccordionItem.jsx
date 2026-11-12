@@ -7,6 +7,8 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import TimeInput24 from "../TimeInput24/TimeInput24";
+import DateInputDMY from "../../../shared/DateInputDMY/DateInputDMY";
+import { formatDate } from "../../../../utils/formatDate";
 import AttendanceTable from "./AttendanceTable";
 import LessonRescheduleConfirmModal from "./LessonRescheduleConfirmModal";
 import styles from "./LessonAccordionItem.module.css";
@@ -221,7 +223,7 @@ function LessonAccordionItem({
             </span>
           </div>
           <div className={styles.lessonMeta}>
-            <span>{lesson.date}</span>
+            <span>{formatDate(lesson.date)}</span>
             <span className={styles.dot}>·</span>
             <span>
               {lesson.start_time} – {lesson.end_time}
@@ -268,8 +270,7 @@ function LessonAccordionItem({
           <div className={styles.editGrid}>
             <div className={styles.editField}>
               <label className={styles.editLabel}>Date</label>
-              <input
-                type="date"
+              <DateInputDMY
                 className={styles.editInput}
                 value={form.lesson_date}
                 onChange={(e) => handleChange("lesson_date", e.target.value)}

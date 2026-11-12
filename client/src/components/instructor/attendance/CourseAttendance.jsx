@@ -15,6 +15,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useParams, Link } from "react-router-dom";
 import { toast } from "sonner";
 import styles from "./CourseAttendance.module.css";
+import { formatDate } from "../../../utils/formatDate";
 
 function CourseAttendance() {
   const { course_id } = useParams();
@@ -166,7 +167,7 @@ function CourseAttendance() {
         </Link>
         <h1 className={styles.title}>{course.title}</h1>
         <p className={styles.subtitle}>
-          {course.start_date} – {course.end_date} · {course.enrolled} /{" "}
+          {formatDate(course.start_date)} – {formatDate(course.end_date)} · {course.enrolled} /{" "}
           {course.capacity} enrolled
         </p>
       </div>
@@ -201,7 +202,7 @@ function CourseAttendance() {
                         Lesson {lesson.lesson_number}
                       </span>
                       <span className={styles.lessonWhen}>
-                        {lesson.date} · {lesson.start_time}–{lesson.end_time}
+                        {formatDate(lesson.date)} · {lesson.start_time}–{lesson.end_time}
                       </span>
                       <span className={styles.lessonMark}>
                         {marked > 0
@@ -238,7 +239,7 @@ function CourseAttendance() {
                     Lesson {lessonInfo?.lesson_number} attendance
                   </h2>
                   <p className={styles.rosterSub}>
-                    {lessonInfo?.lesson_date} · {lessonInfo?.start_time}–
+                    {formatDate(lessonInfo?.lesson_date)} · {lessonInfo?.start_time}–
                     {lessonInfo?.end_time} · {presentCount} / {roster.length}{" "}
                     present
                   </p>

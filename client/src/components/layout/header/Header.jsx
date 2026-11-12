@@ -4,9 +4,10 @@ import logo from "../../../assets/bluemarsLogo.png";
 import surfboardIcon from "../../../assets/surfboard.png";
 
 // ─── Navbar Component ─────────────────────────────────────────────────────────
-// The outermost <nav> uses the CSS class `navbar` which is a flex container.
-// `justify-content: space-between` pushes the three sections (left / center / right)
-// to the far ends and perfectly centers the middle section automatically.
+// The outermost <nav> uses the CSS class `navbar`, a 3-column grid
+// (`1fr auto 1fr`): the brand and auth groups sit in equal-width side columns,
+// so the links in the middle stay centered on the page regardless of how wide
+// either side is.
 // ──────────────────────────────────────────────────────────────────────────────
 function Navbar() {
   const location = useLocation();

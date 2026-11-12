@@ -7,6 +7,7 @@ import { useState, useEffect, useRef } from "react";
 import LessonAccordionList from "./LessonAccordionList";
 import CourseEditDrawer from "./CourseEditDrawer";
 import DiscountModal from "./DiscountModal";
+import { formatDate } from "../../../../utils/formatDate";
 import styles from "./CourseHeaderCard.module.css";
 
 /* ── Inline SVG icons ────────────────────────────────────────────────────── */
@@ -321,7 +322,7 @@ function CourseHeaderCard({
         <div className={styles.detailsRow}>
           <span className={styles.detail}>
             <CalendarIcon />
-            {course.start_date} – {course.end_date}
+            {formatDate(course.start_date)} – {formatDate(course.end_date)}
           </span>
           <span className={styles.detail}>
             <ClockIcon />

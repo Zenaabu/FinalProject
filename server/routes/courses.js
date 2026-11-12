@@ -4,6 +4,7 @@ const router = express.Router();
 const { requireLogin, requireAdmin } = require("../validations/authValidation");
 const {
   validateCanCreatePayPalOrder,
+  validateNoStudentScheduleClash,
 } = require("../validations/usersValidations");
 const {
   isInstructor,
@@ -46,6 +47,7 @@ const {
   sendLessonRescheduleEmail,
   sendInstructorRescheduleEmail,
   sendCourseReceiptEmail,
+  findStudentLessonClashes,
 } = require("../validations/utils");
 
 // a function that gets a course's base price and its discount_percent
@@ -129,51 +131,81 @@ router.get("/available", requireLogin, (req, res) => {
           return res.status(500).json({ success: false, message: err3.message });
         }
 
-        const lessonsByCourse = {};
-        for (const lesson of lessons) {
-          if (!lessonsByCourse[lesson.course_id]) {
-            lessonsByCourse[lesson.course_id] = [];
+        // every upcoming lesson the user is already booked into, so each
+        // course can say up front which of its lessons would clash — the
+        // same check validateNoStudentScheduleClash enforces at create-order
+        userQ.getUserBookedLessons(user_id, null, (err4, bookedLessons) => {
+          if (err4) {
+            return res
+              .status(500)
+              .json({ success: false, message: err4.message });
           }
-          lessonsByCourse[lesson.course_id].push(lesson);
-        }
 
-        const courses = rows.map((c) => {
-          const taken = Number(c.registered_count) + Number(c.pending_count);
-          const discountPercent =
-            c.discount_percent === null || c.discount_percent === undefined
-              ? null
-              : Number(c.discount_percent);
+          const lessonsByCourse = {};
+          for (const lesson of lessons) {
+            if (!lessonsByCourse[lesson.course_id]) {
+              lessonsByCourse[lesson.course_id] = [];
+            }
+            lessonsByCourse[lesson.course_id].push(lesson);
+          }
 
-          return {
-            course_id: c.course_id,
-            description: c.description,
-            level: c.level,
-            start_date: c.start_date,
-            end_date: c.end_date,
-            capacity: c.capacity,
-            price: Number(c.price),
-            // null when there's no active discount; final_price === price
-            // in that case. This is what PayPal will actually charge — see
-            // applyDiscount(), used identically in the create-order route.
-            discount_percent: discountPercent,
-            final_price: applyDiscount(c.price, discountPercent),
-            vat_percent: c.vat_percent,
-            total_lessons: c.total_lessons,
-            instructor: c.instructor ?? "—",
-            seats_left: Math.max(0, Number(c.capacity) - taken),
-            is_registered: Number(c.is_registered) > 0,
-            // already sorted date/time ascending by the query
-            lessons: (lessonsByCourse[c.course_id] || []).map((l) => ({
-              lesson_id: l.lesson_id,
-              lesson_number: l.lesson_number,
-              date: l.date,
-              start_time: l.start_time,
-              end_time: l.end_time,
-            })),
-          };
+          const courses = rows.map((c) => {
+            const taken = Number(c.registered_count) + Number(c.pending_count);
+            const courseLessons = lessonsByCourse[c.course_id] || [];
+            // a course never clashes with itself (e.g. one the user is
+            // already registered to)
+            const clashes = findStudentLessonClashes(
+              bookedLessons.filter((b) => b.course_id !== c.course_id),
+              courseLessons.map((l) => ({ ...l, lesson_date: l.date })),
+            );
+            const discountPercent =
+              c.discount_percent === null || c.discount_percent === undefined
+                ? null
+                : Number(c.discount_percent);
+
+            return {
+              course_id: c.course_id,
+              description: c.description,
+              level: c.level,
+              start_date: c.start_date,
+              end_date: c.end_date,
+              capacity: c.capacity,
+              price: Number(c.price),
+              // null when there's no active discount; final_price === price
+              // in that case. This is what PayPal will actually charge — see
+              // applyDiscount(), used identically in the create-order route.
+              discount_percent: discountPercent,
+              final_price: applyDiscount(c.price, discountPercent),
+              vat_percent: c.vat_percent,
+              total_lessons: c.total_lessons,
+              instructor: c.instructor ?? "—",
+              seats_left: Math.max(0, Number(c.capacity) - taken),
+              is_registered: Number(c.is_registered) > 0,
+              // already sorted date/time ascending by the query
+              lessons: courseLessons.map((l) => ({
+                lesson_id: l.lesson_id,
+                lesson_number: l.lesson_number,
+                date: l.date,
+                start_time: l.start_time,
+                end_time: l.end_time,
+              })),
+              // lessons that overlap one the user already has — empty means
+              // they can enroll. The catalog disables "Enroll" otherwise.
+              clashes: clashes.map(({ lesson, bookedLesson }) => ({
+                lesson_number: lesson.lesson_number,
+                date: lesson.date,
+                start_time: lesson.start_time,
+                end_time: lesson.end_time,
+                other_course_id: bookedLesson.course_id,
+                other_course_description: bookedLesson.course_description,
+                other_start_time: bookedLesson.start_time,
+                other_end_time: bookedLesson.end_time,
+              })),
+            };
+          });
+
+          res.json({ success: true, courses });
         });
-
-        res.json({ success: true, courses });
       });
     });
   });
@@ -701,6 +733,7 @@ router.post(
   "/:course_id/paypal/create-order",
   requireLogin,
   validateCanCreatePayPalOrder,
+  validateNoStudentScheduleClash,
   async (req, res) => {
     try {
       const { course_id } = req.params;

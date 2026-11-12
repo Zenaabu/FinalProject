@@ -842,6 +842,34 @@ function hasLessonConflict(existingLessons, newLessons) {
   return false;
 }
 
+// a function that gets the lessons a student is already booked into and the
+// lessons of a course they want to enroll in (both with lesson_date /
+// start_time / end_time). it returns every clashing pair — same overlap rule
+// as hasLessonConflict, so back-to-back lessons (10:00-12:00 and 12:00-14:00)
+// are fine — as { lesson, bookedLesson }, or [] when nothing overlaps
+function findStudentLessonClashes(bookedLessons, newLessons) {
+  const clashes = [];
+
+  for (const lesson of newLessons) {
+    for (const booked of bookedLessons) {
+      const sameDate =
+        formatDateOnly(booked.lesson_date) ===
+        formatDateOnly(lesson.lesson_date);
+
+      const bookedStart = formatTimeOnly(booked.start_time);
+      const bookedEnd = formatTimeOnly(booked.end_time);
+      const newStart = formatTimeOnly(lesson.start_time);
+      const newEnd = formatTimeOnly(lesson.end_time);
+
+      if (sameDate && bookedStart < newEnd && bookedEnd > newStart) {
+        clashes.push({ lesson, bookedLesson: booked });
+      }
+    }
+  }
+
+  return clashes;
+}
+
 // a function that gets an array of APPROVED instructor_constraints rows and
 // an array of lessons (lesson_date/start_time/end_time). it returns the
 // first lesson that falls on a date covered by one of those constraints
@@ -1092,6 +1120,7 @@ module.exports = {
   validateLessonDate,
   validateLessonTime,
   hasLessonConflict,
+  findStudentLessonClashes,
   findLessonInsideApprovedConstraint,
   hasSameCourseDateConflict,
   hasDuplicateLessonDates,

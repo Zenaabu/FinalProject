@@ -8,6 +8,7 @@ import { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { AlertTriangle } from "lucide-react";
 import styles from "./InstructorCourses.module.css";
+import { formatDate } from "../../../utils/formatDate";
 
 function statusOf(course) {
   const today = new Date().toISOString().slice(0, 10);
@@ -168,7 +169,7 @@ function InstructorCourses() {
                     <div className={styles.metaRow}>
                       <dt>Dates</dt>
                       <dd>
-                        {course.start_date} – {course.end_date}
+                        {formatDate(course.start_date)} – {formatDate(course.end_date)}
                       </dd>
                     </div>
                     <div className={styles.metaRow}>

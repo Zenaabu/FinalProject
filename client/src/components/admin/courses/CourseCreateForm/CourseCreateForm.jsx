@@ -39,6 +39,8 @@ import {
   X,
 } from "lucide-react";
 import TimeInput24 from "../TimeInput24/TimeInput24";
+import DateInputDMY from "../../../shared/DateInputDMY/DateInputDMY";
+import { formatDate } from "../../../../utils/formatDate";
 import styles from "./CourseCreateForm.module.css";
 
 // A course cannot be scheduled with more lessons than this — mirrors the
@@ -251,7 +253,7 @@ function CourseCreateForm({ instructors = [], onCancel, onCreated }) {
         (l) => l.lesson_date < form.start_date || l.lesson_date > form.end_date,
       );
       if (outside) {
-        next.lessons = `Every lesson must fall between ${form.start_date} and ${form.end_date}.`;
+        next.lessons = `Every lesson must fall between ${formatDate(form.start_date)} and ${formatDate(form.end_date)}.`;
       }
     }
 
@@ -451,10 +453,9 @@ function CourseCreateForm({ instructors = [], onCancel, onCreated }) {
 
           {/* ── Start Date ──────────────────────────────────────────────── */}
           <Field icon={Calendar} label="Start Date" error={errors.start_date}>
-            <input
+            <DateInputDMY
               id="ccf-start-date"
               className={`${styles.input} ${errors.start_date ? styles.inputError : ""}`}
-              type="date"
               name="start_date"
               value={form.start_date}
               onChange={handleChange}
@@ -463,10 +464,9 @@ function CourseCreateForm({ instructors = [], onCancel, onCreated }) {
 
           {/* ── End Date ────────────────────────────────────────────────── */}
           <Field icon={CalendarCheck} label="End Date" error={errors.end_date}>
-            <input
+            <DateInputDMY
               id="ccf-end-date"
               className={`${styles.input} ${errors.end_date ? styles.inputError : ""}`}
-              type="date"
               name="end_date"
               value={form.end_date}
               onChange={handleChange}
@@ -551,10 +551,9 @@ function CourseCreateForm({ instructors = [], onCancel, onCreated }) {
                   <CalendarDays size={13} />
                   Date
                 </label>
-                <input
+                <DateInputDMY
                   id={`ccf-lesson-date-${index}`}
                   className={styles.input}
-                  type="date"
                   value={lesson.lesson_date}
                   onChange={(e) =>
                     handleLessonChange(index, "lesson_date", e.target.value)

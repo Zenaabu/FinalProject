@@ -1,0 +1,32 @@
+.wrap {
+  position: relative;
+  min-width: 0;
+}
+
+/* Hide the browser's own (locale-ordered) date text; the calendar icon stays. */
+.native {
+  width: 100%;
+  box-sizing: border-box;
+  color: transparent;
+  cursor: pointer;
+}
+
+.native::-webkit-datetime-edit {
+  color: transparent;
+}
+
+/* Sits over the input's text area. Its padding has to match the input's own
+   padding (+ border), so callers with a differently padded input set
+   --dmy-pad on an ancestor. The default mirrors CourseCreateForm's .input. */
+.display {
+  position: absolute;
+  inset: 0 2rem 0 0;
+  display: flex;
+  align-items: center;
+  padding: var(--dmy-pad, 0.4rem 0 0.55rem);
+  font-size: var(--dmy-font, 0.9rem);
+  color: #0f172a;
+  pointer-events: none;
+  white-space: nowrap;
+  overflow: hidden;
+}

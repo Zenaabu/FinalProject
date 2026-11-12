@@ -19,6 +19,8 @@ import {
 import useSession from "../../auth/useSession";
 import LessonConflictModal from "./LessonConflictModal";
 import styles from "./InstructorConstraints.module.css";
+import { formatDate } from "../../../utils/formatDate";
+import DateInputDMY from "../../shared/DateInputDMY/DateInputDMY";
 
 const REASONS = [
   {
@@ -202,8 +204,7 @@ function InstructorConstraints() {
               <span className={styles.fieldLabel}>
                 <CalendarDays size={14} /> From
               </span>
-              <input
-                type="date"
+              <DateInputDMY
                 className={styles.dateInput}
                 value={startDate}
                 min={minDate}
@@ -219,8 +220,7 @@ function InstructorConstraints() {
               <span className={styles.fieldLabel}>
                 <CalendarDays size={14} /> To
               </span>
-              <input
-                type="date"
+              <DateInputDMY
                 className={styles.dateInput}
                 value={endDate}
                 min={startDate}
@@ -285,8 +285,7 @@ function InstructorConstraints() {
                 <span className={styles.fieldLabel}>
                   <CalendarDays size={14} /> From
                 </span>
-                <input
-                  type="date"
+                <DateInputDMY
                   className={styles.dateInput}
                   value={historyFrom}
                   onChange={(e) => {
@@ -300,8 +299,7 @@ function InstructorConstraints() {
                 <span className={styles.fieldLabel}>
                   <CalendarDays size={14} /> To
                 </span>
-                <input
-                  type="date"
+                <DateInputDMY
                   className={styles.dateInput}
                   value={historyTo}
                   onChange={(e) => {
@@ -357,8 +355,8 @@ function InstructorConstraints() {
                   >
                     <div className={styles.historyDates}>
                       {c.start_date === c.end_date
-                        ? c.start_date
-                        : `${c.start_date} → ${c.end_date}`}
+                        ? formatDate(c.start_date)
+                        : `${formatDate(c.start_date)} → ${formatDate(c.end_date)}`}
                       <span
                         className={`${styles.statusBadge} ${
                           styles[
