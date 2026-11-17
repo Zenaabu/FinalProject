@@ -431,8 +431,11 @@ function isValidDateOnly(value) {
   return DATE_ONLY_RE.test(value) && !isNaN(new Date(value));
 }
 
+// local calendar date — toISOString() converts to UTC first, which on a
+// UTC+2 server turns local midnight into the previous day
 function toDateOnly(date) {
-  return date.toISOString().slice(0, 10);
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 }
 
 function currentMonthRange() {

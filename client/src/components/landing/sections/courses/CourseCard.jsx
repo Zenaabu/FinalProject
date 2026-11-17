@@ -2,8 +2,7 @@ import { Link } from "react-router-dom";
 import styles from "./CourseCard.module.css";
 
 function CourseCard({ course, linkTo = "/signup" }) {
-  const { title, description, price, level, features, buttonLabel, image } =
-    course;
+  const { title, description, level, features, buttonLabel, image } = course;
 
   return (
     <article className={styles.card}>
@@ -26,11 +25,6 @@ function CourseCard({ course, linkTo = "/signup" }) {
         {/* Title + description */}
         <h3 className={styles.title}>{title}</h3>
         <p className={styles.description}>{description}</p>
-
-        {/* Price */}
-        <div className={styles.priceRow}>
-          <span className={styles.price}>₪{price}</span>
-        </div>
 
         {/* Feature list */}
         <ul className={styles.features}>

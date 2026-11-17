@@ -8,8 +8,10 @@ import { useState } from "react";
 import { Search, RotateCcw } from "lucide-react";
 import styles from "./ReportsDateRangeForm.module.css";
 
+// local calendar date — see toDateOnly in ReportsPage.jsx
 function toDateOnly(d) {
-  return d.toISOString().slice(0, 10);
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
 
 function currentMonthRange() {

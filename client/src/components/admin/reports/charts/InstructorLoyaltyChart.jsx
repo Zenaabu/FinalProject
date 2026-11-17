@@ -18,7 +18,7 @@ import { Award } from "lucide-react";
 import styles from "./InstructorLoyaltyChart.module.css";
 
 const BAR_COLOR = "#0284c7";
-const ROW_HEIGHT = 38;
+const ROW_HEIGHT = 44;
 
 function CustomTooltip({ active, payload }) {
   if (!active || !payload || !payload.length) return null;
@@ -108,13 +108,13 @@ function InstructorLoyaltyChart({ startDate, endDate }) {
                 <YAxis
                   type="category"
                   dataKey="instructor_name"
-                  tick={{ fontSize: 12, fill: "#334155" }}
+                  tick={{ fontSize: 14, fontWeight: 600, fill: "#0f172a" }}
                   axisLine={false}
                   tickLine={false}
-                  width={130}
+                  width={140}
                 />
                 <Tooltip content={<CustomTooltip />} cursor={{ fill: "rgba(56, 189, 248, 0.08)" }} />
-                <Bar dataKey="repeat_count" fill={BAR_COLOR} radius={[0, 4, 4, 0]} maxBarSize={22}>
+                <Bar dataKey="repeat_count" fill={BAR_COLOR} radius={[0, 4, 4, 0]} maxBarSize={24}>
                   <LabelList content={(props) => renderCountLabel({ ...props, data: instructors })} />
                 </Bar>
               </BarChart>

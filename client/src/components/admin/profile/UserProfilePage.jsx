@@ -19,6 +19,15 @@ function formatDateDMY(isoDate) {
   return `${d}/${m}/${y}`;
 }
 
+// ── ID masking ─────────────────────────────────────────────────────────────────
+// The national ID is sensitive, so the profile never shows it in full:
+// the last 3 digits are replaced with "*" (e.g. 057037293 → 057037***).
+function maskId(id) {
+  const s = String(id ?? "");
+  if (s.length <= 3) return "*".repeat(s.length);
+  return s.slice(0, -3) + "***";
+}
+
 // ── Password validation (mirrors server/validations/utils.js) ─────────────────
 function getPasswordErrors(password) {
   const errors = [];
@@ -551,7 +560,7 @@ function UserProfilePage() {
           </div>
           <div className={styles.userIdBadge}>
             <span className={styles.userIdLabel}>USER ID</span>
-            <span className={styles.userIdValue}>{user.user_id}</span>
+            <span className={styles.userIdValue}>{maskId(user.user_id)}</span>
           </div>
         </div>
 
@@ -618,7 +627,7 @@ function UserProfilePage() {
           />
           <ProfileField
             label="USER ID"
-            value={user.user_id}
+            value={maskId(user.user_id)}
             iconType="id"
             locked
           />

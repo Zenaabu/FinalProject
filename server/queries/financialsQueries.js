@@ -6,9 +6,12 @@ const db = require("../DB/dbSingleton");
 // `BETWEEN startDate AND endDate` — payment_date/created_at are DATETIME
 // columns, so a bare BETWEEN would silently exclude same-day rows after
 // midnight on the end date.
+// Pure UTC date math (note the "Z") — parsing as local midnight and then
+// calling toISOString() shifted the result back a day on a UTC+2 server, so
+// nextDay(endDate) returned endDate itself and the end day was excluded.
 function nextDay(dateStr) {
-  const d = new Date(`${dateStr}T00:00:00`);
-  d.setDate(d.getDate() + 1);
+  const d = new Date(`${dateStr}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + 1);
   return d.toISOString().slice(0, 10);
 }
 

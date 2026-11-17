@@ -103,10 +103,10 @@ function GenderSplitChart({ startDate, endDate }) {
                 <YAxis
                   type="category"
                   dataKey="label"
-                  tick={{ fontSize: 12, fill: "#334155" }}
+                  tick={{ fontSize: 14, fontWeight: 600, fill: "#0f172a" }}
                   axisLine={false}
                   tickLine={false}
-                  width={54}
+                  width={68}
                 />
                 <Tooltip content={<CustomTooltip />} cursor={{ fill: "rgba(56, 189, 248, 0.08)" }} />
                 <Bar dataKey="user_count" radius={[0, 4, 4, 0]} maxBarSize={34}>

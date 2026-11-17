@@ -104,21 +104,6 @@
   margin: 0 0 1.1rem;
 }
 
-/* ── Price ── */
-.priceRow {
-  display: flex;
-  align-items: baseline;
-  gap: 0.3rem;
-  margin-bottom: 1.1rem;
-}
-
-.price {
-  font-size: 2rem;
-  font-weight: 900;
-  color: #0284c7;
-  line-height: 1;
-}
-
 /* ── Feature list ── */
 .features {
   list-style: none;

@@ -4,9 +4,12 @@ const db = require("../DB/dbSingleton");
 // Same convention as financialsQueries.js: every query takes a
 // ['YYYY-MM-DD', 'YYYY-MM-DD'] range and matches rows as
 // `col >= startDate AND col < nextDay(endDate)` rather than `BETWEEN`.
+// Pure UTC date math (note the "Z") — parsing as local midnight and then
+// calling toISOString() shifted the result back a day on a UTC+2 server, so
+// nextDay(endDate) returned endDate itself and the end day was excluded.
 function nextDay(dateStr) {
-  const d = new Date(`${dateStr}T00:00:00`);
-  d.setDate(d.getDate() + 1);
+  const d = new Date(`${dateStr}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + 1);
   return d.toISOString().slice(0, 10);
 }
 

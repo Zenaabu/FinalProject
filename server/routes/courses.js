@@ -937,6 +937,9 @@ router.post(
                       price: applyDiscount(course.price, course.discount_percent),
                       originalPrice: Number(course.price),
                       discountPercent: course.discount_percent,
+                      // price is VAT-inclusive — the email splits it into
+                      // before-VAT + VAT using this rate
+                      vatPercent: course.vat_percent,
                       firstLessonDate: course.first_lesson_date,
                       firstLessonStart: course.first_lesson_start,
                       firstLessonEnd: course.first_lesson_end,

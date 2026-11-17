@@ -457,6 +457,19 @@ async function sendWelcomeEmail(user, nearestCourse) {
   }
 }
 
+// a function that gets a VAT-inclusive amount and a VAT rate (e.g. 17) and
+// splits it into { net, vat } in shekels, rounded to agorot. vat is taken as
+// total - net so the two lines on the receipt always add up to the amount
+// paid exactly. same formula as the Financials page (price / (1 + vat/100)).
+function splitVat(total, vatPercent) {
+  const amount = Number(total);
+  const rate = Number(vatPercent) || 0;
+  const net = Math.round((amount / (1 + rate / 100)) * 100) / 100;
+  const vat = Math.round((amount - net) * 100) / 100;
+
+  return { net, vat };
+}
+
 // a function that gets the purchase details for one course registration and
 // returns the HTML body of the receipt email. Same table-based, inline-styled
 // family as the other emails; the "first lesson" block is styled like the
@@ -473,12 +486,15 @@ function buildReceiptEmailHtml({
   price,
   originalPrice,
   discountPercent,
+  vatPercent,
   firstLessonDate,
   firstLessonStart,
   firstLessonEnd,
 }) {
   const name = escapeHtml(firstName);
   const amount = `₪${Number(price).toFixed(2)}`;
+  const { net, vat } = splitVat(price, vatPercent);
+  const vatRate = Number(vatPercent) || 0;
   // only shown when the admin had an active last-minute discount on this
   // course at the moment payment was captured
   const hasDiscount = discountPercent && Number(originalPrice) > Number(price);
@@ -557,9 +573,19 @@ function buildReceiptEmailHtml({
                          </table>`
                       : ""
                   }
+                  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:8px;padding-bottom:8px;border-bottom:1px dashed #cbd5e1;">
+                    <tr>
+                      <td style="padding:2px 0;font-size:13px;color:#64748b;">Price before VAT</td>
+                      <td style="padding:2px 0;font-size:13px;color:#0f172a;text-align:right;">₪${net.toFixed(2)}</td>
+                    </tr>
+                    <tr>
+                      <td style="padding:2px 0;font-size:13px;color:#64748b;">VAT (${escapeHtml(vatRate)}%)</td>
+                      <td style="padding:2px 0;font-size:13px;color:#0f172a;text-align:right;">₪${vat.toFixed(2)}</td>
+                    </tr>
+                  </table>
                   <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
                     <tr>
-                      <td style="font-size:14px;font-weight:700;color:#0f172a;">Amount Paid</td>
+                      <td style="font-size:14px;font-weight:700;color:#0f172a;">Amount Paid <span style="font-size:11px;font-weight:400;color:#94a3b8;">(incl. VAT)</span></td>
                       <td style="font-size:19px;font-weight:800;color:#0284c7;text-align:right;">${amount}</td>
                     </tr>
                   </table>
@@ -587,7 +613,8 @@ function buildReceiptEmailHtml({
 // a function that gets a user ({ email, first_name }) and the receipt details
 // of a just-completed course purchase ({ receiptNumber, paymentDate,
 // courseDescription, level, instructor, price, originalPrice,
-// discountPercent, firstLessonDate, firstLessonStart, firstLessonEnd } —
+// discountPercent, vatPercent, firstLessonDate, firstLessonStart,
+// firstLessonEnd } — price is VAT-inclusive and is split by vatPercent;
 // originalPrice/discountPercent are only passed when a last-minute discount
 // was active, and the first-lesson fields may be null if the course has no
 // lessons yet) and emails them a receipt. best-effort: the caller should not
@@ -604,12 +631,17 @@ async function sendCourseReceiptEmail(user, details) {
     price,
     originalPrice,
     discountPercent,
+    vatPercent,
     firstLessonDate,
     firstLessonStart,
     firstLessonEnd,
   } = details;
 
   const amount = `₪${Number(price).toFixed(2)}`;
+  const { net, vat } = splitVat(price, vatPercent);
+  const vatText =
+    `Price before VAT: ₪${net.toFixed(2)}\n` +
+    `VAT (${Number(vatPercent) || 0}%): ₪${vat.toFixed(2)}\n`;
   const hasDiscount = discountPercent && Number(originalPrice) > Number(price);
   const discountText = hasDiscount
     ? `A ${discountPercent}% last-minute discount was applied (was ₪${Number(originalPrice).toFixed(2)}).\n`
@@ -631,7 +663,8 @@ async function sendCourseReceiptEmail(user, details) {
         `Receipt No.: #${receiptNumber}\n` +
         `Payment Date: ${formatDateOnly(paymentDate)}\n` +
         discountText +
-        `Amount Paid: ${amount}\n\n` +
+        vatText +
+        `Amount Paid (incl. VAT): ${amount}\n\n` +
         firstLessonText +
         `- BlueMars Surf Club`,
       html: buildReceiptEmailHtml({
@@ -644,6 +677,7 @@ async function sendCourseReceiptEmail(user, details) {
         price,
         originalPrice,
         discountPercent,
+        vatPercent,
         firstLessonDate,
         firstLessonStart,
         firstLessonEnd,

@@ -13,8 +13,11 @@ import RevenueByLevelChart from "./charts/RevenueByLevelChart";
 import FinancialsDateRangeForm from "./dateRange/FinancialsDateRangeForm";
 import styles from "./FinancialsPage.module.css";
 
+// local calendar date — toISOString() converts to UTC first, which in Israel
+// shifts the 1st of the month (and today, before 02:00) back a day
 function toDateOnly(d) {
-  return d.toISOString().slice(0, 10);
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
 
 function currentMonthRange() {

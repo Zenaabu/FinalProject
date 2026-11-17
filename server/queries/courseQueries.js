@@ -250,6 +250,7 @@ function getCourseReceiptInfo(course_id, cb) {
        c.level,
        c.price,
        c.discount_percent,
+       c.vat_percent,
        CONCAT(u.first_name, ' ', u.last_name) AS instructor,
        (SELECT DATE_FORMAT(l.lesson_date, '%Y-%m-%d')
           FROM lessons l
