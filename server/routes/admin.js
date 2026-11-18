@@ -370,11 +370,19 @@ router.get(
 // GET the KPI numbers for the admin dashboard home page
 // url: /api/admin/dashboard-stats
 router.get("/dashboard-stats", requireLogin, requireAdmin, (req, res) => {
-  adminQ.getDashboardStats((err, rows) => {
-    if (err) {
-      return res.status(500).json({ success: false, message: err.message });
+  // run the course cleanup first (ended courses, and empty courses that
+  // reached their start date) so the KPI counts never include stale ones
+  courseQ.deactivateExpiredCourses((err0) => {
+    if (err0) {
+      return res.status(500).json({ success: false, message: err0.message });
     }
-    res.json({ success: true, stats: rows[0] });
+
+    adminQ.getDashboardStats((err, rows) => {
+      if (err) {
+        return res.status(500).json({ success: false, message: err.message });
+      }
+      res.json({ success: true, stats: rows[0] });
+    });
   });
 });
 

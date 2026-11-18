@@ -33,19 +33,21 @@ function CustomTooltip({ active, payload }) {
   );
 }
 
-function renderCountLabel({ x, y, width, height, index, data }) {
-  const row = data[index];
-  if (!row) return null;
+// The label text is read from the bar's own `value` (the row's precomputed
+// `count_label`), not looked up via `index` — recharts 3 doesn't reliably pass
+// the row index to custom label content, which mislabeled bars.
+function renderCountLabel({ x, y, width, height, value }) {
+  if (value == null) return null;
 
   return (
     <text
-      x={x + width + 10}
-      y={y + height / 2}
+      x={Number(x) + Number(width) + 10}
+      y={Number(y) + Number(height) / 2}
       textAnchor="start"
       dominantBaseline="middle"
       className={styles.labelCount}
     >
-      {row.user_count} ({row.pct}%)
+      {value}
     </text>
   );
 }
@@ -60,12 +62,18 @@ function GenderSplitChart({ startDate, endDate }) {
       .then((res) => {
         if (!res.success) return;
 
-        const total = res.genders.reduce((sum, g) => sum + g.user_count, 0);
-        const genders = res.genders.map((g) => ({
-          ...g,
-          label: GENDER_LABELS[g.gender],
-          pct: total > 0 ? Math.round((g.user_count / total) * 100) : 0,
-        }));
+        const total = res.genders.reduce((sum, g) => sum + Number(g.user_count), 0);
+        const genders = res.genders.map((g) => {
+          const user_count = Number(g.user_count);
+          const pct = total > 0 ? Math.round((user_count / total) * 100) : 0;
+          return {
+            ...g,
+            user_count,
+            label: GENDER_LABELS[g.gender],
+            pct,
+            count_label: `${user_count} (${pct}%)`,
+          };
+        });
 
         setData({ genders, total });
       })
@@ -113,7 +121,7 @@ function GenderSplitChart({ startDate, endDate }) {
                   {data.genders.map((g) => (
                     <Cell key={g.gender} fill={GENDER_COLORS[g.gender]} />
                   ))}
-                  <LabelList content={(props) => renderCountLabel({ ...props, data: data.genders })} />
+                  <LabelList dataKey="count_label" content={renderCountLabel} />
                 </Bar>
               </BarChart>
             </ResponsiveContainer>

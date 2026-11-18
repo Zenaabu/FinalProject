@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+import { Link } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
 import styles from "./Auth.module.css";
 import logo from "../../assets/bluemarsLogo.png";
 import LoginForm from "./LoginForm";
@@ -40,6 +42,14 @@ const Auth = ({ initialMode = "login" }) => {
 
   return (
     <div className={styles.loginContainer}>
+      {/* lets a visitor browse the landing page without logging in first */}
+      <Link to="/" className={styles.backHomeButton}>
+        <span className={styles.backHomeIcon}>
+          <ArrowLeft size={16} className={styles.backHomeArrow} />
+        </span>
+        <span className={styles.backHomeText}>Back to Home</span>
+      </Link>
+
       <div
         className={`${styles.loginCard} ${!isLogin ? styles.signUpCard : ""}`}
       >

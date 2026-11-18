@@ -1,9 +1,15 @@
 // ─── StatsRow.jsx ─────────────────────────────────────────────────────────────
 // Renders the four KPI cards side by side, backed by GET /api/admin/dashboard-stats.
+// The last slot is a SplitStatCard: "Courses Starting Soon" next to
+// "No Students" (empty courses at their last enrollment day — the same
+// courses that get the red badge on the Courses & Lessons page, which that
+// half links to).
 // ──────────────────────────────────────────────────────────────────────────────
 
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import StatCard from "./StatCard";
+import SplitStatCard from "./SplitStatCard";
 import styles from "./StatsRow.module.css";
 
 /* ── Icon SVGs (inline — no library needed) ─────────────────────────────── */
@@ -80,8 +86,28 @@ const AlertIcon = (
   </svg>
 );
 
+const EmptyCourseIcon = (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="20"
+    height="20"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+  >
+    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+    <circle cx="9" cy="7" r="4" />
+    <line x1="17" y1="8" x2="23" y2="14" />
+    <line x1="23" y1="8" x2="17" y2="14" />
+  </svg>
+);
+
 /* ── Card styling (data comes from the API, only presentation lives here) ── */
-function buildCards(stats) {
+function buildCards(stats, navigate) {
   return [
     {
       id: "courses",
@@ -117,22 +143,43 @@ function buildCards(stats) {
       icon: ClockIcon,
     },
     {
-      id: "at-risk",
-      label: "Courses Starting Soon",
-      value: stats ? stats.at_risk_courses : "—",
-      sub:
-        stats && stats.at_risk_courses > 0
-          ? "Under 50% capacity, within 7 days"
-          : "None under 50% capacity",
-      subColor: stats && stats.at_risk_courses > 0 ? "#dc2626" : "#15803d",
-      iconBg: "rgba(220, 38, 38, 0.12)",
-      iconColor: "#dc2626",
-      icon: AlertIcon,
+      id: "starting-soon",
+      split: true,
+      halves: [
+        {
+          id: "at-risk",
+          label: "Courses Starting Soon",
+          value: stats ? stats.at_risk_courses : "—",
+          sub:
+            stats && stats.at_risk_courses > 0
+              ? "Under 50% capacity, within 7 days"
+              : "None under 50% capacity",
+          subColor: stats && stats.at_risk_courses > 0 ? "#dc2626" : "#15803d",
+          iconBg: "rgba(220, 38, 38, 0.12)",
+          iconColor: "#dc2626",
+          icon: AlertIcon,
+        },
+        {
+          id: "empty",
+          label: "No Students",
+          value: stats ? stats.empty_courses : "—",
+          sub:
+            stats && stats.empty_courses > 0
+              ? "0 enrolled, enrollment closing — review"
+              : "Every closing course has students",
+          subColor: stats && stats.empty_courses > 0 ? "#dc2626" : "#15803d",
+          iconBg: "rgba(234, 88, 12, 0.12)",
+          iconColor: "#c2410c",
+          icon: EmptyCourseIcon,
+          onClick: () => navigate("/admin/courses"),
+        },
+      ],
     },
   ];
 }
 
 function StatsRow() {
+  const navigate = useNavigate();
   const [stats, setStats] = useState(null);
 
   useEffect(() => {
@@ -148,9 +195,13 @@ function StatsRow() {
 
   return (
     <div className={styles.row}>
-      {buildCards(stats).map((s) => (
-        <StatCard key={s.id} {...s} />
-      ))}
+      {buildCards(stats, navigate).map((s) =>
+        s.split ? (
+          <SplitStatCard key={s.id} halves={s.halves} />
+        ) : (
+          <StatCard key={s.id} {...s} />
+        ),
+      )}
     </div>
   );
 }

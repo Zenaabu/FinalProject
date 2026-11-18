@@ -99,6 +99,33 @@
   color: #b45309;
 }
 
+/* Empty course at its last enrollment day — a button that opens the
+   keep/deactivate pop-up, styled as a pill like the other badges */
+.badgeEmpty {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  border: none;
+  font-family: inherit;
+  cursor: pointer;
+  background: #fee2e2;
+  color: #b91c1c;
+  box-shadow: 0 0 0 1px rgba(220, 38, 38, 0.25);
+  transition:
+    transform 0.12s ease,
+    box-shadow 0.12s ease;
+}
+
+.badgeEmpty:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.3);
+}
+
+.badgeEmpty:focus-visible {
+  outline: 2px solid #dc2626;
+  outline-offset: 2px;
+}
+
 /* Discount badges double as buttons — reset the browser's default button
    chrome so they still look exactly like the other pill badges */
 .badgeDiscountActive,

@@ -89,9 +89,13 @@ function CoursesMain() {
     }
   };
 
-  // ── PUT /api/courses/:id returned the fresh course — swap it in ──────────
-  const handleCourseUpdated = (updatedCourse) => {
-    toast.success("Course updated successfully");
+  // ── PUT /api/courses/:id (or another course mutation, e.g. deactivating
+  // an empty course) returned the fresh course — swap it in ──────────────
+  const handleCourseUpdated = (
+    updatedCourse,
+    message = "Course updated successfully",
+  ) => {
+    toast.success(message);
 
     setCourses((prev) =>
       prev.map((c) =>

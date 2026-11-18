@@ -32,17 +32,25 @@ const {
 router.get("/courses", requireLogin, requireInstructor, (req, res) => {
   const instructorId = req.session.user.user_id;
 
-  courseQ.getCoursesByInstructorId(instructorId, (err, rows) => {
-    if (err) {
-      return res.status(500).json({
-        success: false,
-        message: err.message,
-      });
+  // run the course cleanup first, so an empty course that already started
+  // shows to its instructor as inactive (freed), not as one they still teach
+  courseQ.deactivateExpiredCourses((err0) => {
+    if (err0) {
+      return res.status(500).json({ success: false, message: err0.message });
     }
 
-    res.json({
-      success: true,
-      courses: rows,
+    courseQ.getCoursesByInstructorId(instructorId, (err, rows) => {
+      if (err) {
+        return res.status(500).json({
+          success: false,
+          message: err.message,
+        });
+      }
+
+      res.json({
+        success: true,
+        courses: rows,
+      });
     });
   });
 });

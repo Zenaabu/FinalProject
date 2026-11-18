@@ -67,9 +67,25 @@ function formFromCourse(course) {
   };
 }
 
+/* ── Has the course already finished? ───────────────────────────────────── */
+// true once the course's end date is before today (local date, "YYYY-MM-DD"
+// string comparison) — same rule the server's validateCourseNotReactivated uses
+function courseHasEnded(course) {
+  if (!course.end_date) return false;
+  const now = new Date();
+  const today = [
+    now.getFullYear(),
+    String(now.getMonth() + 1).padStart(2, "0"),
+    String(now.getDate()).padStart(2, "0"),
+  ].join("-");
+  return String(course.end_date).slice(0, 10) < today;
+}
+
 /* ─────────────────────────────────────────────────────────────────────────── */
 function CourseEditDrawer({ course, instructors = [], onClose, onSaved }) {
   const [form, setForm] = useState(() => formFromCourse(course));
+  // a finished course can't be switched back to Active (the server refuses it)
+  const hasEnded = courseHasEnded(course);
   const [errors, setErrors] = useState({});
   const [saving, setSaving] = useState(false);
 
@@ -247,7 +263,11 @@ function CourseEditDrawer({ course, instructors = [], onClose, onSaved }) {
                 </select>
               </div>
 
-              {/* Status → server maps "Active"→1, "Inactive"→0 */}
+              {/* Status → server maps "Active"→1, "Inactive"→0.
+                  A course whose end date has passed is finished for good —
+                  the server refuses to reactivate it, so the dropdown is
+                  locked. A course deactivated by hand while still running
+                  can be switched back to Active normally. */}
               <div className={styles.field}>
                 <label className={styles.label} htmlFor="edit-status">
                   Status
@@ -256,11 +276,22 @@ function CourseEditDrawer({ course, instructors = [], onClose, onSaved }) {
                   id="edit-status"
                   className={styles.select}
                   value={form.status}
+                  disabled={hasEnded}
+                  title={
+                    hasEnded
+                      ? "This course has already ended and cannot be made active again"
+                      : undefined
+                  }
                   onChange={(e) => handleChange("status", e.target.value)}
                 >
                   <option value="Active">Active</option>
                   <option value="Inactive">Inactive</option>
                 </select>
+                {hasEnded && (
+                  <span className={styles.statusLockedNote}>
+                    This course has ended, so it can't be reactivated.
+                  </span>
+                )}
               </div>
             </div>
           </div>

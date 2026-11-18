@@ -1,6 +1,26 @@
 // import the database singleton to run queries
 const db = require("../DB/dbSingleton");
 
+// the one rule for an "empty course that needs the admin's decision": still
+// active, at its last day of enrollment (start_date is tomorrow — the catalog
+// stops selling a course once start_date <= today) or already past it, and
+// nobody has a seat — no registration and no unexpired pending PayPal
+// checkout. Written against alias `c`, and shared by the course card badge
+// (fetchCoursesWithDetails), the dashboard KPI (adminQueries.getDashboardStats)
+// and the deactivate endpoint's guard (findEmptyCourseAwaitingAction), so the
+// three can never disagree about which courses count.
+const EMPTY_COURSE_CONDITION = `(
+  c.is_active = 1
+  AND c.start_date <= DATE_ADD(CURDATE(), INTERVAL 1 DAY)
+  AND NOT EXISTS (SELECT 1 FROM register er WHERE er.course_id = c.course_id)
+  AND NOT EXISTS (
+    SELECT 1 FROM course_reservations ecr
+     WHERE ecr.course_id = c.course_id
+       AND ecr.status = 'pending'
+       AND ecr.expires_at > NOW()
+  )
+)`;
+
 // a function that gets course_id and returns all the details about
 // the course with the same id (finds the course by the id)
 function findCourseById(course_id, cb) {
@@ -143,7 +163,9 @@ function getActiveCoursesByInstructorId(user_id, cb) {
   );
 }
 
-// a function that deactivate courses that already ended
+// a function that deactivate courses that already ended — and, as part of
+// the same cleanup, courses that reached their start date with nobody
+// enrolled (deactivateEmptyStartedCourses), so every caller gets both
 function deactivateExpiredCourses(cb) {
   const conn = db.getConnection();
 
@@ -152,7 +174,42 @@ function deactivateExpiredCourses(cb) {
      SET is_active = 0
      WHERE end_date < CURDATE()
        AND is_active = 1`,
-    cb,
+    (err) => {
+      if (err) return cb(err);
+      deactivateEmptyStartedCourses(cb);
+    },
+  );
+}
+
+// a function that automatically deactivates every course that matches
+// EMPTY_COURSE_CONDITION and whose start date has arrived — i.e. the admin
+// saw the "No Students" badge on the last enrollment day but didn't act on
+// it, and the catalog has now stopped selling the course, so nobody can
+// still join. Same effect as the manual deactivateEmptyCourse: the
+// instructor's time slots are freed (conflict checks ignore inactive
+// courses), and substitutes on its upcoming lessons are cleared first
+// (while the course still matches the condition).
+function deactivateEmptyStartedCourses(cb) {
+  const conn = db.getConnection();
+
+  conn.query(
+    `UPDATE lessons l
+     JOIN courses c ON c.course_id = l.course_id
+     SET l.substitute_instructor_id = NULL
+     WHERE ${EMPTY_COURSE_CONDITION}
+       AND c.start_date <= CURDATE()
+       AND l.lesson_date >= CURDATE()`,
+    (err) => {
+      if (err) return cb(err);
+
+      conn.query(
+        `UPDATE courses c
+         SET c.is_active = 0
+         WHERE ${EMPTY_COURSE_CONDITION}
+           AND c.start_date <= CURDATE()`,
+        cb,
+      );
+    },
   );
 }
 
@@ -381,7 +438,8 @@ function fetchCoursesWithDetails(course_id, cb) {
        c.is_active,
        c.user_id,
        CONCAT(u.first_name, ' ', u.last_name) AS instructor,
-       COUNT(DISTINCT r.user_id)              AS enrolled
+       COUNT(DISTINCT r.user_id)              AS enrolled,
+       ${EMPTY_COURSE_CONDITION}              AS is_empty_alert
      FROM courses c
      LEFT JOIN users    u ON c.user_id    = u.user_id
      LEFT JOIN register r ON c.course_id  = r.course_id
@@ -563,8 +621,57 @@ function buildCourse(c, lessons) {
         : Number(c.discount_percent),
     vat_percent: c.vat_percent,
     total_lessons: c.total_lessons,
+    // true when EMPTY_COURSE_CONDITION matches — the card shows the
+    // "No students" badge that opens the deactivate pop-up
+    is_empty_alert: Boolean(Number(c.is_empty_alert)),
     lessons,
   };
+}
+
+// a function that gets a course_id and returns that course only if it
+// currently matches EMPTY_COURSE_CONDITION (no rows otherwise) — the
+// server-side guard for deactivateEmptyCourse, so the endpoint can't be used
+// on a course someone has enrolled in (or is mid-checkout for)
+function findEmptyCourseAwaitingAction(course_id, cb) {
+  const conn = db.getConnection();
+
+  conn.query(
+    `SELECT c.course_id
+     FROM courses c
+     WHERE c.course_id = ?
+       AND ${EMPTY_COURSE_CONDITION}`,
+    [course_id],
+    cb,
+  );
+}
+
+// a function that gets a course_id and deactivates that (empty) course,
+// freeing its instructor: every instructor-conflict / availability query
+// already filters on courses.is_active = 1, so is_active = 0 alone releases
+// the owner's time slots. Any substitute assigned to one of its upcoming
+// lessons is cleared too, since getSubstituteLessonsForInstructor doesn't
+// filter on is_active and would otherwise keep showing them that lesson.
+function deactivateEmptyCourse(course_id, cb) {
+  const conn = db.getConnection();
+
+  conn.query(
+    `UPDATE courses
+     SET is_active = 0
+     WHERE course_id = ?`,
+    [course_id],
+    (err) => {
+      if (err) return cb(err);
+
+      conn.query(
+        `UPDATE lessons
+         SET substitute_instructor_id = NULL
+         WHERE course_id = ?
+           AND lesson_date >= CURDATE()`,
+        [course_id],
+        cb,
+      );
+    },
+  );
 }
 
 module.exports = {
@@ -585,4 +692,7 @@ module.exports = {
   updateCourse,
   getCoursesWithDetails,
   getCourseWithDetails,
+  findEmptyCourseAwaitingAction,
+  deactivateEmptyCourse,
+  EMPTY_COURSE_CONDITION,
 };

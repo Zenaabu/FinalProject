@@ -6,11 +6,14 @@
 // ──────────────────────────────────────────────────────────────────────────────
 
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { BookOpen, Search } from "lucide-react";
+import { BookOpen, GraduationCap, Search } from "lucide-react";
 import AvatarInitials from "../../dashboard/shared/AvatarInitials";
 import ChangeRoleModal from "../modals/ChangeRoleModal";
 import BlockUserModal from "../modals/BlockUserModal";
 import UserCoursesModal from "../modals/UserCoursesModal";
+// Reused from Staff Scheduling: an instructor never enrolls in a course, so
+// for them the "courses" action shows the courses they teach instead.
+import InstructorCoursesModal from "../../staff/InstructorCoursesModal";
 import styles from "./UserDatabase.module.css";
 
 /* Normalise a DB row into the shape the component uses */
@@ -250,10 +253,22 @@ function UserDatabase({ autoFocusSearch = false }) {
                           className={styles.btnCourses}
                           type="button"
                           onClick={() => openModal(u, "courses")}
-                          title="View enrolled courses"
-                          aria-label={`View courses for ${u.name}`}
+                          title={
+                            u.role === "instructor"
+                              ? "View teaching courses"
+                              : "View enrolled courses"
+                          }
+                          aria-label={
+                            u.role === "instructor"
+                              ? `View courses taught by ${u.name}`
+                              : `View courses for ${u.name}`
+                          }
                         >
-                          <BookOpen size={14} />
+                          {u.role === "instructor" ? (
+                            <GraduationCap size={14} />
+                          ) : (
+                            <BookOpen size={14} />
+                          )}
                         </button>
                         <button
                           className={styles.btnRole}
@@ -302,9 +317,18 @@ function UserDatabase({ autoFocusSearch = false }) {
           onClose={closeModal}
         />
       )}
-      {modalType === "courses" && modalUser && (
-        <UserCoursesModal user={modalUser} onClose={closeModal} />
-      )}
+      {modalType === "courses" && modalUser &&
+        (modalUser.role === "instructor" ? (
+          <InstructorCoursesModal
+            instructor={{
+              user_id: modalUser.id,
+              instructor_name: modalUser.name,
+            }}
+            onClose={closeModal}
+          />
+        ) : (
+          <UserCoursesModal user={modalUser} onClose={closeModal} />
+        ))}
     </>
   );
 }

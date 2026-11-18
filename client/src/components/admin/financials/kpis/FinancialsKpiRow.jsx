@@ -8,6 +8,7 @@
 // ──────────────────────────────────────────────────────────────────────────────
 
 import { useState, useEffect, useCallback } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { DollarSign, TrendingUp, TrendingDown, Receipt, Wallet, Pencil } from "lucide-react";
 import StatCard from "../../dashboard/stats/StatCard";
 import VatEditModal from "../vatSettings/VatEditModal";
@@ -78,8 +79,22 @@ function buildCards(summary, onVatClick) {
 }
 
 function FinancialsKpiRow({ startDate, endDate }) {
+  const location = useLocation();
+  const navigate = useNavigate();
   const [summary, setSummary] = useState(null);
-  const [isVatModalOpen, setIsVatModalOpen] = useState(false);
+  // The dashboard's "Change VAT Rate" quick action navigates here with
+  // { state: { openVatEdit: true } } so the modal opens automatically.
+  // Consumed once and cleared so a refresh/back-nav doesn't reopen it.
+  const [isVatModalOpen, setIsVatModalOpen] = useState(
+    Boolean(location.state?.openVatEdit),
+  );
+
+  useEffect(() => {
+    if (location.state?.openVatEdit) {
+      navigate(location.pathname, { replace: true, state: null });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const fetchSummary = useCallback(() => {
     fetch(

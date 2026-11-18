@@ -1,0 +1,206 @@
+/* ============================================================
+   EmptyCourseModal.module.css
+   ============================================================ */
+
+/* ── Backdrop overlay ────────────────────────────────────────────────────── */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.15s ease;
+  padding: 1rem;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* ── Modal card ──────────────────────────────────────────────────────────── */
+.modal {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow:
+    0 20px 60px rgba(2, 132, 199, 0.12),
+    0 4px 12px rgba(0, 0, 0, 0.08);
+  width: 100%;
+  max-width: 440px;
+  max-height: calc(100vh - 2rem);
+  overflow-y: auto;
+  padding: 2rem 1.8rem 1.6rem;
+  text-align: center;
+  animation: slideUp 0.18s ease;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(16px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* ── Icon ────────────────────────────────────────────────────────────────── */
+.iconWrap {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1.1rem;
+  background: linear-gradient(135deg, #f87171, #dc2626);
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(220, 38, 38, 0.3);
+}
+
+/* ── Text ────────────────────────────────────────────────────────────────── */
+.title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 0.55rem;
+}
+
+.message {
+  font-size: 0.85rem;
+  color: #475569;
+  line-height: 1.55;
+  margin: 0 0 1rem;
+}
+
+/* ── Course summary ──────────────────────────────────────────────────────── */
+.summary {
+  background: #f0f9ff;
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  border-radius: 10px;
+  padding: 0.75rem 0.9rem;
+  margin: 0 0 1rem;
+  text-align: left;
+}
+
+.summaryTitle {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--color-ocean-text);
+  margin-bottom: 0.5rem;
+}
+
+.facts {
+  margin: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem 0.9rem;
+}
+
+.fact dt {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.fact dd {
+  margin: 0.1rem 0 0;
+  font-size: 0.83rem;
+  color: #0f172a;
+  font-weight: 500;
+}
+
+.fact dd.zero {
+  color: #dc2626;
+  font-weight: 700;
+}
+
+/* ── Effects list ────────────────────────────────────────────────────────── */
+.effects {
+  text-align: left;
+  margin: 0 0 1.1rem;
+  padding-left: 1.1rem;
+  font-size: 0.82rem;
+  color: #475569;
+  line-height: 1.55;
+}
+
+.effects li + li {
+  margin-top: 0.3rem;
+}
+
+/* ── Error banner ─────────────────────────────────────────────────────────── */
+.errorBanner {
+  margin: 0 0 1rem;
+  padding: 0.6rem 0.9rem;
+  background: #fef2f2;
+  border: 1px solid #fca5a5;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  color: #b91c1c;
+}
+
+/* ── Footer buttons ──────────────────────────────────────────────────────── */
+.footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  justify-content: center;
+}
+
+.btnCancel,
+.btnDeactivate {
+  flex: 1;
+  min-width: 7rem;
+  padding: 0.6rem 1rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.btnCancel {
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  color: #475569;
+}
+
+.btnCancel:hover:not(:disabled) {
+  background: #f8fafc;
+}
+
+.btnDeactivate {
+  border: none;
+  background: #dc2626;
+  color: #fff;
+  font-weight: 700;
+}
+
+.btnDeactivate:hover:not(:disabled) {
+  background: #b91c1c;
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+}
+
+.btnCancel:disabled,
+.btnDeactivate:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+@media (max-width: 420px) {
+  .facts {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,5 +1,6 @@
 // queries/adminQueries.js
 const db = require("../DB/dbSingleton");
+const { EMPTY_COURSE_CONDITION } = require("./courseQueries");
 
 // a function that gets a user_id (of the admin)
 // it returns all the users from DB without the user with user_id (without admin)
@@ -99,8 +100,9 @@ function getInstructorsAvailableForDates(dates, cb) {
 // within the next 7 days that are still under 50% enrolled (capacity minus
 // registered + unexpired-pending, same "taken seats" formula used by
 // getAvailableCourses' seats_left — the low-enrollment-before-start problem,
-// surfaced instead of left for an admin to notice on their own), and new
-// students in the last 7 days
+// surfaced instead of left for an admin to notice on their own), courses
+// with nobody enrolled that have reached their last day of enrollment
+// (courseQueries.EMPTY_COURSE_CONDITION), and new students in the last 7 days
 function getDashboardStats(cb) {
   const conn = db.getConnection();
 
@@ -122,6 +124,9 @@ function getDashboardStats(cb) {
                   AND cr.status = 'pending'
                   AND cr.expires_at > NOW())
             ) < c.capacity * 0.5) AS at_risk_courses,
+        (SELECT COUNT(*)
+           FROM courses c
+          WHERE ${EMPTY_COURSE_CONDITION}) AS empty_courses,
         (SELECT COUNT(DISTINCT user_id) FROM register
           WHERE payment_date >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)) AS new_students_week`,
     cb,

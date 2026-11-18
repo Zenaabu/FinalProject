@@ -20,6 +20,8 @@ const {
   validateInstructorAvoidsApprovedConstraintsForExistingCourse,
   validateLessonConflictInSameCourse,
   validateUpdateCourseDetails,
+  validateCourseNotReactivated,
+  validateCourseIsEmptyAwaitingAction,
   validateUpdatedCourseCapacity,
   validateUpdatedCourseTotalLessons,
   validateUpdatedCourseDatesIncludeLessons,
@@ -380,6 +382,7 @@ router.put(
   requireAdmin,
   validateCourseExists,
   validateUpdateCourseDetails,
+  validateCourseNotReactivated,
   validateUpdatedCourseCapacity,
   validateUpdatedCourseTotalLessons,
   validateUpdatedCourseDatesIncludeLessons,
@@ -407,6 +410,44 @@ router.put(
         res.json({
           success: true,
           message: "Course updated successfully",
+          course,
+        });
+      });
+    });
+  },
+);
+
+// POST deactivate an empty course that reached its last enrollment day —
+// the action behind the "No students" badge's pop-up on the admin's course
+// card. Setting is_active = 0 frees the instructor's time slots (every
+// conflict check ignores inactive courses) and any upcoming substitute
+// assignment is cleared. Responds with the fresh course like every other
+// course mutation.
+// url: /api/courses/:course_id/deactivate-empty
+router.post(
+  "/:course_id/deactivate-empty",
+  requireLogin,
+  requireAdmin,
+  validateCourseExists,
+  validateCourseIsEmptyAwaitingAction,
+  (req, res) => {
+    const { course_id } = req.params;
+
+    courseQ.deactivateEmptyCourse(course_id, (err) => {
+      if (err) {
+        return res.status(500).json({ success: false, message: err.message });
+      }
+
+      courseQ.getCourseWithDetails(course_id, (err2, course) => {
+        if (err2) {
+          return res
+            .status(500)
+            .json({ success: false, message: err2.message });
+        }
+
+        res.json({
+          success: true,
+          message: "Course deactivated — the instructor's schedule is now free",
           course,
         });
       });

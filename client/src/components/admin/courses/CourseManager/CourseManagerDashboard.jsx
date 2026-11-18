@@ -1,9 +1,9 @@
 // ─── CourseManagerDashboard.jsx ───────────────────────────────────────────────
 // Renders the vertical accordion course view, split by status into an
-// Active / Inactive / All tab filter, defaulting to Active (an "Active"/"Upcoming" course counts as
-// Active — both mean is_active = 1 on the course row; only a course the
-// backend has flipped to is_active = 0, i.e. status "Inactive", counts
-// against the Inactive tab).
+// Active / Upcoming / Inactive / All tab filter, defaulting to Active. The
+// tabs key off the server-computed course.status: "Active" (is_active = 1 and
+// already started), "Upcoming" (is_active = 1 but start_date is still in the
+// future) and "Inactive" (is_active = 0).
 // A date-range search narrows the same list further — a course matches when
 // its own [start_date, end_date] span overlaps the searched range at all, so
 // e.g. a course running Jan 10–Feb 20 still shows up for a Feb 1–Feb 10
@@ -19,13 +19,22 @@ import styles from "./CourseManagerDashboard.module.css";
 
 const TABS = [
   { key: "active", label: "Active" },
+  { key: "upcoming", label: "Upcoming" },
   { key: "inactive", label: "Inactive" },
   { key: "all", label: "All" },
 ];
 
+// tab key → the course.status value it shows (the "all" tab has none)
+const STATUS_BY_TAB = {
+  active: "Active",
+  upcoming: "Upcoming",
+  inactive: "Inactive",
+};
+
 const EMPTY_MESSAGE = {
   all: "No courses found.",
   active: "No active courses right now.",
+  upcoming: "No upcoming courses scheduled.",
   inactive: "No inactive courses — nothing has finished yet.",
 };
 
@@ -48,8 +57,8 @@ function CourseManagerDashboard({
 }) {
   const [filter, setFilter] = useState("active");
 
-  // a deep-link to an inactive course would be hidden by the default Active
-  // tab, so jump to Inactive once — only on the first load of courses
+  // a deep-link to an upcoming/inactive course would be hidden by the default
+  // Active tab, so jump to its tab once — only on the first load of courses
   const deepLinkHandled = useRef(false);
   useEffect(() => {
     if (deepLinkHandled.current || !initialExpandedCourseId || !courses.length)
@@ -57,6 +66,7 @@ function CourseManagerDashboard({
     deepLinkHandled.current = true;
     const target = courses.find((c) => c.course_id === initialExpandedCourseId);
     if (target?.status === "Inactive") setFilter("inactive");
+    else if (target?.status === "Upcoming") setFilter("upcoming");
   }, [courses, initialExpandedCourseId]);
 
   // draft values follow the inputs as the admin types; appliedRange only
@@ -83,21 +93,19 @@ function CourseManagerDashboard({
   };
 
   const counts = useMemo(() => {
-    const inactive = courses.filter((c) => c.status === "Inactive").length;
-    return {
-      all: courses.length,
-      active: courses.length - inactive,
-      inactive,
-    };
+    const result = { all: courses.length };
+    for (const [tab, status] of Object.entries(STATUS_BY_TAB)) {
+      result[tab] = courses.filter((c) => c.status === status).length;
+    }
+    return result;
   }, [courses]);
 
   const visibleCourses = useMemo(() => {
     let list = courses;
 
-    if (filter === "active") {
-      list = list.filter((c) => c.status !== "Inactive");
-    } else if (filter === "inactive") {
-      list = list.filter((c) => c.status === "Inactive");
+    const status = STATUS_BY_TAB[filter];
+    if (status) {
+      list = list.filter((c) => c.status === status);
     }
 
     if (appliedRange) {

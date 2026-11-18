@@ -7,6 +7,7 @@ import { useState, useEffect, useRef } from "react";
 import LessonAccordionList from "./LessonAccordionList";
 import CourseEditDrawer from "./CourseEditDrawer";
 import DiscountModal from "./DiscountModal";
+import EmptyCourseModal from "./EmptyCourseModal";
 import { formatDate } from "../../../../utils/formatDate";
 import styles from "./CourseHeaderCard.module.css";
 
@@ -188,7 +189,12 @@ function CourseHeaderCard({
   const [isExpanded, setIsExpanded] = useState(startExpanded);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDiscountOpen, setIsDiscountOpen] = useState(false);
+  const [isEmptyOpen, setIsEmptyOpen] = useState(false);
   const cardRef = useRef(null);
+
+  // server-computed (courseQueries.EMPTY_COURSE_CONDITION): active, at its
+  // last enrollment day or already started, and nobody enrolled
+  const isEmptyAlert = Boolean(course.is_empty_alert);
 
   // Arriving here from the dashboard's "click a course" shortcut — scroll
   // it into view since the list is start-date-descending and the target
@@ -257,6 +263,20 @@ function CourseHeaderCard({
               <span className={`${styles.badge} ${styles.badgeLevel}`}>
                 {course.level}
               </span>
+              {isEmptyAlert && (
+                <button
+                  type="button"
+                  className={`${styles.badge} ${styles.badgeEmpty}`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsEmptyOpen(true);
+                  }}
+                >
+                  <WarningIcon />
+                  {`0/${course.capacity} Enrolled`} —{" "}
+                  {daysUntilStart >= 1 ? "Last Day to Enroll" : "No Students"}
+                </button>
+              )}
               {hasDiscount ? (
                 isUpcoming ? (
                   <button
@@ -296,7 +316,8 @@ function CourseHeaderCard({
                   — Offer Discount
                 </button>
               ) : (
-                isUnderCapacity && (
+                // the empty-course badge already says it louder
+                isUnderCapacity && !isEmptyAlert && (
                   <span className={`${styles.badge} ${styles.badgeUnderCapacity}`}>
                     <WarningIcon />
                     Under 50% Capacity
@@ -371,6 +392,19 @@ function CourseHeaderCard({
           onSaved={(updated) => {
             onCourseUpdated?.(updated);
             setIsDiscountOpen(false);
+          }}
+        />
+      )}
+
+      {/* ── Empty-course pop-up (keep or deactivate) ─────────────── */}
+      {isEmptyOpen && (
+        <EmptyCourseModal
+          course={course}
+          daysUntilStart={daysUntilStart}
+          onClose={() => setIsEmptyOpen(false)}
+          onSaved={(updated, message) => {
+            setIsEmptyOpen(false);
+            onCourseUpdated?.(updated, message);
           }}
         />
       )}

@@ -676,6 +676,48 @@ function validateCourseExists(req, res, next) {
   });
 }
 
+// a middleware that refuses to turn a FINISHED course back to Active.
+// a course whose end date has passed is really over, so it must stay out of
+// the Active list. a course the admin switched to inactive by hand while it
+// is still running (or hasn't started) can be reactivated freely.
+// needs req.course (validateCourseExists)
+function validateCourseNotReactivated(req, res, next) {
+  const today = formatDateOnly(new Date());
+  const hasEnded = formatDateOnly(req.course.end_date) < today;
+
+  if (hasEnded && req.body.status === "Active") {
+    return res.status(400).json({
+      success: false,
+      message: "This course has already ended and cannot be made active again",
+    });
+  }
+
+  next();
+}
+
+// a middleware that checks the course is an "empty course awaiting the
+// admin's decision" (courseQueries.EMPTY_COURSE_CONDITION: active, at or past
+// its last enrollment day, nobody registered or mid-checkout) — the only
+// kind of course POST /:course_id/deactivate-empty may switch off, so it can
+// never silently cancel a course someone has paid for
+function validateCourseIsEmptyAwaitingAction(req, res, next) {
+  courseQ.findEmptyCourseAwaitingAction(req.params.course_id, (err, rows) => {
+    if (err) {
+      return res.status(500).json({ success: false, message: err.message });
+    }
+
+    if (!rows || rows.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "This course can no longer be deactivated from here — it is inactive, still open for enrollment, or someone has enrolled in it",
+      });
+    }
+
+    next();
+  });
+}
+
 // a middleware that checks if lesson exists. when the route also carries a
 // course_id, the lesson must belong to that course
 function validateLessonExists(req, res, next) {
@@ -1413,6 +1455,8 @@ module.exports = {
   validateUpdatedLessonInstructorConflict,
   validateUpdatedLessonDateOrder,
   validateUpdateCourseDetails,
+  validateCourseNotReactivated,
+  validateCourseIsEmptyAwaitingAction,
   validateUpdatedCourseDatesIncludeLessons,
   validateUpdatedCourseCapacity,
   validateUpdatedCourseTotalLessons,

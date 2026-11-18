@@ -3,7 +3,7 @@
 // ──────────────────────────────────────────────────────────────────────────────
 
 import { useNavigate } from "react-router-dom";
-import { ClipboardList, Search, KeyRound } from "lucide-react";
+import { ClipboardList, Search, Percent } from "lucide-react";
 import ActionButton from "./ActionButton";
 import styles from "./QuickActions.module.css";
 
@@ -60,15 +60,14 @@ function QuickActions() {
         }),
     },
     {
-      id: "change-password",
-      label: "Change Password",
-      icon: <KeyRound size={18} />,
+      id: "change-vat",
+      label: "Change VAT Rate",
+      icon: <Percent size={18} />,
       variant: "neutral",
-      // Jumps to the admin's own profile page (RequireRole gates /user/*
-      // to role "user", so an admin navigating there would just get bounced
-      // straight back here) with the password field already open in edit
-      // mode, so this is a one-click shortcut instead of two.
-      onClick: () => navigate("/admin/profile", { state: { openPassword: true } }),
+      // Jumps to Financials with the "Change VAT Rate" modal already open,
+      // so the admin can set the new rate in one click instead of two.
+      onClick: () =>
+        navigate("/admin/financials", { state: { openVatEdit: true } }),
     },
   ];
 
