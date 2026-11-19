@@ -34,15 +34,14 @@ function validateInstructorOwnsCourse(req, res, next) {
 // a middleware that validates that attendance can be taken for this lesson
 function validateAttendanceAllowed(req, res, next) {
   const lesson = req.lesson;
-  const course = req.course;
 
   if (
-    !canTakeAttendance(lesson.lesson_date, lesson.start_time, course.end_date)
+    !canTakeAttendance(lesson.lesson_date, lesson.start_time, lesson.end_time)
   ) {
     return res.status(400).json({
       success: false,
       message:
-        "Attendance can only be taken after lesson start time and before course end date",
+        "Attendance can only be taken while the lesson is taking place (between its start and end time)",
     });
   }
 

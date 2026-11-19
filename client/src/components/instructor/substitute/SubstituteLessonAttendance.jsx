@@ -131,8 +131,10 @@ function SubstituteLessonAttendance() {
 
       {!lessonInfo.can_take_attendance && (
         <p className={styles.notice}>
-          Attendance can only be recorded once the lesson has started and
-          while the course is still running.
+          {new Date(`${lessonInfo.lesson_date}T${lessonInfo.end_time}:00`) <
+          new Date()
+            ? "This lesson has ended, so its attendance is locked."
+            : "Attendance can only be recorded while the lesson is taking place."}
         </p>
       )}
 

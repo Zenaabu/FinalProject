@@ -65,7 +65,7 @@ Route handlers follow a consistent request-response shape: `{ success: boolean, 
 
 **`getCoursesWithDetails` / `getCourseWithDetails`** in `courseQueries.js` (both wrap `fetchCoursesWithDetails`) are the representative example of the multi-step-query pattern used for nested data: courses → lessons (batched by `course_id IN (?)`) → per-lesson roster (batched by `lesson_id IN (?)`), manually grouped and assembled in JS rather than via SQL joins/JSON aggregation. The roster half is a `UNION`: registered users `LEFT JOIN`ed onto `attend` (so unmarked students appear with a `null` status), unioned with any `attend` row whose user is no longer registered (so recorded attendance is never hidden).
 
-**Attendance** is written by the course's instructor, one whole lesson per request: `POST /api/instructor/lessons/:lesson_id/attendance` with `{ records: [{ user_id, attended }] }`, upserted via `INSERT … ON DUPLICATE KEY UPDATE`, so re-posting corrects an already-marked lesson. `utils.canTakeAttendance` gates it to the window between the lesson's start time and the course end date; the matching `GET` returns `lesson.can_take_attendance` so the UI can disable saving.
+**Attendance** is written by the course's instructor, one whole lesson per request: `POST /api/instructor/lessons/:lesson_id/attendance` with `{ records: [{ user_id, attended }] }`, upserted via `INSERT … ON DUPLICATE KEY UPDATE`, so re-posting corrects an already-marked lesson. `utils.canTakeAttendance` gates it to the lesson's own start–end time window (once the lesson ends its attendance is locked); the matching `GET` returns `lesson.can_take_attendance` so the UI can disable saving.
 
 ## Frontend architecture (`client/src/`)
 

@@ -87,7 +87,7 @@ router.get(
           can_take_attendance: canTakeAttendance(
             row.lesson_date,
             row.start_time,
-            row.end_date,
+            row.end_time,
           ),
           // the sidebar badge / dashboard banner alert: up until attendance
           // is recorded, and it also goes away once the lesson's day has
@@ -182,7 +182,7 @@ router.get(
             can_take_attendance: canTakeAttendance(
               req.lesson.lesson_date,
               req.lesson.start_time,
-              req.course.end_date,
+              req.lesson.end_time,
             ),
           },
           students,

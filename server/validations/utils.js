@@ -1081,20 +1081,19 @@ function validateCourseUpdateDates(start_date, end_date) {
   return true;
 }
 
-// a function that gets lessonDate, startTime and courseEndDate
+// a function that gets lessonDate, startTime and endTime of a lesson
 // it returns true if the instructor can take attendance and false if not
-// the instructor can take attendance if the lesson already started and
-// the course has not ended yet
-function canTakeAttendance(lessonDate, startTime, courseEndDate) {
+// the instructor can take attendance only while the lesson is taking place:
+// from the lesson's start time until its end time. once the lesson is over
+// the attendance is locked and stays as it was recorded
+function canTakeAttendance(lessonDate, startTime, endTime) {
   const now = new Date();
+  const date = formatDateOnly(lessonDate);
 
-  const lessonStart = new Date(
-    `${formatDateOnly(lessonDate)}T${formatTimeOnly(startTime)}:00`,
-  );
-  const courseEnd = new Date(courseEndDate);
-  courseEnd.setHours(23, 59, 59, 999);
+  const lessonStart = new Date(`${date}T${formatTimeOnly(startTime)}:00`);
+  const lessonEnd = new Date(`${date}T${formatTimeOnly(endTime)}:00`);
 
-  return now >= lessonStart && now <= courseEnd;
+  return now >= lessonStart && now <= lessonEnd;
 }
 
 // a function that gets the fields of the instructor constraint and returns true

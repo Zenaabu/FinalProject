@@ -134,7 +134,12 @@ function SubstituteLessons() {
                       Covering for {lesson.original_instructor_name}
                     </span>
                     {!lesson.can_take_attendance && (
-                      <span className={styles.badgeMuted}>Not open yet</span>
+                      <span className={styles.badgeMuted}>
+                        {new Date(`${lesson.lesson_date}T${lesson.end_time}:00`) <
+                        new Date()
+                          ? "Closed"
+                          : "Not open yet"}
+                      </span>
                     )}
                   </div>
 

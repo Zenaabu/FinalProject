@@ -7,8 +7,8 @@
 //   GET  /api/instructor/lessons/:lesson_id/attendance   -> roster + statuses
 //   POST /api/instructor/lessons/:lesson_id/attendance   -> save the roster
 //
-// The server only accepts attendance once the lesson has started and while the
-// course has not ended (can_take_attendance), so the Save button follows that.
+// The server only accepts attendance while the lesson is taking place (between
+// its start and end time — can_take_attendance), so the Save button follows that.
 // ──────────────────────────────────────────────────────────────────────────────
 
 import { useState, useEffect, useCallback } from "react";
@@ -306,8 +306,11 @@ function CourseAttendance() {
               {/* the server refuses attendance outside the lesson window */}
               {lessonInfo && !lessonInfo.can_take_attendance && (
                 <p className={styles.notice}>
-                  Attendance can only be recorded once the lesson has started
-                  and while the course is still running.
+                  {new Date(
+                    `${lessonInfo.lesson_date}T${lessonInfo.end_time}:00`,
+                  ) < new Date()
+                    ? "This lesson has ended, so its attendance is locked."
+                    : "Attendance can only be recorded while the lesson is taking place."}
                 </p>
               )}
 
