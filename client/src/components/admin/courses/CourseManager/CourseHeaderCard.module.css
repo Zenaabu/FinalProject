@@ -91,6 +91,12 @@
 .badgeInactive { background: #fee2e2; color: #dc2626; }
 .badgeLevel    { background: #e0f2fe; color: var(--color-ocean-text); }
 
+/* per-level colors — same blue / orange / red as the user CourseCatalog's
+   level tabs and sections, on a light tint of each */
+.badgeLevel_beginner     { background: #dbeafe; color: #2563eb; }
+.badgeLevel_intermediate { background: #ffedd5; color: #d97706; }
+.badgeLevel_advanced     { background: #fee2e2; color: #dc2626; }
+
 .badgeUnderCapacity {
   display: inline-flex;
   align-items: center;

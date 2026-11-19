@@ -260,7 +260,11 @@ function CourseHeaderCard({
               <span className={`${styles.badge} ${statusClass}`}>
                 {course.status.toUpperCase()}
               </span>
-              <span className={`${styles.badge} ${styles.badgeLevel}`}>
+              <span
+                className={`${styles.badge} ${styles.badgeLevel} ${
+                  styles[`badgeLevel_${(course.level || "").toLowerCase()}`] ?? ""
+                }`}
+              >
                 {course.level}
               </span>
               {isEmptyAlert && (

@@ -14,6 +14,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams, Link } from "react-router-dom";
 import { toast } from "sonner";
+import { UserCheck } from "lucide-react";
 import styles from "./CourseAttendance.module.css";
 import { formatDate } from "../../../utils/formatDate";
 
@@ -229,6 +230,35 @@ function CourseAttendance() {
         <section className={styles.rosterPane}>
           {!selectedLessonId ? (
             <p className={styles.paneEmpty}>Select a lesson on the left.</p>
+          ) : coveredBySubstitute ? (
+            <>
+              <div className={styles.rosterHeader}>
+                <div>
+                  <h2 className={styles.paneTitle}>
+                    Lesson {selectedLesson.lesson_number} attendance
+                  </h2>
+                  <p className={styles.rosterSub}>
+                    {formatDate(selectedLesson.date)} · {selectedLesson.start_time}–
+                    {selectedLesson.end_time}
+                  </p>
+                </div>
+              </div>
+
+              <div className={styles.coveredBox}>
+                <UserCheck className={styles.coveredIcon} aria-hidden="true" />
+                <div>
+                  <p className={styles.coveredTitle}>
+                    This lesson is covered by{" "}
+                    {selectedLesson.substitute_name || "a substitute instructor"}
+                  </p>
+                  <p className={styles.coveredText}>
+                    The attendance for this lesson has been handed over to the
+                    substitute instructor, who will take and manage it. You
+                    don't need to do anything here.
+                  </p>
+                </div>
+              </div>
+            </>
           ) : rosterLoading ? (
             <p className={styles.paneEmpty}>Loading roster…</p>
           ) : (
